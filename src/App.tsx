@@ -42,8 +42,20 @@ function App() {
   // Reset physics when simulation parameters change
   useEffect(() => {
     setPhysicsKey((prev: number) => prev + 1)
-  }, [gravity, particleParticleFriction, particleWallFriction, deltaTime, frictionCoefficient])
+  }, [gravity, particleParticleFriction, particleWallFriction, frictionCoefficient])
   
+  // Handle deltaTime changes separately to avoid unnecessary full resets
+  useEffect(() => {
+    // Ensure deltaTime is never zero
+    if (deltaTime <= 0) {
+      setDeltaTime(0.01);
+      return;
+    }
+    
+    // No need to fully reset, just update the physics key
+    setPhysicsKey((prev: number) => prev + 1);
+  }, [deltaTime]);
+
   // Reset simulation when particle parameters change
   useEffect(() => {
     handleReset()
@@ -54,8 +66,18 @@ function App() {
     ? 1/180  // Less extreme difference (changed from 1/240)
     : 1/90   // More precision for normal cases (changed from 1/60)
   
-  // Scale timeStep by deltaTime (clamped to ensure stability)
-  const timeStep = baseTimeStep * Math.max(0.1, Math.min(2.0, deltaTime))
+  // Scale timeStep by deltaTime with a wider range of effect (0.01 to 5.0)
+  // Using a non-linear scale for better control at lower values
+  // For values over 1.0, we use a different scaling to prevent extreme instability
+  const scaledDeltaTime = deltaTime <= 1.0 
+    ? Math.pow(deltaTime, 1.5) * 2.0  // Original scaling for 0.01-1.0
+    : 2.0 + Math.pow(deltaTime - 1.0, 0.75) * 1.5;  // Gentler scaling for 1.0-5.0
+
+  // Ensure it's never zero or extremely small with Math.max
+  const timeStep = Math.max(0.0001, baseTimeStep * scaledDeltaTime);
+
+  // Add a warning for high deltaTime values
+  const isHighDeltaTime = deltaTime > 3.0;
 
   return (
     <div className="app-container">
@@ -122,6 +144,7 @@ function App() {
         
         <div className="simulation-status">
           {isPlaying ? "Running" : "Paused"} • {activeParticles} active particles • Restitution: {restitution.toFixed(3)} • Friction: {frictionCoefficient.toFixed(3)}
+          {isHighDeltaTime && <span style={{ color: 'orange', marginLeft: '8px' }}> ⚠️ High simulation speed may cause instability</span>}
         </div>
       </div>
     </div>

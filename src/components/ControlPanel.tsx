@@ -165,7 +165,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         value={deltaTime}
         onChange={setDeltaTime}
         min={0.01}
-        max={1.0}
+        max={5.0}
+        step={0.01}
+        formatValue={(v) => v.toFixed(2)}
       />
 
       <h2>Simulation Controls</h2>
