@@ -102,22 +102,13 @@
 /* Disabled slider styles */
 .slider-disabled {
   position: relative;
-  opacity: 0.8;
+  opacity: 0.75;
   transition: opacity 0.2s;
 }
 
+/* Remove the thick overlay and use a more subtle approach */
 .slider-disabled::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(1px);
-  border-radius: 8px;
-  z-index: 1;
-  pointer-events: none;
+  display: none;
 }
 
 .slider-disabled .slider-header {
@@ -133,31 +124,56 @@
 }
 
 .slider-disabled .rc-slider-rail {
-  background-color: var(--slider-track) !important;
-  opacity: 0.5;
+  background-color: rgba(75, 85, 99, 0.4) !important;
 }
 
 .slider-disabled .rc-slider-track {
-  background: var(--text-secondary) !important;
-  opacity: 0.3;
+  background: rgba(107, 114, 128, 0.4) !important;
 }
 
 .slider-disabled .rc-slider-handle {
-  background-color: var(--text-secondary) !important;
+  background-color: rgba(107, 114, 128, 0.8) !important;
   transform: scale(0.85);
   box-shadow: none !important;
 }
 
-/* Add a subtle lock icon for disabled sliders */
+/* Keep the lock icon but make it more subtle */
 .slider-disabled::after {
   content: '🔒';
   position: absolute;
   right: -25px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 14px;
-  opacity: 0.6;
+  font-size: 12px;
+  opacity: 0.5;
   z-index: 2;
+}
+
+/* Completely override RC Slider's disabled styles */
+.rc-slider-disabled {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  padding: 14px 0 !important; /* Match regular slider padding */
+  margin: 0 !important;
+}
+
+.rc-slider-disabled .rc-slider-rail {
+  background-color: rgba(75, 85, 99, 0.4) !important;
+}
+
+.rc-slider-disabled .rc-slider-track {
+  background: rgba(107, 114, 128, 0.4) !important;
+}
+
+.rc-slider-disabled .rc-slider-handle {
+  border-color: rgba(107, 114, 128, 0.4) !important;
+  background-color: rgba(107, 114, 128, 0.8) !important;
+  box-shadow: none !important;
+}
+
+/* Remove the border that appears on disabled sliders */
+.rc-slider-disabled::before {
+  display: none !important;
 }
 
 :root {

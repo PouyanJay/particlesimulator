@@ -296,12 +296,12 @@ body {
   background-color: rgba(255, 255, 255, 0.04);
   border-radius: 8px;
   border-left: 2px solid var(--accent-primary);
-  transition: all 0.2s ease;
+  transition: opacity 0.3s ease, border-color 0.3s ease;
 }
 
 .control-subgroup-disabled {
-  border-left-color: var(--text-secondary);
-  opacity: 0.8;
+  border-left-color: rgba(107, 114, 128, 0.5);
+  opacity: 0.85;
 }
 
 /* Add some spacing between control sections */
