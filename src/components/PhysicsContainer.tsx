@@ -12,6 +12,7 @@ interface PhysicsContainerProps {
   particleCount?: number
   particleSize?: number
   initialVelocity?: number
+  frictionCoefficient?: number
   onActiveParticlesChange?: (count: number) => void
 }
 
@@ -106,6 +107,7 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
   particleCount = 100,
   particleSize = 0.08,
   initialVelocity = 1.0,
+  frictionCoefficient = 0.1,
   onActiveParticlesChange
 }) => {
   // Use counter to force re-render on reset
@@ -136,6 +138,15 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
   
   // Keep track of last activity time to detect stalls
   const lastActivityTime = useRef(Date.now())
+  
+  // Calculate effective damping based on friction coefficient - NEW
+  const effectiveDamping = useMemo(() => {
+    // Only apply damping when friction is enabled
+    if (!particleParticleFriction && !particleWallFriction) return 0;
+    
+    // Scale damping with friction coefficient (less damping at low friction)
+    return Math.pow(frictionCoefficient, 1.5) * 0.1;
+  }, [frictionCoefficient, particleParticleFriction, particleWallFriction]);
   
   // Force container re-render when frictions or gravity change
   useEffect(() => {
@@ -363,6 +374,29 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
             }, true)
             lastActivityTime.current = Date.now()
           }
+        } else if (frictionCoefficient < 0.05) {
+          // For very low friction modes, still do some minimal corrections to prevent energy loss
+          // Only correct if the speed has dropped significantly compared to original
+          const originalSpeed = particleSpeeds.current.get(index)
+          if (originalSpeed && 
+              currentSpeed < originalSpeed * 0.5 && // Only boost if lost 50% of speed
+              currentSpeed < 0.1) { // And speed is very low
+            
+            // Apply a gentler correction proportional to friction coefficient
+            // Lower friction = more correction (inverse relationship)
+            const correctionFactor = 1.0 - Math.min(frictionCoefficient * 10, 0.9); // Map 0.001 to ~0.99, 0.05 to ~0.5
+            const boostSpeed = originalSpeed * correctionFactor * 0.5; // Reduced boost
+            
+            if (boostSpeed > currentSpeed) {
+              const scale = boostSpeed / currentSpeed;
+              body.setLinvel({ 
+                x: vel.x * scale, 
+                y: vel.y * scale, 
+                z: vel.z * scale 
+              }, true)
+              lastActivityTime.current = Date.now()
+            }
+          }
         }
       } catch (error) {
         // Silently catch errors to prevent simulation interruption
@@ -443,51 +477,51 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
           type="fixed" 
           position={[0, 0, 0]} 
           restitution={restitution} // Use the configured restitution
-          friction={particleWallFriction ? 0.3 : 0}
-          linearDamping={0}
-          angularDamping={0}
+          friction={particleWallFriction ? frictionCoefficient : 0} // Use friction coefficient
+          linearDamping={0} // Fixed objects don't need damping
+          angularDamping={0} // Fixed objects don't need damping
         >
           {/* Bottom */}
           <CuboidCollider
             args={[HALF_SIZE, WALL_THICKNESS, HALF_SIZE]}
             position={[0, -HALF_SIZE, 0]}
             restitution={restitution}
-            friction={particleWallFriction ? 0.3 : 0}
+            friction={particleWallFriction ? frictionCoefficient : 0} // Use friction coefficient
           />
           {/* Top */}
           <CuboidCollider
             args={[HALF_SIZE, WALL_THICKNESS, HALF_SIZE]}
             position={[0, HALF_SIZE, 0]}
             restitution={restitution}
-            friction={particleWallFriction ? 0.3 : 0}
+            friction={particleWallFriction ? frictionCoefficient : 0} // Use friction coefficient
           />
           {/* Left */}
           <CuboidCollider
             args={[WALL_THICKNESS, HALF_SIZE, HALF_SIZE]}
             position={[-HALF_SIZE, 0, 0]}
             restitution={restitution}
-            friction={particleWallFriction ? 0.3 : 0}
+            friction={particleWallFriction ? frictionCoefficient : 0} // Use friction coefficient
           />
           {/* Right */}
           <CuboidCollider
             args={[WALL_THICKNESS, HALF_SIZE, HALF_SIZE]}
             position={[HALF_SIZE, 0, 0]}
             restitution={restitution}
-            friction={particleWallFriction ? 0.3 : 0}
+            friction={particleWallFriction ? frictionCoefficient : 0} // Use friction coefficient
           />
           {/* Front */}
           <CuboidCollider
             args={[HALF_SIZE, HALF_SIZE, WALL_THICKNESS]}
             position={[0, 0, -HALF_SIZE]}
             restitution={restitution}
-            friction={particleWallFriction ? 0.3 : 0}
+            friction={particleWallFriction ? frictionCoefficient : 0} // Use friction coefficient
           />
           {/* Back */}
           <CuboidCollider
             args={[HALF_SIZE, HALF_SIZE, WALL_THICKNESS]}
             position={[0, 0, HALF_SIZE]}
             restitution={restitution}
-            friction={particleWallFriction ? 0.3 : 0}
+            friction={particleWallFriction ? frictionCoefficient : 0} // Use friction coefficient
           />
         </RigidBody>
 
@@ -499,9 +533,9 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
             position={particle.position}
             linearVelocity={particle.velocity}
             restitution={restitution} // Use the configured restitution
-            friction={particleParticleFriction ? 0.3 : 0}
-            linearDamping={0}
-            angularDamping={0}
+            friction={particleParticleFriction ? frictionCoefficient : 0} // Use friction coefficient
+            linearDamping={effectiveDamping} // Use calculated damping
+            angularDamping={effectiveDamping} // Use calculated damping
             ccd={true} // Enable CCD for better collision detection
             canSleep={false} // Prevent particles from sleeping
             colliders={false}
@@ -511,7 +545,7 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
             <BallCollider 
               args={[radius]} // Use the calculated radius
               restitution={restitution}
-              friction={particleParticleFriction ? 0.3 : 0}
+              friction={particleParticleFriction ? frictionCoefficient : 0} // Use friction coefficient
               density={1}
             />
             <mesh>

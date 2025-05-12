@@ -20,6 +20,7 @@ function App() {
   const [particleCount, setParticleCount] = useState(100) // Default particle count
   const [particleSize, setParticleSize] = useState(0.08) // Default particle size
   const [initialVelocity, setInitialVelocity] = useState(1.0) // Default initial velocity
+  const [frictionCoefficient, setFrictionCoefficient] = useState(0.1) // Default friction coefficient
   
   // Add key to force physics container to re-render on reset
   const [resetKey, setResetKey] = useState(0)
@@ -41,7 +42,7 @@ function App() {
   // Reset physics when simulation parameters change
   useEffect(() => {
     setPhysicsKey((prev: number) => prev + 1)
-  }, [gravity, particleParticleFriction, particleWallFriction, deltaTime])
+  }, [gravity, particleParticleFriction, particleWallFriction, deltaTime, frictionCoefficient])
   
   // Reset simulation when particle parameters change
   useEffect(() => {
@@ -50,8 +51,8 @@ function App() {
 
   // Determine proper physics settings based on friction state and deltaTime
   const baseTimeStep = (!particleParticleFriction && !particleWallFriction) 
-    ? 1/240  // Use smaller timestep for zero-friction case for better stability
-    : 1/60   // Regular timestep for normal cases
+    ? 1/180  // Less extreme difference (changed from 1/240)
+    : 1/90   // More precision for normal cases (changed from 1/60)
   
   // Scale timeStep by deltaTime (clamped to ensure stability)
   const timeStep = baseTimeStep * Math.max(0.1, Math.min(2.0, deltaTime))
@@ -83,6 +84,8 @@ function App() {
             setParticleSize={setParticleSize}
             initialVelocity={initialVelocity}
             setInitialVelocity={setInitialVelocity}
+            frictionCoefficient={frictionCoefficient}
+            setFrictionCoefficient={setFrictionCoefficient}
           />
         </div>
       </div>
@@ -110,6 +113,7 @@ function App() {
               particleCount={particleCount}
               particleSize={particleSize}
               initialVelocity={initialVelocity}
+              frictionCoefficient={frictionCoefficient}
               onActiveParticlesChange={setActiveParticles}
             />
           </Physics>
@@ -117,7 +121,7 @@ function App() {
         </Canvas>
         
         <div className="simulation-status">
-          {isPlaying ? "Running" : "Paused"} • {activeParticles} active particles • Restitution: {restitution.toFixed(3)}
+          {isPlaying ? "Running" : "Paused"} • {activeParticles} active particles • Restitution: {restitution.toFixed(3)} • Friction: {frictionCoefficient.toFixed(3)}
         </div>
       </div>
     </div>

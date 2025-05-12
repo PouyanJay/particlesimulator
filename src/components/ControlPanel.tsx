@@ -24,6 +24,8 @@ interface ControlPanelProps {
   setParticleSize: (value: number) => void
   initialVelocity: number
   setInitialVelocity: (value: number) => void
+  frictionCoefficient: number
+  setFrictionCoefficient: (value: number) => void
 }
 
 const CustomSlider = ({ 
@@ -89,6 +91,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   setParticleSize,
   initialVelocity,
   setInitialVelocity,
+  frictionCoefficient,
+  setFrictionCoefficient,
 }) => {
   return (
     <>
@@ -118,6 +122,16 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         onChange={setRestitution}
         min={0.1}
         max={1.0}
+      />
+      
+      <CustomSlider
+        label="Friction Coefficient"
+        value={frictionCoefficient}
+        onChange={setFrictionCoefficient}
+        min={0.001}
+        max={1.0}
+        step={0.001}
+        formatValue={(v) => v.toFixed(3)}
       />
       
       <CustomSlider
