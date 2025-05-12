@@ -211,37 +211,56 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
   // Set up periodic check to ensure simulation is still running
   useEffect(() => {
     const stallCheckInterval = setInterval(() => {
-      // If no activity in 3 seconds, restart simulation
-      if (Date.now() - lastActivityTime.current > 3000 && simulationActive) {
+      // Only reset if truly stalled - increased from 3 to 5 seconds and lowered the activity threshold
+      if (Date.now() - lastActivityTime.current > 5000 && simulationActive) {
         console.log('Simulation appears stalled, resetting particle velocities...')
         
-        // Reset velocities for all particles
-        particleRefs.current.forEach((body, index) => {
+        // Check if there's any movement at all before resetting
+        let hasMovement = false;
+        particleRefs.current.forEach((body) => {
           if (body) {
             try {
-              const originalSpeed = particleSpeeds.current.get(index) || initialVelocity
-              const safeSpeed = Math.min(originalSpeed, 2.0)
-              
-              const phi = Math.random() * Math.PI * 2
-              const theta = Math.random() * Math.PI
-              
-              const vx = safeSpeed * Math.sin(theta) * Math.cos(phi)
-              const vy = safeSpeed * Math.sin(theta) * Math.sin(phi)
-              const vz = safeSpeed * Math.cos(theta)
-              
-              body.setLinvel({ x: vx, y: vy, z: vz }, true)
+              const vel = body.linvel();
+              const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z);
+              if (speed > 0.005) { // Very low threshold to detect any movement
+                hasMovement = true;
+              }
             } catch (error) {
               // Ignore errors
             }
           }
-        })
+        });
         
-        lastActivityTime.current = Date.now()
+        // Only reset if there's really no movement
+        if (!hasMovement) {
+          // Reset velocities for all particles
+          particleRefs.current.forEach((body, index) => {
+            if (body) {
+              try {
+                const originalSpeed = particleSpeeds.current.get(index) || initialVelocity
+                const safeSpeed = Math.min(originalSpeed, 2.0)
+                
+                const phi = Math.random() * Math.PI * 2
+                const theta = Math.random() * Math.PI
+                
+                const vx = safeSpeed * Math.sin(theta) * Math.cos(phi)
+                const vy = safeSpeed * Math.sin(theta) * Math.sin(phi)
+                const vz = safeSpeed * Math.cos(theta)
+                
+                body.setLinvel({ x: vx, y: vy, z: vz }, true)
+              } catch (error) {
+                // Ignore errors
+              }
+            }
+          });
+          
+          lastActivityTime.current = Date.now();
+        }
       }
-    }, 1000)
+    }, 1000);
     
-    return () => clearInterval(stallCheckInterval)
-  }, [simulationActive, initialVelocity])
+    return () => clearInterval(stallCheckInterval);
+  }, [simulationActive, initialVelocity]);
   
   // Report active particles count
   useEffect(() => {
@@ -351,9 +370,9 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
     })
     
     // Update lastActivityTime if there's significant movement
-    const averageVelocity = particlesChecked > 0 ? totalVelocityMagnitude / particlesChecked : 0
-    if (averageVelocity > 0.1) {
-      lastActivityTime.current = Date.now()
+    const averageVelocity = particlesChecked > 0 ? totalVelocityMagnitude / particlesChecked : 0;
+    if (averageVelocity > 0.01) { // Reduced threshold from 0.1 to 0.01
+      lastActivityTime.current = Date.now();
     }
     
     // Update active particles count
