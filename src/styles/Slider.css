@@ -1,0 +1,100 @@
+/* Slider container and header */
+.slider-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 5px 0;
+  user-select: none;
+}
+
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.slider-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-primary);
+  font-weight: 500;
+  min-width: 40px;
+  text-align: right;
+}
+
+/* RC Slider custom styling */
+.rc-slider {
+  height: 30px;
+  padding: 14px 0; /* Increase touch target area */
+  margin: 0;
+  touch-action: none; /* Disable browser-specific touch actions */
+}
+
+/* Override rc-slider default classes */
+.rc-slider-rail {
+  height: 4px;
+  background-color: var(--slider-track) !important;
+}
+
+.rc-slider-track {
+  height: 4px;
+  background: var(--accent-gradient) !important;
+}
+
+.rc-slider-handle {
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 50% !important;
+  border: none !important;
+  background-color: var(--accent-primary) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+  opacity: 1 !important;
+  margin-top: -8px !important;
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: grab !important;
+}
+
+.rc-slider-handle:hover {
+  transform: scale(1.15) !important;
+  border: none !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4) !important;
+}
+
+.rc-slider-handle:active {
+  transform: scale(1.1) !important;
+  border: none !important;
+  cursor: grabbing !important;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4) !important;
+}
+
+.rc-slider-handle:focus {
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
+  outline: none !important;
+  border: none !important;
+}
+
+/* Increase track height on hover for better feedback */
+.rc-slider:hover .rc-slider-rail,
+.rc-slider:hover .rc-slider-track {
+  height: 6px !important;
+}
+
+/* For iOS better touch handling */
+@media (pointer: coarse) {
+  .rc-slider {
+    padding: 18px 0; /* Even larger touch area for mobile */
+  }
+
+  .rc-slider-handle {
+    width: 24px !important;
+    height: 24px !important;
+    margin-top: -10px !important;
+  }
+  
+  .rc-slider-rail,
+  .rc-slider-track {
+    height: 6px !important;
+  }
+} 

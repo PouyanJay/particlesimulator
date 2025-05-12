@@ -1,0 +1,290 @@
+:root {
+  /* Primary colors */
+  --background-primary: #0f172a;
+  --background-secondary: #1e293b;
+  --background-tertiary: #334155;
+  
+  /* Text colors */
+  --text-primary: rgba(255, 255, 255, 0.92);
+  --text-secondary: rgba(255, 255, 255, 0.65);
+  --text-muted: rgba(255, 255, 255, 0.45);
+  
+  /* Accent colors */
+  --accent-primary: #38bdf8;
+  --accent-secondary: #818cf8;
+  --accent-gradient: linear-gradient(135deg, #38bdf8, #818cf8);
+  
+  /* Toggle colors */
+  --toggle-inactive: #334155;
+  --toggle-active-from: #38bdf8;
+  --toggle-active-to: #818cf8;
+  
+  /* State colors */
+  --state-active: #10b981;
+  --state-inactive: #ef4444;
+  
+  /* UI elements */
+  --panel-border: rgba(255, 255, 255, 0.1);
+  --slider-track: #475569;
+  --section-header: rgba(255, 255, 255, 0.04);
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--background-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.control-panel {
+  flex: 0 0 360px;
+  background-color: var(--background-secondary);
+  box-shadow: var(--card-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.control-panel-inner {
+  padding: 1.75rem;
+}
+
+.control-panel h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  padding-bottom: 0.5rem;
+  color: var(--text-primary);
+  position: relative;
+}
+
+.control-panel h1::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 3px;
+  width: 60px;
+  background: var(--accent-gradient);
+  border-radius: 1.5px;
+}
+
+.control-panel h2 {
+  font-size: 1rem;
+  margin: 1.5rem 0 1rem 0;
+  padding: 0.65rem 0.75rem;
+  background-color: var(--section-header);
+  border-radius: 6px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.simulation-container {
+  flex: 1;
+  position: relative;
+  background-color: var(--background-primary);
+}
+
+.control-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.35rem 0;
+}
+
+.control-group label {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Modern Toggle Switch */
+.toggle-switch {
+  width: 50px;
+  height: 26px;
+  background-color: var(--toggle-inactive);
+  border-radius: 14px;
+  position: relative;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: 
+    inset 0 1px 3px rgba(0, 0, 0, 0.2),
+    0 1px 2px rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.toggle-switch::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--toggle-active-from), var(--toggle-active-to));
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.toggle-switch.active::before {
+  opacity: 1;
+}
+
+.toggle-switch::after {
+  content: '';
+  width: 18px;
+  height: 18px;
+  background-color: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  transition: all var(--transition-normal);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+}
+
+.toggle-switch.active::after {
+  transform: translateX(24px);
+  background-color: #fff;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 0 8px rgba(56, 189, 248, 0.5);
+}
+
+/* Status Icons */
+.toggle-switch .toggle-icon {
+  position: absolute;
+  top: 6px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.4);
+  transition: all var(--transition-normal);
+  z-index: 1;
+}
+
+.toggle-switch .toggle-off {
+  right: 7px;
+}
+
+.toggle-switch .toggle-on {
+  left: 7px;
+  opacity: 0;
+}
+
+.toggle-switch.active .toggle-off {
+  opacity: 0;
+}
+
+.toggle-switch.active .toggle-on {
+  opacity: 1;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Slider styling - simplified for better touch handling */
+/* All slider styles now in src/styles/Slider.css */
+
+.button-group {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.button {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--background-tertiary);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.5px;
+}
+
+.button:hover {
+  background-color: var(--accent-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Status indicator */
+.simulation-status {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(5px);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  z-index: 10;
+}
+
+/* Add container blur background to the first section */
+.control-section-blur {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--background-secondary);
+  padding: 0;
+  z-index: 5;
+  backdrop-filter: blur(10px);
+  margin: -1px;
+  box-shadow: 0 1px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Scrollbar styling */
+.control-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.control-panel::-webkit-scrollbar-track {
+  background: var(--background-secondary);
+}
+
+.control-panel::-webkit-scrollbar-thumb {
+  background: var(--background-tertiary);
+  border-radius: 4px;
+}
+
+.control-panel::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
