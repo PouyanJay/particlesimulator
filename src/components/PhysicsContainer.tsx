@@ -161,12 +161,13 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
     lastActivityTime.current = Date.now()
   }, [particleParticleFriction, particleWallFriction, gravity, particleCount, particleSize, initialVelocity, restitution])
 
-  // Rotate the container slightly for better 3D perspective
+  // Rotate the container for an isometric view
   const groupRef = useRef<THREE.Group>(null)
   useEffect(() => {
     if (groupRef.current) {
-      groupRef.current.rotation.y = Math.PI / 6
-      groupRef.current.rotation.x = Math.PI / 12
+      // Set rotation for true isometric view (approx. 35.264° around Y, then 45° around Z)
+      groupRef.current.rotation.y = Math.PI / 4;     // 45 degrees around Y axis
+      groupRef.current.rotation.x = Math.atan(1/Math.sqrt(2));  // ~35.264 degrees for isometric view
     }
   }, [])
   

@@ -112,7 +112,7 @@ function App() {
         </div>
       </div>
       <div className="simulation-container">
-        <Canvas camera={{ position: [0, 0, 5], fov: 60 }}>
+        <Canvas camera={{ position: [6, 6, 6], fov: 45 }}>
           <color attach="background" args={['#0f172a']} />
           <ambientLight intensity={0.3} />
           <directionalLight position={[10, 10, 10]} intensity={1.2} />
@@ -139,7 +139,14 @@ function App() {
               onActiveParticlesChange={setActiveParticles}
             />
           </Physics>
-          <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} />
+          <OrbitControls 
+            enablePan={true} 
+            enableZoom={true} 
+            enableRotate={true}
+            minDistance={5} 
+            maxDistance={15}
+            target={[0, 0, 0]}
+          />
         </Canvas>
         
         <div className="simulation-status">
