@@ -41,8 +41,14 @@ function App() {
 
   // Reset physics when simulation parameters change
   useEffect(() => {
-    setPhysicsKey((prev: number) => prev + 1)
-  }, [gravity, particleParticleFriction, particleWallFriction, frictionCoefficient])
+    // When there is no friction, set default values for friction-related properties
+    if (!particleParticleFriction && !particleWallFriction) {
+      setRestitution(1.0); // Perfect elasticity when no friction
+      setFrictionCoefficient(0.0); // Zero friction coefficient
+    }
+    
+    setPhysicsKey((prev: number) => prev + 1);
+  }, [gravity, particleParticleFriction, particleWallFriction, frictionCoefficient]);
   
   // Handle deltaTime changes separately to avoid unnecessary full resets
   useEffect(() => {

@@ -148,6 +148,16 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
     return Math.pow(frictionCoefficient, 1.5) * 0.1;
   }, [frictionCoefficient, particleParticleFriction, particleWallFriction]);
   
+  // For restitution, ensure perfect elasticity when no friction
+  const effectiveRestitution = useMemo(() => {
+    return (!particleParticleFriction && !particleWallFriction) ? 1.0 : restitution;
+  }, [restitution, particleParticleFriction, particleWallFriction]);
+  
+  // For friction coefficient, ensure zero when no friction
+  const effectiveFrictionCoefficient = useMemo(() => {
+    return (!particleParticleFriction && !particleWallFriction) ? 0.0 : frictionCoefficient;
+  }, [frictionCoefficient, particleParticleFriction, particleWallFriction]);
+  
   // Force container re-render when frictions or gravity change
   useEffect(() => {
     setResetCounter(prev => prev + 1)
@@ -477,8 +487,8 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
         <RigidBody 
           type="fixed" 
           position={[0, 0, 0]} 
-          restitution={restitution} // Use the configured restitution
-          friction={particleWallFriction ? frictionCoefficient : 0} // Use friction coefficient
+          restitution={effectiveRestitution} // Use the configured restitution
+          friction={effectiveFrictionCoefficient} // Use friction coefficient
           linearDamping={0} // Fixed objects don't need damping
           angularDamping={0} // Fixed objects don't need damping
         >
@@ -486,43 +496,43 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
           <CuboidCollider
             args={[HALF_SIZE, WALL_THICKNESS, HALF_SIZE]}
             position={[0, -HALF_SIZE, 0]}
-            restitution={restitution}
-            friction={particleWallFriction ? frictionCoefficient : 0} // Use friction coefficient
+            restitution={effectiveRestitution}
+            friction={effectiveFrictionCoefficient} // Use friction coefficient
           />
           {/* Top */}
           <CuboidCollider
             args={[HALF_SIZE, WALL_THICKNESS, HALF_SIZE]}
             position={[0, HALF_SIZE, 0]}
-            restitution={restitution}
-            friction={particleWallFriction ? frictionCoefficient : 0} // Use friction coefficient
+            restitution={effectiveRestitution}
+            friction={effectiveFrictionCoefficient} // Use friction coefficient
           />
           {/* Left */}
           <CuboidCollider
             args={[WALL_THICKNESS, HALF_SIZE, HALF_SIZE]}
             position={[-HALF_SIZE, 0, 0]}
-            restitution={restitution}
-            friction={particleWallFriction ? frictionCoefficient : 0} // Use friction coefficient
+            restitution={effectiveRestitution}
+            friction={effectiveFrictionCoefficient} // Use friction coefficient
           />
           {/* Right */}
           <CuboidCollider
             args={[WALL_THICKNESS, HALF_SIZE, HALF_SIZE]}
             position={[HALF_SIZE, 0, 0]}
-            restitution={restitution}
-            friction={particleWallFriction ? frictionCoefficient : 0} // Use friction coefficient
+            restitution={effectiveRestitution}
+            friction={effectiveFrictionCoefficient} // Use friction coefficient
           />
           {/* Front */}
           <CuboidCollider
             args={[HALF_SIZE, HALF_SIZE, WALL_THICKNESS]}
             position={[0, 0, -HALF_SIZE]}
-            restitution={restitution}
-            friction={particleWallFriction ? frictionCoefficient : 0} // Use friction coefficient
+            restitution={effectiveRestitution}
+            friction={effectiveFrictionCoefficient} // Use friction coefficient
           />
           {/* Back */}
           <CuboidCollider
             args={[HALF_SIZE, HALF_SIZE, WALL_THICKNESS]}
             position={[0, 0, HALF_SIZE]}
-            restitution={restitution}
-            friction={particleWallFriction ? frictionCoefficient : 0} // Use friction coefficient
+            restitution={effectiveRestitution}
+            friction={effectiveFrictionCoefficient} // Use friction coefficient
           />
         </RigidBody>
 
@@ -533,8 +543,8 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
             ref={addBodyRef}
             position={particle.position}
             linearVelocity={particle.velocity}
-            restitution={restitution} // Use the configured restitution
-            friction={particleParticleFriction ? frictionCoefficient : 0} // Use friction coefficient
+            restitution={effectiveRestitution} // Use the configured restitution
+            friction={effectiveFrictionCoefficient} // Use friction coefficient
             linearDamping={effectiveDamping} // Use calculated damping
             angularDamping={effectiveDamping} // Use calculated damping
             ccd={true} // Enable CCD for better collision detection
@@ -545,8 +555,8 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
           >
             <BallCollider 
               args={[radius]} // Use the calculated radius
-              restitution={restitution}
-              friction={particleParticleFriction ? frictionCoefficient : 0} // Use friction coefficient
+              restitution={effectiveRestitution}
+              friction={effectiveFrictionCoefficient} // Use friction coefficient
               density={1}
             />
             <mesh>

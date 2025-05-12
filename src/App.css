@@ -113,11 +113,10 @@ body {
 }
 
 .control-group {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding: 0.35rem 0;
+  position: relative;
+  padding: 10px 0;
+  margin-bottom: 10px;
+  border-radius: 8px;
 }
 
 .control-group label {
@@ -212,8 +211,9 @@ body {
 
 .button-group {
   display: flex;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 15px;
 }
 
 .button {
@@ -287,4 +287,27 @@ body {
 
 .control-panel::-webkit-scrollbar-thumb:hover {
   background: var(--accent-primary);
+}
+
+/* Subgroup for friction-related controls */
+.control-subgroup {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  border-left: 2px solid var(--accent-primary);
+  transition: all 0.2s ease;
+}
+
+.control-subgroup-disabled {
+  border-left-color: var(--text-secondary);
+  opacity: 0.8;
+}
+
+/* Add some spacing between control sections */
+h2 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
 }

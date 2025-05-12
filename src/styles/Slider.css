@@ -97,4 +97,70 @@
   .rc-slider-track {
     height: 6px !important;
   }
+}
+
+/* Disabled slider styles */
+.slider-disabled {
+  position: relative;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.slider-disabled::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(1px);
+  border-radius: 8px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.slider-disabled .slider-header {
+  opacity: 0.75;
+}
+
+.slider-disabled .slider-header span {
+  color: var(--text-secondary);
+}
+
+.slider-disabled .slider-value {
+  color: var(--text-secondary);
+}
+
+.slider-disabled .rc-slider-rail {
+  background-color: var(--slider-track) !important;
+  opacity: 0.5;
+}
+
+.slider-disabled .rc-slider-track {
+  background: var(--text-secondary) !important;
+  opacity: 0.3;
+}
+
+.slider-disabled .rc-slider-handle {
+  background-color: var(--text-secondary) !important;
+  transform: scale(0.85);
+  box-shadow: none !important;
+}
+
+/* Add a subtle lock icon for disabled sliders */
+.slider-disabled::after {
+  content: '🔒';
+  position: absolute;
+  right: -25px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  opacity: 0.6;
+  z-index: 2;
+}
+
+:root {
+  --slider-disabled: rgba(209, 213, 219, 0.5);
+  --text-disabled: #6b7280;
 } 
