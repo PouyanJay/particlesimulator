@@ -218,6 +218,7 @@ function App() {
           data={speedHistory} 
           currentSpeed={currentSpeed} 
           maxDataPoints={100}
+          initialVelocity={initialVelocity}
         />
         
         <div className="simulation-status">

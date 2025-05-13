@@ -29,14 +29,23 @@ interface SpeedGraphProps {
   data: number[] // Array of speed values
   currentSpeed: number // Current average speed
   maxDataPoints?: number // Maximum number of data points to display
+  initialVelocity: number // Initial velocity value to scale the y-axis
 }
 
 const SpeedGraph: React.FC<SpeedGraphProps> = ({ 
   data = [],
   currentSpeed = 0,
-  maxDataPoints = 100
+  maxDataPoints = 100,
+  initialVelocity = 1.0
 }) => {
   const [isVisible, setIsVisible] = useState(true);
+  
+  // Calculate y-axis limits based on initialVelocity
+  const maxYValue = initialVelocity * 1.3;
+  const midYValue = maxYValue * 0.5;
+  
+  // Format y-axis tick values to 2 decimal places
+  const formatTickValue = (value: number) => value.toFixed(2);
   
   // Toggle graph visibility
   const toggleVisibility = () => {
@@ -117,19 +126,28 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
       y: {
         beginAtZero: true,
         min: 0,
-        max: 1,
+        max: maxYValue, // Dynamic max value based on initialVelocity
         grid: {
           color: function(context: any) {
-            // Only draw grid lines for 0, 0.5, and 1
+            // Only draw grid lines for specific values
             const value = context.tick.value;
-            const targetValues = [0, 0.5, 1];
-            return targetValues.includes(value) ? 
+            const targetValues = [0, midYValue, maxYValue];
+            // Check if value is close to any target value (floating point comparison)
+            const isTargetValue = targetValues.some(target => 
+              Math.abs(value - target) < 0.001
+            );
+            return isTargetValue ? 
               'rgba(255, 255, 255, 0.2)' : // Brighter lines for main grid
               'rgba(0, 0, 0, 0)'; // Transparent for other lines
           },
           lineWidth: (context: any) => {
             const value = context.tick.value;
-            return [0, 0.5, 1].includes(value) ? 1 : 0;
+            const targetValues = [0, midYValue, maxYValue];
+            // Check if value is close to any target value
+            const isTargetValue = targetValues.some(target => 
+              Math.abs(value - target) < 0.001
+            );
+            return isTargetValue ? 1 : 0;
           }
         },
         ticks: {
@@ -139,10 +157,15 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
           },
           // Force specific values to appear
           callback: function(tickValue: number | string) {
-            return [0, 0.5, 1].includes(Number(tickValue)) ? tickValue : '';
+            const numValue = Number(tickValue);
+            const targetValues = [0, midYValue, maxYValue];
+            const isTargetValue = targetValues.some(target => 
+              Math.abs(numValue - target) < 0.001
+            );
+            return isTargetValue ? formatTickValue(numValue) : '';
           },
-          // Explicitly set the tick values we want
-          stepSize: 0.5
+          // Generate enough ticks to include our target values
+          count: 7 // Should generate enough ticks to include our 3 target values
         }
       },
       x: {
