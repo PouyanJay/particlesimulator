@@ -79,26 +79,34 @@
   position: absolute;
   top: 20px;
   right: 20px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: rgba(15, 23, 42, 0.9);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background-color: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(5px);
   color: #38bdf8;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 16px;
   z-index: 100;
   transition: all 0.2s ease;
+  padding: 0;
+  overflow: hidden;
 }
 
 .speed-graph-toggle-minimized:hover {
-  transform: scale(1.1);
+  transform: translateY(-2px);
   background-color: rgba(30, 41, 59, 0.95);
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.speed-graph-toggle-minimized:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* Animation for showing/hiding the graph */

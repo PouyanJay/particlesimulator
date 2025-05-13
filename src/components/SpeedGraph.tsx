@@ -51,7 +51,30 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
         onClick={toggleVisibility}
         title="Show Speed Graph"
       >
-        📊
+        <svg 
+          width="16" 
+          height="16" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          xmlns="http://www.w3.org/2000/svg"
+          style={{ margin: 'auto' }}
+        >
+          {/* Line chart icon */}
+          <path 
+            d="M3 16L7 12L11 14L21 4" 
+            stroke="#38bdf8" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+          />
+          {/* Bottom line */}
+          <path 
+            d="M3 20H21" 
+            stroke="#38bdf8" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+          />
+        </svg>
       </button>
     );
   }
