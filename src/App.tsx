@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Physics } from '@react-three/rapier'
 import { OrbitControls } from '@react-three/drei'
 import './App.css'
 import PhysicsContainer from './components/PhysicsContainer'
 import ControlPanel from './components/ControlPanel'
+import SpeedGraph from './components/SpeedGraph'
 import Logo from './components/Logo'
 
 function App() {
@@ -28,11 +29,67 @@ function App() {
 
   // Active particle count for status display
   const [activeParticles, setActiveParticles] = useState(0)
+  
+  // Speed tracking for graph
+  const [currentSpeed, setCurrentSpeed] = useState(0)
+  const [speedHistory, setSpeedHistory] = useState<number[]>([0, 0]) // Initialize with placeholder data
+  const speedUpdateInterval = useRef<number | null>(null)
+  const elapsedTimeRef = useRef<number>(0) // Track elapsed simulation time
+  
+  // Function to handle receiving speed data from PhysicsContainer
+  const handleSpeedUpdate = (speed: number) => {
+    setCurrentSpeed(speed);
+  };
+
+  // Update speed history at a controlled rate (twice per second)
+  useEffect(() => {
+    // Clean up any existing interval
+    if (speedUpdateInterval.current) {
+      clearInterval(speedUpdateInterval.current);
+      speedUpdateInterval.current = null;
+    }
+    
+    // Only set up the interval if we're playing
+    if (isPlaying) {
+      // Function to update speed history
+      const updateSpeedHistory = () => {
+        setSpeedHistory(prevHistory => {
+          const newHistory = [...prevHistory, currentSpeed];
+          return newHistory.length > 100 ? newHistory.slice(-100) : newHistory;
+        });
+      };
+      
+      // Start with current speed value
+      updateSpeedHistory();
+      
+      // Set interval to update regularly
+      speedUpdateInterval.current = window.setInterval(updateSpeedHistory, 500);
+    }
+    
+    // Clean up on unmount
+    return () => {
+      if (speedUpdateInterval.current) {
+        clearInterval(speedUpdateInterval.current);
+        speedUpdateInterval.current = null;
+      }
+    };
+  }, [isPlaying, currentSpeed]);
+
+  // Reset speed history when simulation is reset
+  useEffect(() => {
+    // Reset to initial state with placeholder data points
+    setSpeedHistory([0, 0]);
+    elapsedTimeRef.current = 0; // Reset elapsed time on simulation reset
+  }, [resetKey]);
 
   const handleReset = () => {
     // Increment reset key to force re-render
     setResetKey((prev: number) => prev + 1)
     setPhysicsKey((prev: number) => prev + 1)
+    
+    // Reset speed history and elapsed time
+    setSpeedHistory([0, 0])
+    elapsedTimeRef.current = 0;
     
     // Pause and then resume the simulation
     setIsPlaying(false)
@@ -143,6 +200,7 @@ function App() {
               initialVelocity={initialVelocity}
               frictionCoefficient={frictionCoefficient}
               onActiveParticlesChange={setActiveParticles}
+              onSpeedUpdate={handleSpeedUpdate}
             />
           </Physics>
           <OrbitControls 
@@ -154,6 +212,13 @@ function App() {
             target={[0, 0, 0]}
           />
         </Canvas>
+        
+        {/* Speed Graph - positioned through CSS */}
+        <SpeedGraph 
+          data={speedHistory} 
+          currentSpeed={currentSpeed} 
+          maxDataPoints={100}
+        />
         
         <div className="simulation-status">
           {isPlaying ? "Running" : "Paused"} • {activeParticles} active particles • Restitution: {restitution.toFixed(3)} • Friction: {frictionCoefficient.toFixed(3)}

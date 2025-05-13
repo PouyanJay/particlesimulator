@@ -1,7 +1,14 @@
 import { useRef, useState, useEffect, useMemo } from 'react'
-import { RigidBody, CuboidCollider, BallCollider, RapierRigidBody } from '@react-three/rapier'
+import * as Rapier from '@react-three/rapier'
 import * as THREE from 'three'
-import { useFrame } from '@react-three/fiber'
+import * as Fiber from '@react-three/fiber'
+
+// Use components from namespaces
+const { RigidBody, CuboidCollider, BallCollider } = Rapier
+const { useFrame } = Fiber
+
+// Define RapierRigidBody type
+type RapierRigidBody = any
 
 interface PhysicsContainerProps {
   particleParticleFriction: boolean
@@ -14,6 +21,7 @@ interface PhysicsContainerProps {
   initialVelocity?: number
   frictionCoefficient?: number
   onActiveParticlesChange?: (count: number) => void
+  onSpeedUpdate?: (speed: number) => void
 }
 
 // Container dimensions
@@ -108,7 +116,8 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
   particleSize = 0.08,
   initialVelocity = 1.0,
   frictionCoefficient = 0.1,
-  onActiveParticlesChange
+  onActiveParticlesChange,
+  onSpeedUpdate
 }) => {
   // Use counter to force re-render on reset
   const [resetCounter, setResetCounter] = useState(0)
@@ -414,9 +423,16 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
       }
     })
     
+    // Calculate average velocity
+    const averageSpeed = particlesChecked > 0 ? totalVelocityMagnitude / particlesChecked : 0;
+    
+    // Report the average speed to parent component - ensure it's always reported
+    if (onSpeedUpdate) {
+      onSpeedUpdate(Math.max(0, averageSpeed)); // Ensure we don't report negative values
+    }
+    
     // Update lastActivityTime if there's significant movement
-    const averageVelocity = particlesChecked > 0 ? totalVelocityMagnitude / particlesChecked : 0;
-    if (averageVelocity > 0.01) { // Reduced threshold from 0.1 to 0.01
+    if (averageSpeed > 0.01) { // Reduced threshold from 0.1 to 0.01
       lastActivityTime.current = Date.now();
     }
     
