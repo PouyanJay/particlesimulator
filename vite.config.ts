@@ -7,6 +7,10 @@ const getBase = () => {
   if (process.env.GITHUB_REPOSITORY) {
     return `/${process.env.GITHUB_REPOSITORY.split('/')[1]}/`
   }
+  // Check for BASE_URL environment variable (set in GitHub Actions)
+  if (process.env.BASE_URL) {
+    return process.env.BASE_URL
+  }
   return '/'
 }
 
@@ -14,4 +18,8 @@ const getBase = () => {
 export default defineConfig({
   plugins: [react()],
   base: getBase(),
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+  }
 })

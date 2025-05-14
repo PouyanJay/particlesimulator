@@ -10,8 +10,9 @@ permissions:
   pages: write
   id-token: write
 
+# Cancel any in-progress job or previous runs
 concurrency:
-  group: "pages"
+  group: "pages-${{ github.workflow }}-${{ github.ref }}"
   cancel-in-progress: true
 
 jobs:
@@ -35,6 +36,7 @@ jobs:
         env:
           # Add this to ensure the app knows it's being built for GitHub Pages
           PUBLIC_URL: /${{ github.event.repository.name }}
+          BASE_URL: /${{ github.event.repository.name }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -43,6 +45,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+          retention-days: 1  # Shorter retention to avoid artifact buildup
 
   deploy:
     needs: build
@@ -53,4 +56,7 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4 
+        uses: actions/deploy-pages@v4
+        with:
+          timeout: 600000  # 10 minutes
+          error_count: 3  # Retry on error up to 3 times 
