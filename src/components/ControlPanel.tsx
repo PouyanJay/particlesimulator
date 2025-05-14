@@ -26,6 +26,8 @@ interface ControlPanelProps {
   setInitialVelocity: (value: number) => void
   frictionCoefficient: number
   setFrictionCoefficient: (value: number) => void
+  collisionFadeDuration: number
+  setCollisionFadeDuration: (value: number) => void
 }
 
 const CustomSlider = ({ 
@@ -96,6 +98,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   setInitialVelocity,
   frictionCoefficient,
   setFrictionCoefficient,
+  collisionFadeDuration,
+  setCollisionFadeDuration,
 }) => {
   // Check if any friction is enabled
   const isFrictionEnabled = particleParticleFriction || particleWallFriction;
@@ -188,6 +192,16 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           max={5.0}
           step={0.01}
           formatValue={(v) => v.toFixed(2)}
+        />
+        
+        <CustomSlider
+          label="Collision Color Fade Duration"
+          value={collisionFadeDuration}
+          onChange={setCollisionFadeDuration}
+          min={0.1}
+          max={2.0}
+          step={0.1}
+          formatValue={(v) => v.toFixed(1) + 's'}
         />
       
         <div className="button-group">

@@ -7,8 +7,33 @@ import * as Fiber from '@react-three/fiber'
 const { RigidBody, CuboidCollider, BallCollider } = Rapier
 const { useFrame } = Fiber
 
-// Define RapierRigidBody type
-type RapierRigidBody = any
+// Define RapierRigidBody interface with required methods
+interface RapierRigidBody {
+  translation(): { x: number, y: number, z: number };
+  linvel(): { x: number, y: number, z: number };
+  setLinvel(vel: { x: number, y: number, z: number }, wake: boolean): void;
+  isSleeping(): boolean;
+}
+
+// Define particle colors
+const PARTICLE_COLORS = {
+  default: new THREE.Color("#3888ff"), // Blue
+  collision: new THREE.Color("#8a0000"), // Dark red
+}
+
+// Define collision status for each particle
+type ParticleCollisionStatus = {
+  isColliding: boolean,     // Is currently colliding
+  collisionTime: number,    // When collision started (timestamp)
+  lastUpdateTime: number,   // Last time this status was checked
+}
+
+// Define collision detection parameters
+const COLLISION_DETECTION = {
+  speedChangeThreshold: 0.2,  // How much speed should change to detect collision
+  proximityThreshold: 0.05,   // How close particles should be to be considered colliding
+  wallProximityThreshold: 0.02 // How close to wall to detect wall collision
+}
 
 interface PhysicsContainerProps {
   particleParticleFriction: boolean
@@ -20,6 +45,7 @@ interface PhysicsContainerProps {
   particleSize?: number
   initialVelocity?: number
   frictionCoefficient?: number
+  collisionFadeDuration?: number
   onActiveParticlesChange?: (count: number) => void
   onSpeedUpdate?: (speed: number) => void
 }
@@ -42,14 +68,14 @@ const DEBUG = {
   maxLogs: 10,
   issues: new Set<string>(),
   
-  log: (msg: string, ...args: any[]) => {
+  log: (msg: string, ...args: unknown[]) => {
     if (DEBUG.logCount < DEBUG.maxLogs) {
       console.log(msg, ...args)
       DEBUG.logCount++
     }
   },
   
-  logIssue: (issueType: string, details: any) => {
+  logIssue: (issueType: string, details: Record<string, unknown>) => {
     const key = `${issueType}-${JSON.stringify(details)}`
     if (!DEBUG.issues.has(key)) {
       console.warn(`PHYSICS ISSUE DETECTED [${issueType}]:`, details)
@@ -116,11 +142,27 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
   particleSize = 0.08,
   initialVelocity = 1.0,
   frictionCoefficient = 0.1,
+  collisionFadeDuration = 1.0, // seconds
   onActiveParticlesChange,
   onSpeedUpdate
 }) => {
   // Use counter to force re-render on reset
   const [resetCounter, setResetCounter] = useState(0)
+  
+  // Track particle materials for color fading
+  const particleMaterials = useRef<THREE.MeshStandardMaterial[]>([])
+  
+  // Track collision status for each particle with the new format
+  const particleCollisionStatus = useRef<Map<number, ParticleCollisionStatus>>(new Map())
+  
+  // Track particle positions for proximity detection
+  const particlePositions = useRef<Map<number, THREE.Vector3>>(new Map())
+  
+  // Track potential collisions this frame
+  const potentialCollisions = useRef<Set<number>>(new Set())
+  
+  // Constants for color transition
+  const COLOR_FADE_DURATION = collisionFadeDuration
   
   // Generate particles
   const { particles, radius } = useMemo(() => 
@@ -130,7 +172,9 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
       initialVelocity,
       CONTAINER_SIZE
     ), 
-    [resetCounter, particleCount, particleSize, initialVelocity, CONTAINER_SIZE]
+    // resetCounter is included to force re-calculation when the simulation resets
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [resetCounter, particleCount, particleSize, initialVelocity]
   )
   
   // Store references to rigid bodies to monitor/correct velocities
@@ -172,6 +216,8 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
     setResetCounter(prev => prev + 1)
     // Clean up refs when we reset
     particleRefs.current = []
+    // Clear previous velocities
+    previousVelocities.current.clear()
     // Reset debug state
     DEBUG.logCount = 0
     DEBUG.issues.clear()
@@ -196,12 +242,146 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
   // Initialize particle speeds
   useEffect(() => {
     particleSpeeds.current.clear()
+    particleCollisionStatus.current.clear()
+    particleMaterials.current = []
+    
     particles.forEach((particle, index) => {
       const v = particle.velocity
       const speed = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
       particleSpeeds.current.set(index, speed)
+      particleCollisionStatus.current.set(index, {
+        isColliding: false,
+        collisionTime: 0,
+        lastUpdateTime: 0
+      })
     })
   }, [particles])
+  
+  // Helper function to handle particle collision
+  const handleParticleCollision = (particleId: number) => {
+    // Get the current time
+    const currentTime = Date.now() / 1000;
+    
+    // We could check the last collision time if needed
+    // particleCollisionStatus.current.get(particleId)?.collisionTime || 0;
+    
+    // Simple approach: always register a new collision and force color to red
+    // This guarantees that collisions are always visually indicated
+    particleCollisionStatus.current.set(particleId, {
+      isColliding: true,
+      collisionTime: currentTime,
+      lastUpdateTime: currentTime
+    });
+    
+    // Set material to collision color immediately
+    const material = particleMaterials.current[particleId];
+    if (material) {
+      // Always set to full red on collision, regardless of previous state
+      material.color.copy(PARTICLE_COLORS.collision);
+    }
+    
+    // Remove from stuck particles if it was marked
+    stuckParticleCheck.current.stuckParticles.delete(particleId);
+  }
+  
+  // Track previous velocities for wall collision detection
+  const previousVelocities = useRef<Map<number, {x: number, y: number, z: number}>>(new Map());
+  
+  // Helper function to check if particle is colliding with a wall
+  const isCollidingWithWall = (
+    position: THREE.Vector3, 
+    velocity: { x: number, y: number, z: number },
+    previousVelocity: { x: number, y: number, z: number } | undefined,
+    radius: number
+  ): boolean => {
+    // Wall positions (considering container size and radius)
+    const wallThreshold = HALF_SIZE - radius - COLLISION_DETECTION.wallProximityThreshold;
+    
+    // Method 1: Check proximity to walls while moving toward them
+    // Check X walls
+    if ((Math.abs(position.x) > wallThreshold) && 
+        (Math.sign(position.x) === Math.sign(velocity.x))) {
+      return true;
+    }
+    
+    // Check Y walls
+    if ((Math.abs(position.y) > wallThreshold) && 
+        (Math.sign(position.y) === Math.sign(velocity.y))) {
+      return true;
+    }
+    
+    // Check Z walls
+    if ((Math.abs(position.z) > wallThreshold) && 
+        (Math.sign(position.z) === Math.sign(velocity.z))) {
+      return true;
+    }
+    
+    // Method 2: Check for sudden velocity direction changes near walls
+    if (previousVelocity) {
+      // Check for X velocity direction change near X walls
+      if (Math.abs(position.x) > wallThreshold * 0.9 && 
+          Math.sign(velocity.x) !== Math.sign(previousVelocity.x) &&
+          Math.abs(velocity.x) > 0.1) {
+        return true;
+      }
+      
+      // Check for Y velocity direction change near Y walls
+      if (Math.abs(position.y) > wallThreshold * 0.9 && 
+          Math.sign(velocity.y) !== Math.sign(previousVelocity.y) &&
+          Math.abs(velocity.y) > 0.1) {
+        return true;
+      }
+      
+      // Check for Z velocity direction change near Z walls
+      if (Math.abs(position.z) > wallThreshold * 0.9 && 
+          Math.sign(velocity.z) !== Math.sign(previousVelocity.z) &&
+          Math.abs(velocity.z) > 0.1) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+  
+  // Helper function to find nearby particles that might be colliding
+  const findCollidingPairs = (particleId: number, threshold: number) => {
+    const position = particlePositions.current.get(particleId)
+    if (!position) return []
+    
+    const collidingPairs: number[] = []
+    
+    // Check all other particles for proximity
+    particlePositions.current.forEach((otherPos, otherId) => {
+      if (otherId !== particleId && position.distanceTo(otherPos) < threshold) {
+        collidingPairs.push(otherId)
+      }
+    })
+    
+    return collidingPairs
+  }
+  
+  // Track potentially stuck particles and last reset time
+  const stuckParticleCheck = useRef<{
+    lastResetTime: number,
+    stuckParticles: Set<number>
+  }>({
+    lastResetTime: 0,
+    stuckParticles: new Set()
+  });
+  
+  // Helper function to reset a stuck particle
+  const resetStuckParticle = (particleId: number) => {
+    const material = particleMaterials.current[particleId];
+    if (material) {
+      material.color.copy(PARTICLE_COLORS.default);
+    }
+    particleCollisionStatus.current.set(particleId, {
+      isColliding: false,
+      collisionTime: 0,
+      lastUpdateTime: 0
+    });
+    stuckParticleCheck.current.stuckParticles.delete(particleId);
+  };
   
   // Frame counter to control frequency of checks
   const frameCounter = useRef(0)
@@ -221,12 +401,12 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
                 velocity: vel
               })
             }
-          } catch (error) {
-            allValid = false
-            DEBUG.logIssue('INITIAL_VELOCITY_CHECK_ERROR', {
-              particleIndex: index,
-              error: String(error)
-            })
+                } catch (err) {
+        allValid = false
+        DEBUG.logIssue('INITIAL_VELOCITY_CHECK_ERROR', {
+          particleIndex: index,
+          error: String(err)
+        })
           }
         }
       })
@@ -256,8 +436,9 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
               if (speed > 0.005) { // Very low threshold to detect any movement
                 hasMovement = true;
               }
-            } catch (error) {
-              // Ignore errors
+            } catch (err) {
+              // Ignore errors but log if necessary
+              if (DEBUG.issues.size < 5) console.error("Movement check error:", err);
             }
           }
         });
@@ -279,8 +460,9 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
                 const vz = safeSpeed * Math.cos(theta)
                 
                 body.setLinvel({ x: vx, y: vy, z: vz }, true)
-              } catch (error) {
-                // Ignore errors
+              } catch (err) {
+                // Ignore errors but log if necessary
+                if (DEBUG.issues.size < 5) console.error("Velocity reset error:", err);
               }
             }
           });
@@ -306,15 +488,27 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
     frameCounter.current = (frameCounter.current + 1) % 2
     if (frameCounter.current !== 0) return
     
+    // Get current time for color transitions
+    const currentTime = Date.now() / 1000
+    
+    // Clear potential collisions from previous frame
+    potentialCollisions.current.clear()
+    
     // Count active (non-sleeping) particles and check velocities
     let activeCount = 0
     let totalVelocityMagnitude = 0
     let particlesChecked = 0
     
+    // First pass: track positions and detect speed changes
     particleRefs.current.forEach((body, index) => {
       if (!body) return
       
       try {
+        // Get position and store it for proximity detection
+        const pos = body.translation()
+        const position = new THREE.Vector3(pos.x, pos.y, pos.z)
+        particlePositions.current.set(index, position)
+        
         const vel = body.linvel()
         particlesChecked++
         
@@ -344,20 +538,103 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
           
           body.setLinvel({ x: vx, y: vy, z: vz }, true)
           lastActivityTime.current = Date.now()
+          
+          // Trigger collision effect for invalid velocities
+          handleParticleCollision(index)
+          
           return
+        }
+        
+        // Check for collision based on velocity change
+        const originalSpeed = particleSpeeds.current.get(index) || 0.5
+        const speedChange = Math.abs(currentSpeed - originalSpeed) / (originalSpeed || 0.1)
+        
+        // Significant speed change indicates potential collision
+        if (speedChange > COLLISION_DETECTION.speedChangeThreshold && currentSpeed > 0.5) {
+          potentialCollisions.current.add(index)
+        }
+        
+        // Check for wall collisions
+        if (isCollidingWithWall(position, vel, previousVelocities.current.get(index), radius)) {
+          // Mark as wall collision
+          handleParticleCollision(index)
+        }
+        
+        // Store current velocity for next frame comparison
+        previousVelocities.current.set(index, { ...vel });
+      } catch (err) {
+        // Silently catch errors but log if necessary
+        if (DEBUG.issues.size < 5) console.error("Position tracking error:", err);
+      }
+    })
+    
+    // Second pass: apply collision effects to particles and their collision partners
+    potentialCollisions.current.forEach(particleId => {
+      // Find all particles that are close enough to be collision partners
+      const collisionPartners = findCollidingPairs(
+        particleId, 
+        COLLISION_DETECTION.proximityThreshold + particleSize * 2
+      )
+      
+      // Mark particle as colliding
+      handleParticleCollision(particleId)
+      
+      // Mark all collision partners as colliding too
+      collisionPartners.forEach(partnerId => {
+        handleParticleCollision(partnerId)
+      })
+    })
+    
+    // Third pass: update colors and apply physics corrections
+    particleRefs.current.forEach((body, index) => {
+      if (!body) return
+      
+      try {
+        const vel = body.linvel()
+        const currentSpeed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z)
+        const originalSpeed = particleSpeeds.current.get(index) || 0.5
+        
+        // Update particle color based on collision state
+        const material = particleMaterials.current[index];
+        const collisionTime = particleCollisionStatus.current.get(index)?.collisionTime || 0;
+        
+        if (material && collisionTime > 0) {
+          // Calculate fade progress (0 to 1, where 1 means fully back to normal)
+          const timeSinceCollision = currentTime - collisionTime;
+          const fadeProgress = Math.min(timeSinceCollision / COLOR_FADE_DURATION, 1.0);
+          
+          if (fadeProgress < 1.0) {
+            // Interpolate between collision and default color
+            material.color.copy(PARTICLE_COLORS.collision).lerp(
+              PARTICLE_COLORS.default, fadeProgress
+            );
+          } else {
+            // Reset to default color and collision state when fade complete
+            material.color.copy(PARTICLE_COLORS.default);
+            // IMPORTANT: Only reset the collision state to 0 if it's from this specific collision
+            // This prevents resetting when multiple collisions happen during a fade
+            particleCollisionStatus.current.set(index, {
+              isColliding: false,
+              collisionTime: 0,
+              lastUpdateTime: 0
+            });
+          }
+        } else if (material) {
+          // Safety check: ensure particles with no collision state are blue
+          material.color.copy(PARTICLE_COLORS.default);
         }
         
         // Special handling for zero-friction mode
         if (!particleParticleFriction && !particleWallFriction) {
           // If speed is almost zero, give it a small push
           if (currentSpeed < 0.05) {
-            const originalSpeed = Math.min(particleSpeeds.current.get(index) || 0.5, 1.0)
+            const safeOriginalSpeed = Math.min(originalSpeed, 1.0)
             const phi = Math.random() * Math.PI * 2
             const theta = Math.random() * Math.PI
             
-            const vx = originalSpeed * Math.sin(theta) * Math.cos(phi)
-            const vy = originalSpeed * Math.sin(theta) * Math.sin(phi)
-            const vz = originalSpeed * Math.cos(theta)
+            const vx = safeOriginalSpeed * Math.sin(theta) * Math.cos(phi)
+            const vy = safeOriginalSpeed * Math.sin(theta) * Math.sin(phi)
+            const vz = safeOriginalSpeed * Math.cos(theta)
             
             body.setLinvel({ x: vx, y: vy, z: vz }, true)
             lastActivityTime.current = Date.now()
@@ -378,9 +655,7 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
           
           // Conservative speed correction
           // Only apply for deviations > 15% and cap max speed at 5.0
-          const originalSpeed = particleSpeeds.current.get(index)
-          if (originalSpeed && 
-              Math.abs(currentSpeed - originalSpeed) / originalSpeed > 0.15 &&
+          if (Math.abs(currentSpeed - originalSpeed) / originalSpeed > 0.15 &&
               currentSpeed < originalSpeed * 0.85) { // Only boost if significantly slower than expected
             
             // Normalize current velocity and scale by original speed (with cap)
@@ -397,9 +672,7 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
         } else if (frictionCoefficient < 0.05) {
           // For very low friction modes, still do some minimal corrections to prevent energy loss
           // Only correct if the speed has dropped significantly compared to original
-          const originalSpeed = particleSpeeds.current.get(index)
-          if (originalSpeed && 
-              currentSpeed < originalSpeed * 0.5 && // Only boost if lost 50% of speed
+          if (currentSpeed < originalSpeed * 0.5 && // Only boost if lost 50% of speed
               currentSpeed < 0.1) { // And speed is very low
             
             // Apply a gentler correction proportional to friction coefficient
@@ -418,8 +691,9 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
             }
           }
         }
-      } catch (error) {
+      } catch (err) {
         // Silently catch errors to prevent simulation interruption
+        if (DEBUG.issues.size < 5) console.error("Physics correction error:", err);
       }
     })
     
@@ -447,6 +721,23 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
       let anyNaN = false
       let anyInfinite = false
       
+      // Check for stuck particles (particles that have been in collision state for too long)
+      const now = Date.now() / 1000;
+      
+      // Check for stuck particles more frequently (every second)
+      if (now - stuckParticleCheck.current.lastResetTime > 1.0) {
+        stuckParticleCheck.current.lastResetTime = now;
+        
+        particleCollisionStatus.current.forEach((collisionStatus, particleId) => {
+          // If a particle has been in collision state for longer than 2x the fade duration, it's likely stuck
+          if (collisionStatus.isColliding && now - collisionStatus.collisionTime > COLOR_FADE_DURATION * 2) {
+            stuckParticleCheck.current.stuckParticles.add(particleId);
+            // Reset the stuck particle
+            resetStuckParticle(particleId);
+          }
+        });
+      }
+      
       particleRefs.current.forEach((body) => {
         if (!body) return
         
@@ -459,8 +750,9 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
           } else if (!isFinite(vel.x) || !isFinite(vel.y) || !isFinite(vel.z)) {
             anyInfinite = true
           }
-        } catch (error) {
-          // Ignore errors
+        } catch (err) {
+          // Ignore errors but log if necessary
+          if (DEBUG.issues.size < 5) console.error("Status check error:", err);
         }
       })
       
@@ -577,7 +869,15 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
             />
             <mesh>
               <sphereGeometry args={[radius, 16, 16]} />
-              <meshStandardMaterial color={0xfe8c8c} />
+              <meshStandardMaterial 
+                ref={(material) => {
+                  if (material) {
+                    // Store a reference to this material
+                    particleMaterials.current[particle.id] = material;
+                  }
+                }}
+                color={PARTICLE_COLORS.default}
+              />
             </mesh>
           </RigidBody>
         ))}

@@ -22,6 +22,7 @@ function App() {
   const [particleSize, setParticleSize] = useState(0.08) // Default particle size
   const [initialVelocity, setInitialVelocity] = useState(1.0) // Default initial velocity
   const [frictionCoefficient, setFrictionCoefficient] = useState(0.1) // Default friction coefficient
+  const [collisionFadeDuration, setCollisionFadeDuration] = useState(0.5) // Default collision fade duration
   
   // Add key to force physics container to re-render on reset
   const [resetKey, setResetKey] = useState(0)
@@ -171,6 +172,8 @@ function App() {
             setInitialVelocity={setInitialVelocity}
             frictionCoefficient={frictionCoefficient}
             setFrictionCoefficient={setFrictionCoefficient}
+            collisionFadeDuration={collisionFadeDuration}
+            setCollisionFadeDuration={setCollisionFadeDuration}
           />
         </div>
       </div>
@@ -199,6 +202,7 @@ function App() {
               particleSize={particleSize}
               initialVelocity={initialVelocity}
               frictionCoefficient={frictionCoefficient}
+              collisionFadeDuration={collisionFadeDuration}
               onActiveParticlesChange={setActiveParticles}
               onSpeedUpdate={handleSpeedUpdate}
             />
