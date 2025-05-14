@@ -1,6 +1,6 @@
 # 3D Particle Physics Simulator
 
-An interactive 3D particle physics simulator built with React, Three.js, and React Three Fiber.
+An interactive 3D particle physics simulator built with React, Three.js, and React Three Fiber for educational purposes.
 
 ## Screenshot
 
