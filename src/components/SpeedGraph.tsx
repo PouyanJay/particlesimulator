@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -108,8 +108,10 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
     );
   }
 
-  // Create dummy data for testing if data is empty
-  const processedData = data.length > 1 ? data : [0, 0.5, 1, 0.8, 0.6];
+  // Process data and limit to maxDataPoints if specified
+  const processedData = data.length > 1 
+    ? (maxDataPoints > 0 ? data.slice(-maxDataPoints) : data) 
+    : [0, 0.5, 1, 0.8, 0.6];
   
   // Create labels (timestamps)
   const labels = Array.from({ length: processedData.length }, (_, i) => `${(i*0.5).toFixed(1)}s`);
