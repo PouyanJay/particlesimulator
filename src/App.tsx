@@ -272,7 +272,6 @@ function App() {
         <SpeedGraph 
           data={speedHistory} 
           currentSpeed={currentSpeed} 
-          maxDataPoints={100}
           initialVelocity={initialVelocity}
           isVisible={speedGraphVisible}
           onVisibilityChange={setSpeedGraphVisible}
@@ -282,7 +281,6 @@ function App() {
         <CollisionGraph
           data={collisionHistory}
           currentCollisionCount={currentCollisionCount}
-          maxDataPoints={100}
           initialVelocity={initialVelocity}
           isVisible={collisionGraphVisible}
           onVisibilityChange={setCollisionGraphVisible}
