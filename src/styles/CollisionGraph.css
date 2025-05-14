@@ -97,6 +97,31 @@
   overflow: hidden;
 }
 
+.graph-toggle-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 8px; /* Consistent spacing between elements */
+}
+
+.graph-toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; /* Prevent icon from shrinking */
+  width: 20px; /* Fixed width for icon */
+}
+
+.toggle-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - 24px); /* Reserve space for icon */
+}
+
 .collision-graph-toggle-minimized:hover {
   transform: translateY(-2px);
   background-color: rgba(30, 41, 59, 0.95);

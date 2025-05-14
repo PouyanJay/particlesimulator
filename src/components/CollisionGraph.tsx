@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -45,6 +45,11 @@ const CollisionGraph: React.FC<CollisionGraphProps> = ({
   speedGraphVisible = true
 }) => {
   const [localVisible, setLocalVisible] = useState(isVisible);
+  
+  // Keep local state in sync with prop
+  useEffect(() => {
+    setLocalVisible(isVisible);
+  }, [isVisible]);
   
   // Calculate y-axis limits based on initialVelocity and particle count
   // Higher initial velocity typically means more collisions
@@ -260,7 +265,7 @@ const CollisionGraph: React.FC<CollisionGraphProps> = ({
     <div className="collision-graph-container" style={graphStyle}>
       <div className="collision-graph-header">
         <div className="collision-graph-title">COLLISIONS PER SECOND</div>
-        <div className="collision-graph-value">{currentCollisionCount}</div>
+        <div className="collision-graph-value">{Math.round(currentCollisionCount)}</div>
       </div>
       <div className="collision-graph">
         <Line 

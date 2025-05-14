@@ -45,6 +45,11 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
   // Use local state but sync with parent through callback
   const [localVisible, setLocalVisible] = useState(isVisible);
   
+  // Keep local state in sync with prop
+  useEffect(() => {
+    setLocalVisible(isVisible);
+  }, [isVisible]);
+  
   // Calculate y-axis limits based on initialVelocity
   const maxYValue = initialVelocity * 1.3;
   const midYValue = maxYValue * 0.5;
@@ -97,7 +102,7 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
               />
             </svg>
           </div>
-          <span className="toggle-label">SPEED</span>
+          <span className="toggle-label">SPD</span>
         </div>
       </button>
     );
