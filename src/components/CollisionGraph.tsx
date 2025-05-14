@@ -28,7 +28,6 @@ ChartJS.register(
 interface CollisionGraphProps {
   data: number[] // Array of collision count values
   currentCollisionCount: number // Current number of collisions
-  maxDataPoints?: number // Maximum number of data points to display
   initialVelocity: number // Used to help scale the y-axis
   isVisible?: boolean // Whether the graph is currently visible
   onVisibilityChange?: (visible: boolean) => void // Callback when visibility changes
@@ -50,7 +49,6 @@ type PositionStyle = {
 const CollisionGraph: React.FC<CollisionGraphProps> = ({ 
   data,
   currentCollisionCount,
-  maxDataPoints = 100, // Default value of 100 if not provided
   initialVelocity,
   isVisible = true,
   onVisibilityChange,
@@ -153,14 +151,14 @@ const CollisionGraph: React.FC<CollisionGraphProps> = ({
     );
   }
 
-  // Process data and limit to maxDataPoints if specified
+  // Process data with fixed limit of 100 points
   const processedData: number[] = (() => {
     if (!data || data.length <= 1) {
       return [0, 1, 2, 1, 0]; // Default data for empty input
     }
     
-    if (maxDataPoints && maxDataPoints > 0 && data.length > maxDataPoints) {
-      return data.slice(-maxDataPoints);
+    if (data.length > 100) {
+      return data.slice(-100); // Hard limit to 100 data points
     }
     
     return [...data];

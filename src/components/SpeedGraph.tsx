@@ -105,7 +105,7 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
     );
   }
 
-  // Process data and limit to maximum points (hardcoded to 100)
+  // Process data with fixed limit of 100 points
   const processedData: number[] = (() => {
     if (data.length <= 1) {
       return [0, 0.5, 1, 0.8, 0.6]; // Default data for empty input
