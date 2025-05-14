@@ -28,8 +28,8 @@ ChartJS.register(
 interface SpeedGraphProps {
   data: number[] // Array of speed values
   currentSpeed: number // Current average speed
-  maxDataPoints?: number // Maximum number of data points to display
   initialVelocity: number // Initial velocity value to scale the y-axis
+  maxDataPoints?: number // Maximum number of data points to display
   isVisible?: boolean // Whether the graph is currently visible
   onVisibilityChange?: (visible: boolean) => void // Callback when visibility changes
 }
@@ -37,8 +37,8 @@ interface SpeedGraphProps {
 const SpeedGraph: React.FC<SpeedGraphProps> = ({ 
   data,
   currentSpeed,
-  maxDataPoints,
   initialVelocity,
+  maxDataPoints = 100, // Default value of 100 if not provided
   isVisible = true,
   onVisibilityChange
 }) => {

@@ -50,7 +50,7 @@ type PositionStyle = {
 const CollisionGraph: React.FC<CollisionGraphProps> = ({ 
   data,
   currentCollisionCount,
-  maxDataPoints,
+  maxDataPoints = 100, // Default value of 100 if not provided
   initialVelocity,
   isVisible = true,
   onVisibilityChange,
