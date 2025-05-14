@@ -48,6 +48,7 @@ interface PhysicsContainerProps {
   collisionFadeDuration?: number
   onActiveParticlesChange?: (count: number) => void
   onSpeedUpdate?: (speed: number) => void
+  onCollisionCountUpdate?: (count: number) => void // New callback for collision count
 }
 
 // Container dimensions
@@ -144,7 +145,8 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
   frictionCoefficient = 0.1,
   collisionFadeDuration = 1.0, // seconds
   onActiveParticlesChange,
-  onSpeedUpdate
+  onSpeedUpdate,
+  onCollisionCountUpdate
 }) => {
   // Use counter to force re-render on reset
   const [resetCounter, setResetCounter] = useState(0)
@@ -262,8 +264,16 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
     // Get the current time
     const currentTime = Date.now() / 1000;
     
-    // We could check the last collision time if needed
-    // particleCollisionStatus.current.get(particleId)?.collisionTime || 0;
+    // Check if this is a new collision or an existing one
+    const existingStatus = particleCollisionStatus.current.get(particleId);
+    const isNewCollision = !existingStatus?.isColliding || 
+      (existingStatus.isColliding && currentTime - existingStatus.collisionTime > collisionFadeDuration);
+    
+    // Only count as a new collision if it wasn't already colliding recently
+    if (isNewCollision) {
+      // Increment collision counter
+      collisionCounter.current += 1;
+    }
     
     // Simple approach: always register a new collision and force color to red
     // This guarantees that collisions are always visually indicated
@@ -385,6 +395,10 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
   
   // Frame counter to control frequency of checks
   const frameCounter = useRef(0)
+  
+  // Track collision counts for the graph
+  const collisionCounter = useRef(0)
+  const lastReportedCollisionTime = useRef(0)
   
   // Check velocities after initialization
   useEffect(() => {
@@ -703,6 +717,16 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
     // Report the average speed to parent component - ensure it's always reported
     if (onSpeedUpdate) {
       onSpeedUpdate(Math.max(0, averageSpeed)); // Ensure we don't report negative values
+    }
+    
+    // Report collision count data - only twice per second to match the speed update interval
+    // This makes it easier to correlate speed and collision data
+    const now = Date.now() / 1000;
+    if (onCollisionCountUpdate && (now - lastReportedCollisionTime.current >= 0.5)) {
+      onCollisionCountUpdate(collisionCounter.current);
+      // Reset counter for next interval
+      collisionCounter.current = 0;
+      lastReportedCollisionTime.current = now;
     }
     
     // Update lastActivityTime if there's significant movement

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,7 +11,7 @@ import {
   Filler
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
-import '../styles/SpeedGraph.css'
+import '../styles/CollisionGraph.css'
 
 // Register the components needed for Chart.js
 ChartJS.register(
@@ -25,32 +25,34 @@ ChartJS.register(
   Filler
 )
 
-interface SpeedGraphProps {
-  data: number[] // Array of speed values
-  currentSpeed: number // Current average speed
+interface CollisionGraphProps {
+  data: number[] // Array of collision count values
+  currentCollisionCount: number // Current number of collisions
   maxDataPoints?: number // Maximum number of data points to display
-  initialVelocity: number // Initial velocity value to scale the y-axis
+  initialVelocity: number // Used to help scale the y-axis
   isVisible?: boolean // Whether the graph is currently visible
   onVisibilityChange?: (visible: boolean) => void // Callback when visibility changes
+  speedGraphVisible?: boolean // Whether the speed graph is currently visible, for positioning
 }
 
-const SpeedGraph: React.FC<SpeedGraphProps> = ({ 
+const CollisionGraph: React.FC<CollisionGraphProps> = ({ 
   data = [],
-  currentSpeed = 0,
+  currentCollisionCount = 0,
   maxDataPoints = 100,
   initialVelocity = 1.0,
   isVisible = true,
-  onVisibilityChange
+  onVisibilityChange,
+  speedGraphVisible = true
 }) => {
-  // Use local state but sync with parent through callback
   const [localVisible, setLocalVisible] = useState(isVisible);
   
-  // Calculate y-axis limits based on initialVelocity
-  const maxYValue = initialVelocity * 1.3;
-  const midYValue = maxYValue * 0.5;
+  // Calculate y-axis limits based on initialVelocity and particle count
+  // Higher initial velocity typically means more collisions
+  const maxYValue = Math.max(10, Math.ceil(Math.max(...data) * 1.2)) || 10;
+  const midYValue = Math.floor(maxYValue / 2);
   
-  // Format y-axis tick values to 2 decimal places
-  const formatTickValue = (value: number) => value.toFixed(2);
+  // Format y-axis tick values as integers (collisions are whole numbers)
+  const formatTickValue = (value: number) => Math.round(value).toString();
   
   // Toggle graph visibility
   const toggleVisibility = () => {
@@ -62,13 +64,48 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
     }
   };
 
+  // Calculate position styles based on speed graph visibility
+  const graphStyle = useMemo(() => {
+    // When speed graph is visible (full expanded graph)
+    if (speedGraphVisible) {
+      // Position collision graph below speed graph
+      return {
+        top: '260px', // Below expanded speed graph
+      };
+    } 
+    // When speed graph is minimized (just the icon)
+    else {
+      // Position below the minimized speed graph icon
+      return {
+        top: '70px', // Below speed graph icon
+      };
+    }
+  }, [speedGraphVisible]);
+
+  // Calculate position for the toggle button when graph is minimized
+  const toggleButtonStyle = useMemo(() => {
+    // When speed graph is visible (expanded)
+    if (speedGraphVisible) {
+      return {
+        top: '260px', // Position below speed graph
+      };
+    } 
+    // When speed graph is minimized (just the icon)
+    else {
+      return {
+        top: '70px', // Position below speed graph icon
+      };
+    }
+  }, [speedGraphVisible]);
+
   // If not visible, show the toggle button
   if (!localVisible) {
     return (
       <button 
-        className="speed-graph-toggle-minimized"
+        className="collision-graph-toggle-minimized"
         onClick={toggleVisibility}
-        title="Show Speed Graph"
+        title="Show Collision Graph"
+        style={toggleButtonStyle}
       >
         <div className="graph-toggle-content">
           <div className="graph-toggle-icon">
@@ -77,13 +114,13 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
               height="16" 
               viewBox="0 0 24 24" 
               fill="none" 
-              xmlns="http://www.w3.org/2000/svg"
+              xmlns="http://www.w3.org/2000/svg" 
               style={{ flexShrink: 0 }}
             >
-              {/* Line chart icon */}
+              {/* Line chart icon with different color for collision graph */}
               <path 
                 d="M3 16L7 12L11 14L21 4" 
-                stroke="#38bdf8" 
+                stroke="#f87171" 
                 strokeWidth="2" 
                 strokeLinecap="round" 
                 strokeLinejoin="round" 
@@ -91,20 +128,20 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
               {/* Bottom line */}
               <path 
                 d="M3 20H21" 
-                stroke="#38bdf8" 
+                stroke="#f87171" 
                 strokeWidth="2" 
                 strokeLinecap="round" 
               />
             </svg>
           </div>
-          <span className="toggle-label">SPEED</span>
+          <span className="toggle-label">COLL</span>
         </div>
       </button>
     );
   }
 
   // Create dummy data for testing if data is empty
-  const processedData = data.length > 1 ? data : [0, 0.5, 1, 0.8, 0.6];
+  const processedData = data.length > 1 ? data : [0, 1, 2, 1, 0];
   
   // Create labels (timestamps)
   const labels = Array.from({ length: processedData.length }, (_, i) => `${(i*0.5).toFixed(1)}s`);
@@ -114,10 +151,10 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
     labels: labels,
     datasets: [
       {
-        label: 'Speed',
+        label: 'Collisions',
         data: processedData,
-        backgroundColor: 'rgba(56, 189, 248, 0.3)',
-        borderColor: '#38bdf8',
+        backgroundColor: 'rgba(248, 113, 113, 0.3)', // Red for collisions
+        borderColor: '#f87171', // Red for collisions
         borderWidth: 2.5,
         fill: true,
         tension: 0.4,
@@ -141,13 +178,13 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
       y: {
         beginAtZero: true,
         min: 0,
-        max: maxYValue, // Dynamic max value based on initialVelocity
+        max: maxYValue,
         grid: {
           color: function(context: any) {
             // Only draw grid lines for specific values
             const value = context.tick.value;
             const targetValues = [0, midYValue, maxYValue];
-            // Check if value is close to any target value (floating point comparison)
+            // Check if value is close to any target value (integer comparison)
             const isTargetValue = targetValues.some(target => 
               Math.abs(value - target) < 0.001
             );
@@ -220,12 +257,12 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
   };
 
   return (
-    <div className="speed-graph-container">
-      <div className="speed-graph-header">
-        <div className="speed-graph-title">AVERAGE PARTICLE SPEED</div>
-        <div className="speed-graph-value">{currentSpeed.toFixed(2)}</div>
+    <div className="collision-graph-container" style={graphStyle}>
+      <div className="collision-graph-header">
+        <div className="collision-graph-title">COLLISIONS PER SECOND</div>
+        <div className="collision-graph-value">{currentCollisionCount}</div>
       </div>
-      <div className="speed-graph">
+      <div className="collision-graph">
         <Line 
           data={chartData}
           options={options}
@@ -233,9 +270,9 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
         />
       </div>
       <button 
-        className="speed-graph-toggle"
+        className="collision-graph-toggle"
         onClick={toggleVisibility}
-        title="Hide Speed Graph"
+        title="Hide Collision Graph"
       >
         ×
       </button>
@@ -243,4 +280,4 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
   );
 };
 
-export default SpeedGraph; 
+export default CollisionGraph; 

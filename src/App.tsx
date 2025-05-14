@@ -6,6 +6,7 @@ import './App.css'
 import PhysicsContainer from './components/PhysicsContainer'
 import ControlPanel from './components/ControlPanel'
 import SpeedGraph from './components/SpeedGraph'
+import CollisionGraph from './components/CollisionGraph'
 import Logo from './components/Logo'
 
 function App() {
@@ -37,9 +38,23 @@ function App() {
   const speedUpdateInterval = useRef<number | null>(null)
   const elapsedTimeRef = useRef<number>(0) // Track elapsed simulation time
   
+  // Collision tracking for graph
+  const [currentCollisionCount, setCurrentCollisionCount] = useState(0)
+  const [collisionHistory, setCollisionHistory] = useState<number[]>([0, 0]) // Initialize with placeholder data
+  const collisionUpdateInterval = useRef<number | null>(null)
+  
+  // Graph visibility states for coordinating positions
+  const [speedGraphVisible, setSpeedGraphVisible] = useState(true)
+  const [collisionGraphVisible, setCollisionGraphVisible] = useState(true)
+  
   // Function to handle receiving speed data from PhysicsContainer
   const handleSpeedUpdate = (speed: number) => {
     setCurrentSpeed(speed);
+  };
+  
+  // Function to handle receiving collision count data from PhysicsContainer
+  const handleCollisionUpdate = (collisions: number) => {
+    setCurrentCollisionCount(collisions);
   };
 
   // Update speed history at a controlled rate (twice per second)
@@ -75,11 +90,46 @@ function App() {
       }
     };
   }, [isPlaying, currentSpeed]);
+  
+  // Update collision history at a controlled rate (twice per second)
+  useEffect(() => {
+    // Clean up any existing interval
+    if (collisionUpdateInterval.current) {
+      clearInterval(collisionUpdateInterval.current);
+      collisionUpdateInterval.current = null;
+    }
+    
+    // Only set up the interval if we're playing
+    if (isPlaying) {
+      // Function to update collision history
+      const updateCollisionHistory = () => {
+        setCollisionHistory(prevHistory => {
+          const newHistory = [...prevHistory, currentCollisionCount];
+          return newHistory.length > 100 ? newHistory.slice(-100) : newHistory;
+        });
+      };
+      
+      // Start with current collision count
+      updateCollisionHistory();
+      
+      // Set interval to update regularly (same as speed updates)
+      collisionUpdateInterval.current = window.setInterval(updateCollisionHistory, 500);
+    }
+    
+    // Clean up on unmount
+    return () => {
+      if (collisionUpdateInterval.current) {
+        clearInterval(collisionUpdateInterval.current);
+        collisionUpdateInterval.current = null;
+      }
+    };
+  }, [isPlaying, currentCollisionCount]);
 
-  // Reset speed history when simulation is reset
+  // Reset graphs when simulation is reset
   useEffect(() => {
     // Reset to initial state with placeholder data points
     setSpeedHistory([0, 0]);
+    setCollisionHistory([0, 0]);
     elapsedTimeRef.current = 0; // Reset elapsed time on simulation reset
   }, [resetKey]);
 
@@ -205,6 +255,7 @@ function App() {
               collisionFadeDuration={collisionFadeDuration}
               onActiveParticlesChange={setActiveParticles}
               onSpeedUpdate={handleSpeedUpdate}
+              onCollisionCountUpdate={handleCollisionUpdate}
             />
           </Physics>
           <OrbitControls 
@@ -223,6 +274,19 @@ function App() {
           currentSpeed={currentSpeed} 
           maxDataPoints={100}
           initialVelocity={initialVelocity}
+          isVisible={speedGraphVisible}
+          onVisibilityChange={setSpeedGraphVisible}
+        />
+        
+        {/* Collision Graph - positioned through CSS */}
+        <CollisionGraph
+          data={collisionHistory}
+          currentCollisionCount={currentCollisionCount}
+          maxDataPoints={100}
+          initialVelocity={initialVelocity}
+          isVisible={collisionGraphVisible}
+          onVisibilityChange={setCollisionGraphVisible}
+          speedGraphVisible={speedGraphVisible}
         />
         
         <div className="simulation-status">

@@ -1,6 +1,6 @@
-.speed-graph-container {
+.collision-graph-container {
   position: absolute;
-  top: 20px;
+  /* top is set dynamically via inline styles */
   right: 20px;
   width: 350px;
   height: 220px;
@@ -9,7 +9,7 @@
   border-radius: 8px;
   padding: 16px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  border: 1px solid rgba(248, 113, 113, 0.3);
   z-index: 100;
   overflow: hidden;
   transition: all 0.3s ease-in-out;
@@ -18,7 +18,7 @@
   flex-direction: column;
 }
 
-.speed-graph {
+.collision-graph {
   width: 100%;
   height: 170px;
   margin-top: 10px;
@@ -26,17 +26,17 @@
   overflow: visible;
   background-color: rgba(15, 23, 42, 0.3);
   border-radius: 6px;
-  border: 1px solid rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.1);
 }
 
-.speed-graph-header {
+.collision-graph-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
 }
 
-.speed-graph-title {
+.collision-graph-title {
   font-size: 12px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.9);
@@ -44,14 +44,14 @@
   letter-spacing: 0.5px;
 }
 
-.speed-graph-value {
+.collision-graph-value {
   font-size: 14px;
   font-weight: 600;
-  color: #38bdf8;
+  color: #f87171;
   font-variant-numeric: tabular-nums;
 }
 
-.speed-graph-toggle {
+.collision-graph-toggle {
   position: absolute;
   top: 8px;
   right: 8px;
@@ -70,22 +70,22 @@
   transition: all 0.2s ease;
 }
 
-.speed-graph-toggle:hover {
-  background-color: rgba(56, 189, 248, 0.2);
+.collision-graph-toggle:hover {
+  background-color: rgba(248, 113, 113, 0.2);
   color: rgba(255, 255, 255, 0.9);
 }
 
-.speed-graph-toggle-minimized {
+.collision-graph-toggle-minimized {
   position: absolute;
-  top: 20px;
+  /* top is set dynamically via inline styles */
   right: 20px;
   width: 90px; /* Slightly smaller width */
   height: 40px;
   border-radius: 8px;
   background-color: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(5px);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.2);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
@@ -97,39 +97,14 @@
   overflow: hidden;
 }
 
-.graph-toggle-content {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  gap: 8px; /* Consistent spacing between elements */
-}
-
-.graph-toggle-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0; /* Prevent icon from shrinking */
-  width: 20px; /* Fixed width for icon */
-}
-
-.toggle-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: calc(100% - 24px); /* Reserve space for icon */
-}
-
-.speed-graph-toggle-minimized:hover {
+.collision-graph-toggle-minimized:hover {
   transform: translateY(-2px);
   background-color: rgba(30, 41, 59, 0.95);
-  border-color: rgba(56, 189, 248, 0.4);
+  border-color: rgba(248, 113, 113, 0.4);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
-.speed-graph-toggle-minimized:active {
+.collision-graph-toggle-minimized:active {
   transform: translateY(0);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
