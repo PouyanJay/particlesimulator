@@ -35,16 +35,28 @@ interface CollisionGraphProps {
   speedGraphVisible?: boolean // Whether the speed graph is currently visible, for positioning
 }
 
+// Type for context with tick value
+type ContextWithTickValue = {
+  tick: {
+    value: number;
+  };
+};
+
+// Type for position style
+type PositionStyle = {
+  top: string;
+};
+
 const CollisionGraph: React.FC<CollisionGraphProps> = ({ 
-  data = [],
-  currentCollisionCount = 0,
-  maxDataPoints = 100,
-  initialVelocity = 1.0,
+  data,
+  currentCollisionCount,
+  maxDataPoints,
+  initialVelocity,
   isVisible = true,
   onVisibilityChange,
   speedGraphVisible = true
 }) => {
-  const [localVisible, setLocalVisible] = useState(isVisible);
+  const [localVisible, setLocalVisible] = useState<boolean>(isVisible);
   
   // Keep local state in sync with prop
   useEffect(() => {
@@ -52,21 +64,29 @@ const CollisionGraph: React.FC<CollisionGraphProps> = ({
   }, [isVisible]);
   
   // Calculate y-axis limits based on initialVelocity and particle count
-  // Higher initial velocity typically means more collisions
   // Scale expected collision count with the square of initialVelocity (collision probability increases with speed^2)
-  const velocityFactor = Math.max(1, initialVelocity * initialVelocity);
-  const baseMaxValue = Math.ceil(10 * velocityFactor);
+  const velocityFactor: number = Math.max(1, initialVelocity * initialVelocity);
+  const baseMaxValue: number = Math.ceil(10 * velocityFactor);
   
-  const maxYValue = data.length > 0 
-    ? Math.max(baseMaxValue, Math.ceil(Math.max(...data) * 1.2)) 
-    : baseMaxValue;
-  const midYValue = Math.floor(maxYValue / 2);
+  // Safe calculation for maxYValue that handles empty arrays
+  const maxYValue: number = (() => {
+    if (!data.length) return baseMaxValue;
+    
+    try {
+      return Math.max(baseMaxValue, Math.ceil(Math.max(...data) * 1.2));
+    } catch (err) {
+      // Fallback if Math.max(...data) fails
+      return baseMaxValue;
+    }
+  })();
+  
+  const midYValue: number = Math.floor(maxYValue / 2);
   
   // Format y-axis tick values as integers (collisions are whole numbers)
-  const formatTickValue = (value: number) => Math.round(value).toString();
+  const formatTickValue = (value: number): string => Math.round(value).toString();
   
   // Toggle graph visibility
-  const toggleVisibility = () => {
+  const toggleVisibility = (): void => {
     const newVisibility = !localVisible;
     setLocalVisible(newVisibility);
     // Notify parent component about the visibility change
@@ -76,19 +96,19 @@ const CollisionGraph: React.FC<CollisionGraphProps> = ({
   };
 
   // Calculate position based on speed graph visibility - shared between graph and toggle
-  const getPositionStyle = (isSpeedVisible: boolean) => {
+  const getPositionStyle = (isSpeedVisible: boolean): PositionStyle => {
     return {
       top: isSpeedVisible ? '260px' : '70px', // Below speed graph or icon
     };
   };
   
   // Apply position style to main graph container
-  const graphStyle = useMemo(() => {
+  const graphStyle = useMemo<PositionStyle>(() => {
     return getPositionStyle(speedGraphVisible);
   }, [speedGraphVisible]);
 
   // Apply position style to toggle button when minimized
-  const toggleButtonStyle = useMemo(() => {
+  const toggleButtonStyle = useMemo<PositionStyle>(() => {
     return getPositionStyle(speedGraphVisible);
   }, [speedGraphVisible]);
 
@@ -108,8 +128,7 @@ const CollisionGraph: React.FC<CollisionGraphProps> = ({
               height="16" 
               viewBox="0 0 24 24" 
               fill="none" 
-              xmlns="http://www.w3.org/2000/svg" 
-              style={{ flexShrink: 0 }}
+              xmlns="http://www.w3.org/2000/svg"
             >
               {/* Line chart icon with different color for collision graph */}
               <path 
@@ -135,16 +154,27 @@ const CollisionGraph: React.FC<CollisionGraphProps> = ({
   }
 
   // Process data and limit to maxDataPoints if specified
-  const processedData = data.length > 1 
-    ? (maxDataPoints > 0 ? data.slice(-maxDataPoints) : data) 
-    : [0, 1, 2, 1, 0];
+  const processedData: number[] = (() => {
+    if (!data || data.length <= 1) {
+      return [0, 1, 2, 1, 0]; // Default data for empty input
+    }
+    
+    if (maxDataPoints && maxDataPoints > 0 && data.length > maxDataPoints) {
+      return data.slice(-maxDataPoints);
+    }
+    
+    return [...data];
+  })();
   
   // Create labels (timestamps)
-  const labels = Array.from({ length: processedData.length }, (_, i) => `${(i*0.5).toFixed(1)}s`);
+  const labels: string[] = Array.from(
+    { length: processedData.length }, 
+    (_, i) => `${(i*0.5).toFixed(1)}s`
+  );
 
   // Configure chart data with big, visible elements
   const chartData = {
-    labels: labels,
+    labels,
     datasets: [
       {
         label: 'Collisions',
@@ -176,7 +206,7 @@ const CollisionGraph: React.FC<CollisionGraphProps> = ({
         min: 0,
         max: maxYValue,
         grid: {
-          color: function(context: any) {
+          color: function(context: ContextWithTickValue) {
             // Only draw grid lines for specific values
             const value = context.tick.value;
             const targetValues = [0, midYValue, maxYValue];
@@ -188,7 +218,7 @@ const CollisionGraph: React.FC<CollisionGraphProps> = ({
               'rgba(255, 255, 255, 0.2)' : // Brighter lines for main grid
               'rgba(0, 0, 0, 0)'; // Transparent for other lines
           },
-          lineWidth: (context: any) => {
+          lineWidth: (context: ContextWithTickValue) => {
             const value = context.tick.value;
             const targetValues = [0, midYValue, maxYValue];
             // Check if value is close to any target value
@@ -205,7 +235,7 @@ const CollisionGraph: React.FC<CollisionGraphProps> = ({
           },
           // Force specific values to appear
           callback: function(tickValue: number | string) {
-            const numValue = Number(tickValue);
+            const numValue = typeof tickValue === 'string' ? parseFloat(tickValue) : tickValue;
             const targetValues = [0, midYValue, maxYValue];
             const isTargetValue = targetValues.some(target => 
               Math.abs(numValue - target) < 0.001

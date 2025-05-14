@@ -35,15 +35,15 @@ interface SpeedGraphProps {
 }
 
 const SpeedGraph: React.FC<SpeedGraphProps> = ({ 
-  data = [],
-  currentSpeed = 0,
-  maxDataPoints = 100,
-  initialVelocity = 1.0,
+  data,
+  currentSpeed,
+  maxDataPoints,
+  initialVelocity,
   isVisible = true,
   onVisibilityChange
 }) => {
   // Use local state but sync with parent through callback
-  const [localVisible, setLocalVisible] = useState(isVisible);
+  const [localVisible, setLocalVisible] = useState<boolean>(isVisible);
   
   // Keep local state in sync with prop
   useEffect(() => {
@@ -55,10 +55,10 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
   const midYValue = maxYValue * 0.5;
   
   // Format y-axis tick values to 2 decimal places
-  const formatTickValue = (value: number) => value.toFixed(2);
+  const formatTickValue = (value: number): string => value.toFixed(2);
   
   // Toggle graph visibility
-  const toggleVisibility = () => {
+  const toggleVisibility = (): void => {
     const newVisibility = !localVisible;
     setLocalVisible(newVisibility);
     // Notify parent component about the visibility change
@@ -83,7 +83,6 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
               viewBox="0 0 24 24" 
               fill="none" 
               xmlns="http://www.w3.org/2000/svg"
-              style={{ flexShrink: 0 }}
             >
               {/* Line chart icon */}
               <path 
@@ -108,17 +107,28 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
     );
   }
 
-  // Process data and limit to maxDataPoints if specified
-  const processedData = data.length > 1 
-    ? (maxDataPoints > 0 ? data.slice(-maxDataPoints) : data) 
-    : [0, 0.5, 1, 0.8, 0.6];
+  // Process data and limit to maxDataPoints
+  const processedData: number[] = (() => {
+    if (data.length <= 1) {
+      return [0, 0.5, 1, 0.8, 0.6]; // Default data for empty input
+    }
+    
+    if (maxDataPoints && maxDataPoints > 0 && data.length > maxDataPoints) {
+      return data.slice(-maxDataPoints);
+    }
+    
+    return [...data];
+  })();
   
   // Create labels (timestamps)
-  const labels = Array.from({ length: processedData.length }, (_, i) => `${(i*0.5).toFixed(1)}s`);
+  const labels: string[] = Array.from(
+    { length: processedData.length }, 
+    (_, i) => `${(i*0.5).toFixed(1)}s`
+  );
 
   // Configure chart data with big, visible elements
   const chartData = {
-    labels: labels,
+    labels,
     datasets: [
       {
         label: 'Speed',
@@ -137,6 +147,12 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
     ]
   };
   
+  type ContextWithTickValue = {
+    tick: {
+      value: number;
+    };
+  };
+  
   // Simple chart options focused on visibility
   const options = {
     responsive: true,
@@ -150,7 +166,7 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
         min: 0,
         max: maxYValue, // Dynamic max value based on initialVelocity
         grid: {
-          color: function(context: any) {
+          color: function(context: ContextWithTickValue) {
             // Only draw grid lines for specific values
             const value = context.tick.value;
             const targetValues = [0, midYValue, maxYValue];
@@ -162,7 +178,7 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
               'rgba(255, 255, 255, 0.2)' : // Brighter lines for main grid
               'rgba(0, 0, 0, 0)'; // Transparent for other lines
           },
-          lineWidth: (context: any) => {
+          lineWidth: (context: ContextWithTickValue) => {
             const value = context.tick.value;
             const targetValues = [0, midYValue, maxYValue];
             // Check if value is close to any target value
@@ -179,7 +195,7 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
           },
           // Force specific values to appear
           callback: function(tickValue: number | string) {
-            const numValue = Number(tickValue);
+            const numValue = typeof tickValue === 'string' ? parseFloat(tickValue) : tickValue;
             const targetValues = [0, midYValue, maxYValue];
             const isTargetValue = targetValues.some(target => 
               Math.abs(numValue - target) < 0.001
