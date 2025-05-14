@@ -14,6 +14,7 @@ An interactive 3D particle physics simulator built with React, Three.js, and Rea
 - Interactive speed and collision graphs
 - Adjustable particle count, size, and initial velocity
 - Collision color effects with configurable fade duration
+- Advanced physics using the Rapier physics engine
 
 ## Live Demo
 
