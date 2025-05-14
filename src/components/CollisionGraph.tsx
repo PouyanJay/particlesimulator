@@ -53,7 +53,13 @@ const CollisionGraph: React.FC<CollisionGraphProps> = ({
   
   // Calculate y-axis limits based on initialVelocity and particle count
   // Higher initial velocity typically means more collisions
-  const maxYValue = Math.max(10, Math.ceil(Math.max(...data) * 1.2)) || 10;
+  // Scale expected collision count with the square of initialVelocity (collision probability increases with speed^2)
+  const velocityFactor = Math.max(1, initialVelocity * initialVelocity);
+  const baseMaxValue = Math.ceil(10 * velocityFactor);
+  
+  const maxYValue = data.length > 0 
+    ? Math.max(baseMaxValue, Math.ceil(Math.max(...data) * 1.2)) 
+    : baseMaxValue;
   const midYValue = Math.floor(maxYValue / 2);
   
   // Format y-axis tick values as integers (collisions are whole numbers)
@@ -69,38 +75,21 @@ const CollisionGraph: React.FC<CollisionGraphProps> = ({
     }
   };
 
-  // Calculate position styles based on speed graph visibility
+  // Calculate position based on speed graph visibility - shared between graph and toggle
+  const getPositionStyle = (isSpeedVisible: boolean) => {
+    return {
+      top: isSpeedVisible ? '260px' : '70px', // Below speed graph or icon
+    };
+  };
+  
+  // Apply position style to main graph container
   const graphStyle = useMemo(() => {
-    // When speed graph is visible (full expanded graph)
-    if (speedGraphVisible) {
-      // Position collision graph below speed graph
-      return {
-        top: '260px', // Below expanded speed graph
-      };
-    } 
-    // When speed graph is minimized (just the icon)
-    else {
-      // Position below the minimized speed graph icon
-      return {
-        top: '70px', // Below speed graph icon
-      };
-    }
+    return getPositionStyle(speedGraphVisible);
   }, [speedGraphVisible]);
 
-  // Calculate position for the toggle button when graph is minimized
+  // Apply position style to toggle button when minimized
   const toggleButtonStyle = useMemo(() => {
-    // When speed graph is visible (expanded)
-    if (speedGraphVisible) {
-      return {
-        top: '260px', // Position below speed graph
-      };
-    } 
-    // When speed graph is minimized (just the icon)
-    else {
-      return {
-        top: '70px', // Position below speed graph icon
-      };
-    }
+    return getPositionStyle(speedGraphVisible);
   }, [speedGraphVisible]);
 
   // If not visible, show the toggle button
@@ -145,8 +134,10 @@ const CollisionGraph: React.FC<CollisionGraphProps> = ({
     );
   }
 
-  // Create dummy data for testing if data is empty
-  const processedData = data.length > 1 ? data : [0, 1, 2, 1, 0];
+  // Process data and limit to maxDataPoints if specified
+  const processedData = data.length > 1 
+    ? (maxDataPoints > 0 ? data.slice(-maxDataPoints) : data) 
+    : [0, 1, 2, 1, 0];
   
   // Create labels (timestamps)
   const labels = Array.from({ length: processedData.length }, (_, i) => `${(i*0.5).toFixed(1)}s`);
