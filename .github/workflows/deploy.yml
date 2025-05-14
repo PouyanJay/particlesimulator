@@ -10,24 +10,12 @@ permissions:
   pages: write
   id-token: write
 
-# Cancel any in-progress job or previous runs
 concurrency:
-  group: "pages-${{ github.workflow }}-${{ github.ref }}"
+  group: "pages"
   cancel-in-progress: true
 
 jobs:
-  # Add a cleanup job to remove existing artifacts
-  cleanup:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delete all artifacts from previous workflow runs
-        uses: geekyeggo/delete-artifact@v2
-        with:
-          name: github-pages
-          failOnError: false
-
   build:
-    needs: cleanup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -45,7 +33,6 @@ jobs:
       - name: Build project
         run: npm run build
         env:
-          # Add this to ensure the app knows it's being built for GitHub Pages
           PUBLIC_URL: /${{ github.event.repository.name }}/
           BASE_URL: /${{ github.event.repository.name }}/
 
@@ -53,12 +40,9 @@ jobs:
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
-        id: upload-artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
-          name: github-pages-${{ github.run_id }}
-          retention-days: 1  # Shorter retention to avoid artifact buildup
 
   deploy:
     needs: build
@@ -67,30 +51,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      # Manually download the artifact with the specific name we created
-      - name: Download artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: github-pages-${{ github.run_id }}
-          path: ./artifact
-
-      # Prepare for deployment - recreate as standard "github-pages" artifact
-      - name: Package artifact for deployment
-        run: |
-          cd ./artifact
-          tar -czf ../github-pages.tar.gz *
-
-      # Upload with standard name for deploy-pages to find
-      - name: Upload artifact for deployment
-        uses: actions/upload-artifact@v3
-        with:
-          name: github-pages
-          path: github-pages.tar.gz
-          retention-days: 1
-
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        with:
-          timeout: 600000  # 10 minutes
-          artifact_name: github-pages 
