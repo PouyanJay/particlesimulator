@@ -2,6 +2,10 @@
 
 An interactive 3D particle physics simulator built with React, Three.js, and React Three Fiber.
 
+## Screenshot
+
+![Particle Physics Simulator Screenshot](./public/screenshot.png)
+
 ## Features
 
 - Real-time 3D particle simulation with customizable parameters
@@ -13,7 +17,7 @@ An interactive 3D particle physics simulator built with React, Three.js, and Rea
 
 ## Live Demo
 
-Check out the live demo [here](https://yourusername.github.io/particlesimulator).
+Check out the live demo [here](https://pouyanjay.github.io/particlesimulator).
 
 ## Development
 
