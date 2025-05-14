@@ -29,7 +29,6 @@ interface SpeedGraphProps {
   data: number[] // Array of speed values
   currentSpeed: number // Current average speed
   initialVelocity: number // Initial velocity value to scale the y-axis
-  maxDataPoints?: number // Maximum number of data points to display
   isVisible?: boolean // Whether the graph is currently visible
   onVisibilityChange?: (visible: boolean) => void // Callback when visibility changes
 }
@@ -38,7 +37,6 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
   data,
   currentSpeed,
   initialVelocity,
-  maxDataPoints = 100, // Default value of 100 if not provided
   isVisible = true,
   onVisibilityChange
 }) => {
@@ -107,14 +105,14 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
     );
   }
 
-  // Process data and limit to maxDataPoints
+  // Process data and limit to maximum points (hardcoded to 100)
   const processedData: number[] = (() => {
     if (data.length <= 1) {
       return [0, 0.5, 1, 0.8, 0.6]; // Default data for empty input
     }
     
-    if (maxDataPoints && maxDataPoints > 0 && data.length > maxDataPoints) {
-      return data.slice(-maxDataPoints);
+    if (data.length > 100) {
+      return data.slice(-100); // Hard limit to 100 data points
     }
     
     return [...data];
