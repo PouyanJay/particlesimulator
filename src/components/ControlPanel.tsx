@@ -28,6 +28,8 @@ interface ControlPanelProps {
   setFrictionCoefficient: (value: number) => void
   collisionFadeDuration: number
   setCollisionFadeDuration: (value: number) => void
+  dynamicContainerSize: boolean
+  setDynamicContainerSize: (value: boolean) => void
 }
 
 const CustomSlider = ({ 
@@ -36,9 +38,9 @@ const CustomSlider = ({
   label, 
   min, 
   max, 
-  step = 0.01,
+  step = 0.01, 
   disabled = false,
-  formatValue = (v: number) => v.toFixed(2)
+  formatValue = (v: number) => v.toFixed(2) 
 }: { 
   value: number
   onChange: (value: number) => void
@@ -100,6 +102,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   setFrictionCoefficient,
   collisionFadeDuration,
   setCollisionFadeDuration,
+  dynamicContainerSize,
+  setDynamicContainerSize,
 }) => {
   // Check if any friction is enabled
   const isFrictionEnabled = particleParticleFriction || particleWallFriction;
@@ -109,27 +113,27 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       <h2>Physics Controls</h2>
       
       <div className="control-group">
-        <ToggleSwitch
-          isActive={particleParticleFriction}
-          onChange={() => setParticleParticleFriction(!particleParticleFriction)}
-          label="Particle-Particle Friction"
-        />
-        <ToggleSwitch
-          isActive={particleWallFriction}
-          onChange={() => setParticleWallFriction(!particleWallFriction)}
-          label="Particle-Wall Friction"
-        />
+      <ToggleSwitch
+        isActive={particleParticleFriction}
+        onChange={() => setParticleParticleFriction(!particleParticleFriction)}
+        label="Particle-Particle Friction"
+      />
+      <ToggleSwitch
+        isActive={particleWallFriction}
+        onChange={() => setParticleWallFriction(!particleWallFriction)}
+        label="Particle-Wall Friction"
+      />
 
         <div className={`control-subgroup ${isFrictionEnabled ? "" : "control-subgroup-disabled"}`}>
-          <CustomSlider
-            label="Restitution"
-            value={restitution}
-            onChange={setRestitution}
-            min={0.1}
-            max={1.0}
+      <CustomSlider
+        label="Restitution"
+        value={restitution}
+        onChange={setRestitution}
+        min={0.1}
+        max={1.0}
             disabled={!isFrictionEnabled}
-          />
-          
+      />
+      
           <CustomSlider
             label="Friction Coefficient"
             value={frictionCoefficient}
@@ -154,46 +158,52 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       <h2>Particle Parameters</h2>
       
       <div className="control-group">
-        <CustomSlider
-          label="Particle Count"
-          value={particleCount}
-          onChange={setParticleCount}
-          min={10}
-          max={500}
-          step={10}
-          formatValue={(v) => Math.round(v).toString()}
-        />
-        
-        <CustomSlider
-          label="Particle Size"
-          value={particleSize}
-          onChange={setParticleSize}
-          min={0.02}
-          max={0.2}
-        />
-        
-        <CustomSlider
-          label="Initial Velocity"
-          value={initialVelocity}
-          onChange={setInitialVelocity}
-          min={0.1}
-          max={5.0}
-        />
+      <CustomSlider
+        label="Particle Count"
+        value={particleCount}
+        onChange={setParticleCount}
+        min={10}
+        max={1000}
+        step={10}
+        formatValue={(v) => Math.round(v).toString()}
+      />
+      
+      <ToggleSwitch
+        isActive={dynamicContainerSize}
+        onChange={() => setDynamicContainerSize(!dynamicContainerSize)}
+        label="Scale Container with Particle Count"
+      />
+      
+      <CustomSlider
+        label="Particle Size"
+        value={particleSize}
+        onChange={setParticleSize}
+        min={0.02}
+        max={0.2}
+      />
+      
+      <CustomSlider
+        label="Initial Velocity"
+        value={initialVelocity}
+        onChange={setInitialVelocity}
+        min={0.1}
+        max={5.0}
+      />
       </div>
         
       <h2>Simulation Controls</h2>
       
       <div className="control-group">
-        <CustomSlider
-          label="δt (Simulation Speed)"
-          value={deltaTime}
-          onChange={setDeltaTime}
-          min={0.01}
+      <CustomSlider
+        label="δt (Simulation Speed)"
+        value={deltaTime}
+        onChange={setDeltaTime}
+        min={0.01}
           max={5.0}
           step={0.01}
           formatValue={(v) => v.toFixed(2)}
-        />
-        
+      />
+
         <CustomSlider
           label="Collision Color Fade Duration"
           value={collisionFadeDuration}
@@ -204,14 +214,14 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           formatValue={(v) => v.toFixed(1) + 's'}
         />
       
-        <div className="button-group">
-          <button className="button" onClick={onReset}>
-            Reset
-          </button>
+      <div className="button-group">
+        <button className="button" onClick={onReset}>
+          Reset
+        </button>
 
-          <button className="button" onClick={() => setIsPlaying(!isPlaying)}>
-            {isPlaying ? 'Pause' : 'Play'}
-          </button>
+        <button className="button" onClick={() => setIsPlaying(!isPlaying)}>
+          {isPlaying ? 'Pause' : 'Play'}
+        </button>
         </div>
       </div>
     </>

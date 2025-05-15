@@ -30,9 +30,25 @@ type ParticleCollisionStatus = {
 
 // Define collision detection parameters
 const COLLISION_DETECTION = {
-  speedChangeThreshold: 0.2,  // How much speed should change to detect collision
+  baseSpeedChangeThreshold: 0.2,  // Base threshold for speed change
   proximityThreshold: 0.05,   // How close particles should be to be considered colliding
-  wallProximityThreshold: 0.02 // How close to wall to detect wall collision
+  wallProximityThreshold: 0.02, // How close to wall to detect wall collision
+  
+  // New parameters for adaptive collision detection
+  minFrameSkip: 0,            // Minimum number of frames to skip (0 = check every frame)
+  maxFrameSkip: 3,            // Maximum number of frames to skip
+  densityFrameSkipThreshold: 0.5, // Particle density threshold for frame skipping
+  
+  // Enhanced density-aware parameters
+  lowDensityThreshold: 0.1,    // Below this is considered low density
+  highDensityThreshold: 0.5,   // Above this is considered high density
+  maxDensityThresholdReduction: 0.8,  // Maximum reduction of threshold at highest density (80%)
+  minSpeedHighDensity: 0.05,   // Minimum speed to consider for collisions at high density
+  minSpeedLowDensity: 0.5,     // Minimum speed to consider for collisions at low density
+  
+  // Local density detection
+  localDensityRadius: 0.5,     // Radius to check for local particle clustering
+  localDensityThreshold: 3     // Number of particles in local radius to consider as clustered
 }
 
 interface PhysicsContainerProps {
@@ -46,15 +62,31 @@ interface PhysicsContainerProps {
   initialVelocity?: number
   frictionCoefficient?: number
   collisionFadeDuration?: number
+  dynamicContainerSize?: boolean // Controls whether container size scales with particle count
   onActiveParticlesChange?: (count: number) => void
   onSpeedUpdate?: (speed: number) => void
   onCollisionCountUpdate?: (count: number) => void // New callback for collision count
+  onDensityWarning?: (densityStats: {
+    packingRatio: number;
+    warningLevel: 'none' | 'warning' | 'critical';
+    particlesPerAxis: number;
+    averageSpacing: number;
+  }) => void
 }
 
-// Container dimensions
-const CONTAINER_SIZE = 2.5
-const HALF_SIZE = CONTAINER_SIZE / 2
+// Container dimensions - BASE_CONTAINER_SIZE is the reference size for 100 particles
+const BASE_CONTAINER_SIZE = 2.5
 const WALL_THICKNESS = 0.05
+
+// Calculate container size based on particle count
+const getContainerSize = (particleCount: number): number => {
+  // Scale container size based on cubic root of particle count ratio
+  // This ensures volume scales with particle count
+  const scaleFactor = Math.pow(particleCount / 100, 1/3)
+  // Limit scaling to reasonable bounds (0.8-2.0x)
+  const boundedScaleFactor = Math.max(0.8, Math.min(2.0, scaleFactor))
+  return BASE_CONTAINER_SIZE * boundedScaleFactor
+}
 
 // Define the particle instance type
 interface Particle {
@@ -133,6 +165,92 @@ const hasInvalidVelocity = (vel: { x: number, y: number, z: number }) => {
          Math.abs(vel.x) > 100 || Math.abs(vel.y) > 100 || Math.abs(vel.z) > 100 // Lower threshold
 }
 
+// Helper function to calculate dynamic speed threshold based on density
+const calculateDensityAdjustedThreshold = (density: number): {
+  speedChangeThreshold: number,
+  minSpeedForCollision: number
+} => {
+  // Normalize density to a 0-1 scale relative to our thresholds
+  const normalizedDensity = Math.max(0, Math.min(1, 
+    (density - COLLISION_DETECTION.lowDensityThreshold) / 
+    (COLLISION_DETECTION.highDensityThreshold - COLLISION_DETECTION.lowDensityThreshold)
+  ));
+
+  // Apply non-linear scaling for more sensitivity at higher densities
+  // Using a quadratic curve gives us more reduction at higher densities
+  const thresholdReduction = COLLISION_DETECTION.maxDensityThresholdReduction * 
+    Math.pow(normalizedDensity, 2);
+  
+  // Apply the reduction to get our adjusted threshold
+  const speedChangeThreshold = COLLISION_DETECTION.baseSpeedChangeThreshold * 
+    (1.0 - thresholdReduction);
+
+  // Similarly adjust minimum speed threshold with smooth transition
+  const minSpeedForCollision = COLLISION_DETECTION.minSpeedLowDensity -
+    (COLLISION_DETECTION.minSpeedLowDensity - COLLISION_DETECTION.minSpeedHighDensity) * 
+    Math.pow(normalizedDensity, 1.5);  // Use different power for different curve shape
+  
+  return {
+    speedChangeThreshold,
+    minSpeedForCollision
+  };
+};
+
+// Define density warning thresholds based on physics packing principles
+const DENSITY_WARNINGS = {
+  // Warning level thresholds (particle volume / container volume ratio)
+  warningThreshold: 0.1,   // 10% packing ratio (drastically reduced from 25%)
+  criticalThreshold: 0.2,  // 20% packing ratio (drastically reduced from 40%)
+  
+  // Maximum theoretical packing ratio for uniform spheres is ~74% (close packing)
+  // Random packing typically reaches ~64% (random close packing)
+  // When approaching these values, physics simulation becomes increasingly inaccurate
+}
+
+// Function to calculate packing ratio and determine if warning is needed
+const calculatePackingRatio = (
+  particleCount: number, 
+  particleSize: number, 
+  containerSize: number
+): {
+  packingRatio: number;
+  warningLevel: 'none' | 'warning' | 'critical';
+  particlesPerAxis: number;
+  averageSpacing: number;
+} => {
+  // Calculate total volume of all particles
+  const particleRadius = particleSize;
+  const particleVolume = (4/3) * Math.PI * Math.pow(particleRadius, 3) * particleCount;
+  
+  // Calculate container volume
+  const containerVolume = Math.pow(containerSize, 3);
+  
+  // Calculate packing ratio (volume fraction)
+  const packingRatio = particleVolume / containerVolume;
+  
+  // Calculate average particles per axis (cube root of count)
+  const particlesPerAxis = Math.pow(particleCount, 1/3);
+  
+  // Calculate average spacing between particle centers in units of particle diameter
+  const averageContainerDimPerParticle = containerSize / particlesPerAxis;
+  const averageSpacing = averageContainerDimPerParticle / (particleSize * 2);
+  
+  // Determine warning level
+  let warningLevel: 'none' | 'warning' | 'critical' = 'none';
+  if (packingRatio >= DENSITY_WARNINGS.criticalThreshold) {
+    warningLevel = 'critical';
+  } else if (packingRatio >= DENSITY_WARNINGS.warningThreshold) {
+    warningLevel = 'warning';
+  }
+  
+  return { 
+    packingRatio, 
+    warningLevel,
+    particlesPerAxis,
+    averageSpacing
+  };
+};
+
 const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
   particleParticleFriction,
   particleWallFriction,
@@ -144,12 +262,21 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
   initialVelocity = 1.0,
   frictionCoefficient = 0.1,
   collisionFadeDuration = 1.0, // seconds
+  dynamicContainerSize = false, // Default to fixed container size
   onActiveParticlesChange,
   onSpeedUpdate,
-  onCollisionCountUpdate
+  onCollisionCountUpdate,
+  onDensityWarning,  // New callback for density warning
 }) => {
   // Use counter to force re-render on reset
   const [resetCounter, setResetCounter] = useState(0)
+  
+  // Calculate container size based on particle count if dynamic sizing is enabled
+  const containerSize = useMemo(() => 
+    dynamicContainerSize ? getContainerSize(particleCount) : BASE_CONTAINER_SIZE, 
+    [particleCount, dynamicContainerSize]
+  )
+  const halfSize = useMemo(() => containerSize / 2, [containerSize])
   
   // Track particle materials for color fading
   const particleMaterials = useRef<THREE.MeshStandardMaterial[]>([])
@@ -172,11 +299,11 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
       particleCount, 
       particleSize, 
       initialVelocity,
-      CONTAINER_SIZE
+      containerSize // Use the dynamic container size
     ), 
     // resetCounter is included to force re-calculation when the simulation resets
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [resetCounter, particleCount, particleSize, initialVelocity]
+    [resetCounter, particleCount, particleSize, initialVelocity, containerSize]
   )
   
   // Store references to rigid bodies to monitor/correct velocities
@@ -259,6 +386,19 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
     })
   }, [particles])
   
+  // Calculate particle density factor (0-1 scale, higher means more dense packing)
+  const particleDensity = useMemo(() => {
+    // Total volume of particles relative to container volume
+    const particleVolume = (4/3) * Math.PI * Math.pow(particleSize, 3) * particleCount
+    const containerVolume = Math.pow(containerSize, 3)
+    
+    // Density factor (clamped between 0 and 1)
+    return Math.min(1.0, particleVolume / containerVolume * 10) // * 10 to amplify for better sensitivity
+  }, [particleCount, particleSize, containerSize])
+  
+  // Store local density information (regions with many close particles)
+  const localDensityMap = useRef<Map<number, number>>(new Map());
+  
   // Helper function to handle particle collision
   const handleParticleCollision = (particleId: number) => {
     // Get the current time
@@ -305,7 +445,7 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
     radius: number
   ): boolean => {
     // Wall positions (considering container size and radius)
-    const wallThreshold = HALF_SIZE - radius - COLLISION_DETECTION.wallProximityThreshold;
+    const wallThreshold = halfSize - radius - COLLISION_DETECTION.wallProximityThreshold;
     
     // Method 1: Check proximity to walls while moving toward them
     // Check X walls
@@ -354,18 +494,47 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
   }
   
   // Helper function to find nearby particles that might be colliding
-  const findCollidingPairs = (particleId: number, threshold: number) => {
+  const findCollidingPairs = (particleId: number, threshold: number, particleCount: number) => {
     const position = particlePositions.current.get(particleId)
     if (!position) return []
     
     const collidingPairs: number[] = []
     
-    // Check all other particles for proximity
-    particlePositions.current.forEach((otherPos, otherId) => {
-      if (otherId !== particleId && position.distanceTo(otherPos) < threshold) {
-        collidingPairs.push(otherId)
+    // For high particle counts, optimize the search by checking a subset of nearby particles
+    // This uses a distance-based priority approach
+    if (particleCount > 500) {
+      // Create an array of [otherId, distance] pairs
+      const particleDistances: [number, number][] = []
+      
+      // Calculate distances to other particles
+      particlePositions.current.forEach((otherPos, otherId) => {
+        if (otherId !== particleId) {
+          const distance = position.distanceTo(otherPos)
+          particleDistances.push([otherId, distance])
+        }
+      })
+      
+      // Sort by distance (closest first)
+      particleDistances.sort((a, b) => a[1] - b[1])
+      
+      // Check the closest 100 particles or 20% of total, whichever is larger
+      const checkCount = Math.max(100, Math.floor(particleCount * 0.2))
+      
+      // Add particles within threshold to colliding pairs
+      for (let i = 0; i < Math.min(checkCount, particleDistances.length); i++) {
+        const [otherId, distance] = particleDistances[i]
+        if (distance < threshold) {
+          collidingPairs.push(otherId)
+        }
       }
-    })
+    } else {
+      // For smaller particle counts, check all particles (original behavior)
+      particlePositions.current.forEach((otherPos, otherId) => {
+        if (otherId !== particleId && position.distanceTo(otherPos) < threshold) {
+          collidingPairs.push(otherId)
+        }
+      })
+    }
     
     return collidingPairs
   }
@@ -416,11 +585,11 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
               })
             }
                 } catch (err) {
-        allValid = false
-        DEBUG.logIssue('INITIAL_VELOCITY_CHECK_ERROR', {
-          particleIndex: index,
+            allValid = false
+            DEBUG.logIssue('INITIAL_VELOCITY_CHECK_ERROR', {
+              particleIndex: index,
           error: String(err)
-        })
+            })
           }
         }
       })
@@ -498,8 +667,19 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
   
   // Use a more conservative approach to handle the zero-friction case
   useFrame(() => {
-    // Only check every 2nd frame - frequent enough to catch issues but not every frame
-    frameCounter.current = (frameCounter.current + 1) % 2
+    // Adaptive frame checking based on particle count and density
+    // More particles = more frame skips to maintain performance
+    // But higher density = fewer frame skips for better collision accuracy
+    const adaptiveFrameSkipCount = Math.min(
+      COLLISION_DETECTION.maxFrameSkip,
+      Math.max(
+        COLLISION_DETECTION.minFrameSkip,
+        Math.floor(particleCount / 200) - Math.floor(particleDensity / COLLISION_DETECTION.densityFrameSkipThreshold)
+      )
+    )
+    
+    // Update frame counter with adaptive skip count
+    frameCounter.current = (frameCounter.current + 1) % (adaptiveFrameSkipCount + 1)
     if (frameCounter.current !== 0) return
     
     // Get current time for color transitions
@@ -513,7 +693,10 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
     let totalVelocityMagnitude = 0
     let particlesChecked = 0
     
-    // First pass: track positions and detect speed changes
+    // Clear local density map for this frame
+    localDensityMap.current.clear();
+    
+    // First pass: track positions and calculate local densities
     particleRefs.current.forEach((body, index) => {
       if (!body) return
       
@@ -522,6 +705,16 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
         const pos = body.translation()
         const position = new THREE.Vector3(pos.x, pos.y, pos.z)
         particlePositions.current.set(index, position)
+        
+        // Calculate local density (number of particles within radius)
+        let nearbyCount = 0;
+        particlePositions.current.forEach((otherPos, otherId) => {
+          if (otherId !== index && position.distanceTo(otherPos) < COLLISION_DETECTION.localDensityRadius) {
+            nearbyCount++;
+          }
+        });
+        // Store local density for this particle
+        localDensityMap.current.set(index, nearbyCount);
         
         const vel = body.linvel()
         particlesChecked++
@@ -536,7 +729,6 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
           activeCount++
         }
         
-        // For all particles (not just zero-friction mode), apply basic corrections
         // Skip if velocity contains invalid values and reset it
         if (hasInvalidVelocity(vel)) {
           // Reset to a safe random velocity with the original speed
@@ -559,12 +751,30 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
           return
         }
         
-        // Check for collision based on velocity change
+        // Get local density for this particle
+        const localDensity = localDensityMap.current.get(index) || 0;
+        
+        // Determine if this particle is in a locally dense region
+        const isLocallyDense = localDensity >= COLLISION_DETECTION.localDensityThreshold;
+        
+        // Blend global and local density for best sensitivity
+        // For locally dense clusters, increase effective density
+        const effectiveDensity = isLocallyDense 
+          ? Math.min(1.0, particleDensity * 1.5)
+          : particleDensity;
+        
+        // Get adaptive threshold values based on effective density
+        const {
+          speedChangeThreshold: densityAdjustedThreshold,
+          minSpeedForCollision
+        } = calculateDensityAdjustedThreshold(effectiveDensity);
+        
+        // Check for collision based on velocity change with adjusted thresholds
         const originalSpeed = particleSpeeds.current.get(index) || 0.5
         const speedChange = Math.abs(currentSpeed - originalSpeed) / (originalSpeed || 0.1)
         
-        // Significant speed change indicates potential collision
-        if (speedChange > COLLISION_DETECTION.speedChangeThreshold && currentSpeed > 0.5) {
+        // Dynamically adjust threshold for collision detection
+        if (speedChange > densityAdjustedThreshold && currentSpeed > minSpeedForCollision) {
           potentialCollisions.current.add(index)
         }
         
@@ -585,9 +795,11 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
     // Second pass: apply collision effects to particles and their collision partners
     potentialCollisions.current.forEach(particleId => {
       // Find all particles that are close enough to be collision partners
+      // With optimized function that considers particle count
       const collisionPartners = findCollidingPairs(
         particleId, 
-        COLLISION_DETECTION.proximityThreshold + particleSize * 2
+        COLLISION_DETECTION.proximityThreshold + particleSize * 2,
+        particleCount
       )
       
       // Mark particle as colliding
@@ -605,7 +817,7 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
       
       try {
         const vel = body.linvel()
-        const currentSpeed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z)
+          const currentSpeed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z)
         const originalSpeed = particleSpeeds.current.get(index) || 0.5
         
         // Update particle color based on collision state
@@ -706,10 +918,10 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
           }
         }
       } catch (err) {
-        // Silently catch errors to prevent simulation interruption
+          // Silently catch errors to prevent simulation interruption
         if (DEBUG.issues.size < 5) console.error("Physics correction error:", err);
-      }
-    })
+        }
+      })
     
     // Calculate average velocity
     const averageSpeed = particlesChecked > 0 ? totalVelocityMagnitude / particlesChecked : 0;
@@ -797,19 +1009,46 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
     }
   }
 
+  // Calculate packing density and warning status
+  const densityStats = useMemo(() => 
+    calculatePackingRatio(particleCount, particleSize, containerSize), 
+    [particleCount, particleSize, containerSize]
+  );
+  
+  // Report density warning to parent component if callback provided
+  useEffect(() => {
+    if (onDensityWarning) {
+      onDensityWarning(densityStats);
+    }
+  }, [densityStats, onDensityWarning]);
+
   return (
     <>
       {/* Container */}
       <group ref={groupRef} key={resetCounter}>
         {/* Walls of the container - rendered as transparent wireframe */}
         <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[CONTAINER_SIZE, CONTAINER_SIZE, CONTAINER_SIZE]} />
+          <boxGeometry args={[containerSize, containerSize, containerSize]} />
           <meshStandardMaterial wireframe color="white" transparent opacity={0.3} />
         </mesh>
-
-        {/* Warning indicator for detected issues */}
+      
+        {/* Density warning indicator */}
+        {densityStats.warningLevel !== 'none' && (
+          <mesh 
+            position={[0, -halfSize - 0.3, 0]} 
+            rotation={[0, 0, 0]}
+          >
+            <sphereGeometry args={[0.15, 16, 16]} />
+            <meshStandardMaterial 
+              color={densityStats.warningLevel === 'critical' ? '#ff0000' : '#ffaa00'} 
+              emissive={densityStats.warningLevel === 'critical' ? '#500000' : '#332200'}
+            />
+          </mesh>
+        )}
+        
+        {/* Warning indicator for detected issues - position adjusted to avoid overlap */}
         {hasDetectedIssue && (
-          <mesh position={[0, -HALF_SIZE - 0.5, 0]}>
+          <mesh position={[0.4, -halfSize - 0.3, 0]}>
             <sphereGeometry args={[0.15, 16, 16]} />
             <meshStandardMaterial color="red" />
           </mesh>
@@ -826,43 +1065,43 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
         >
           {/* Bottom */}
           <CuboidCollider
-            args={[HALF_SIZE, WALL_THICKNESS, HALF_SIZE]}
-            position={[0, -HALF_SIZE, 0]}
+            args={[halfSize, WALL_THICKNESS, halfSize]}
+            position={[0, -halfSize, 0]}
             restitution={effectiveRestitution}
             friction={effectiveFrictionCoefficient} // Use friction coefficient
           />
           {/* Top */}
           <CuboidCollider
-            args={[HALF_SIZE, WALL_THICKNESS, HALF_SIZE]}
-            position={[0, HALF_SIZE, 0]}
+            args={[halfSize, WALL_THICKNESS, halfSize]}
+            position={[0, halfSize, 0]}
             restitution={effectiveRestitution}
             friction={effectiveFrictionCoefficient} // Use friction coefficient
           />
           {/* Left */}
           <CuboidCollider
-            args={[WALL_THICKNESS, HALF_SIZE, HALF_SIZE]}
-            position={[-HALF_SIZE, 0, 0]}
+            args={[WALL_THICKNESS, halfSize, halfSize]}
+            position={[-halfSize, 0, 0]}
             restitution={effectiveRestitution}
             friction={effectiveFrictionCoefficient} // Use friction coefficient
           />
           {/* Right */}
           <CuboidCollider
-            args={[WALL_THICKNESS, HALF_SIZE, HALF_SIZE]}
-            position={[HALF_SIZE, 0, 0]}
+            args={[WALL_THICKNESS, halfSize, halfSize]}
+            position={[halfSize, 0, 0]}
             restitution={effectiveRestitution}
             friction={effectiveFrictionCoefficient} // Use friction coefficient
           />
           {/* Front */}
           <CuboidCollider
-            args={[HALF_SIZE, HALF_SIZE, WALL_THICKNESS]}
-            position={[0, 0, -HALF_SIZE]}
+            args={[halfSize, halfSize, WALL_THICKNESS]}
+            position={[0, 0, -halfSize]}
             restitution={effectiveRestitution}
             friction={effectiveFrictionCoefficient} // Use friction coefficient
           />
           {/* Back */}
           <CuboidCollider
-            args={[HALF_SIZE, HALF_SIZE, WALL_THICKNESS]}
-            position={[0, 0, HALF_SIZE]}
+            args={[halfSize, halfSize, WALL_THICKNESS]}
+            position={[0, 0, halfSize]}
             restitution={effectiveRestitution}
             friction={effectiveFrictionCoefficient} // Use friction coefficient
           />
