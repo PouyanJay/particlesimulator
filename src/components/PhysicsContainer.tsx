@@ -71,6 +71,8 @@ interface PhysicsContainerProps {
     warningLevel: 'none' | 'warning' | 'critical';
     particlesPerAxis: number;
     averageSpacing: number;
+    maxAllowableParticles: number;
+    exceedsMaximum: boolean;
   }) => void
 }
 
@@ -202,10 +204,31 @@ const DENSITY_WARNINGS = {
   warningThreshold: 0.1,   // 10% packing ratio (drastically reduced from 25%)
   criticalThreshold: 0.2,  // 20% packing ratio (drastically reduced from 40%)
   
+  // Maximum allowed packing ratio (particles will be capped at this density)
+  maxAllowedPackingRatio: 0.5, // 50% of container volume - conservative limit for simulation stability
+  
   // Maximum theoretical packing ratio for uniform spheres is ~74% (close packing)
   // Random packing typically reaches ~64% (random close packing)
   // When approaching these values, physics simulation becomes increasingly inaccurate
 }
+
+// Calculate maximum particles that can fit in the container at the maximum allowed packing ratio
+export const calculateMaxAllowableParticles = (
+  particleSize: number, 
+  containerSize: number
+): number => {
+  // Calculate container volume
+  const containerVolume = Math.pow(containerSize, 3);
+  
+  // Calculate single particle volume
+  const particleVolume = (4/3) * Math.PI * Math.pow(particleSize, 3);
+  
+  // Calculate max particles based on the max allowed packing ratio
+  const maxParticles = Math.floor((containerVolume * DENSITY_WARNINGS.maxAllowedPackingRatio) / particleVolume);
+  
+  // Ensure we return at least 10 particles as a minimum
+  return Math.max(10, maxParticles);
+};
 
 // Function to calculate packing ratio and determine if warning is needed
 const calculatePackingRatio = (
@@ -217,6 +240,8 @@ const calculatePackingRatio = (
   warningLevel: 'none' | 'warning' | 'critical';
   particlesPerAxis: number;
   averageSpacing: number;
+  maxAllowableParticles: number;
+  exceedsMaximum: boolean;
 } => {
   // Calculate total volume of all particles
   const particleRadius = particleSize;
@@ -235,6 +260,9 @@ const calculatePackingRatio = (
   const averageContainerDimPerParticle = containerSize / particlesPerAxis;
   const averageSpacing = averageContainerDimPerParticle / (particleSize * 2);
   
+  // Calculate maximum allowable particles
+  const maxAllowableParticles = calculateMaxAllowableParticles(particleSize, containerSize);
+  
   // Determine warning level
   let warningLevel: 'none' | 'warning' | 'critical' = 'none';
   if (packingRatio >= DENSITY_WARNINGS.criticalThreshold) {
@@ -243,11 +271,16 @@ const calculatePackingRatio = (
     warningLevel = 'warning';
   }
   
+  // Determine if particle count exceeds maximum
+  const exceedsMaximum = particleCount > maxAllowableParticles;
+  
   return { 
     packingRatio, 
     warningLevel,
     particlesPerAxis,
-    averageSpacing
+    averageSpacing,
+    maxAllowableParticles,
+    exceedsMaximum
   };
 };
 

@@ -30,6 +30,7 @@ interface ControlPanelProps {
   setCollisionFadeDuration: (value: number) => void
   dynamicContainerSize: boolean
   setDynamicContainerSize: (value: boolean) => void
+  maxParticleCount?: number
 }
 
 const CustomSlider = ({ 
@@ -104,6 +105,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   setCollisionFadeDuration,
   dynamicContainerSize,
   setDynamicContainerSize,
+  maxParticleCount = 1000,
 }) => {
   // Check if any friction is enabled
   const isFrictionEnabled = particleParticleFriction || particleWallFriction;
@@ -159,11 +161,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       
       <div className="control-group">
       <CustomSlider
-        label="Particle Count"
+        label={`Particle Count (Max: ${maxParticleCount})`}
         value={particleCount}
-        onChange={setParticleCount}
+        onChange={(value) => setParticleCount(Math.min(value, maxParticleCount))}
         min={10}
-        max={1000}
+        max={Math.max(1000, maxParticleCount)}
         step={10}
         formatValue={(v) => Math.round(v).toString()}
       />

@@ -3,7 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import { Physics } from '@react-three/rapier'
 import { OrbitControls } from '@react-three/drei'
 import './App.css'
-import PhysicsContainer from './components/PhysicsContainer'
+import PhysicsContainer, { calculateMaxAllowableParticles } from './components/PhysicsContainer'
 import ControlPanel from './components/ControlPanel'
 import SpeedGraph from './components/SpeedGraph'
 import CollisionGraph from './components/CollisionGraph'
@@ -15,6 +15,8 @@ type DensityWarningData = {
   warningLevel: 'none' | 'warning' | 'critical';
   particlesPerAxis: number;
   averageSpacing: number;
+  maxAllowableParticles: number;
+  exceedsMaximum: boolean;
 };
 
 function App() {
@@ -61,8 +63,13 @@ function App() {
     packingRatio: 0,
     warningLevel: 'none',
     particlesPerAxis: 0,
-    averageSpacing: 0
+    averageSpacing: 0,
+    maxAllowableParticles: 0,
+    exceedsMaximum: false
   });
+  
+  // Track if we're currently enforcing a particle count adjustment
+  const [enforcingParticleLimit, setEnforcingParticleLimit] = useState(false);
   
   // Function to handle receiving speed data from PhysicsContainer
   const handleSpeedUpdate = (speed: number) => {
@@ -77,6 +84,17 @@ function App() {
   // Handle density warning from PhysicsContainer
   const handleDensityWarning = (warning: DensityWarningData) => {
     setDensityWarning(warning);
+    
+    // If particle count exceeds maximum and we're not already enforcing a limit
+    if (warning.exceedsMaximum && !enforcingParticleLimit) {
+      setEnforcingParticleLimit(true);
+      
+      // Set particle count to the maximum allowed value
+      setParticleCount(warning.maxAllowableParticles);
+      
+      // Reset the enforcement flag after a delay
+      setTimeout(() => setEnforcingParticleLimit(false), 100);
+    }
   };
 
   // Update speed history at a controlled rate (twice per second)
@@ -215,6 +233,19 @@ function App() {
   // Add a warning for high deltaTime values
   const isHighDeltaTime = deltaTime > 3.0;
 
+  // Calculate max allowable particles for display in the UI
+  const maxAllowableParticles = calculateMaxAllowableParticles(
+    particleSize, 
+    dynamicContainerSize ? getContainerSize(particleCount) : 2.5 // Use same logic as PhysicsContainer
+  );
+  
+  // Function to get container size (duplicated from PhysicsContainer for UI calculation)
+  function getContainerSize(count: number): number {
+    const scaleFactor = Math.pow(count / 100, 1/3);
+    const boundedScaleFactor = Math.max(0.8, Math.min(2.0, scaleFactor));
+    return 2.5 * boundedScaleFactor;
+  }
+
   return (
     <div className="app-container">
       <div className="control-panel">
@@ -248,6 +279,7 @@ function App() {
             setCollisionFadeDuration={setCollisionFadeDuration}
             dynamicContainerSize={dynamicContainerSize}
             setDynamicContainerSize={setDynamicContainerSize}
+            maxParticleCount={maxAllowableParticles}
           />
         </div>
       </div>
@@ -314,9 +346,29 @@ function App() {
         />
         
         <div className="simulation-status">
-          {isPlaying ? "Running" : "Paused"} • {activeParticles} active particles • Restitution: {restitution.toFixed(3)} • Friction: {frictionCoefficient.toFixed(3)}
+          {isPlaying ? "Running" : "Paused"} • {activeParticles} active particles • Restitution: {restitution.toFixed(3)} • Friction: {frictionCoefficient.toFixed(3)} • Max Particles: {maxAllowableParticles}
           {isHighDeltaTime && <span style={{ color: 'orange', marginLeft: '8px' }}> ⚠️ High simulation speed may cause instability</span>}
         </div>
+        
+        {/* Particle Limit Exceeded Warning */}
+        {particleCount >= maxAllowableParticles && (
+          <div className="density-warning density-warning-critical" style={{ bottom: '60px' }}>
+            <span className="warning-icon">⚠️</span>
+            <div className="warning-content">
+              <h3>Maximum Particle Limit Reached</h3>
+              <p>
+                The number of particles has been capped at {maxAllowableParticles} based on current settings.
+              </p>
+              <p className="warning-explanation">
+                This limit is calculated based on the container size ({dynamicContainerSize ? getContainerSize(particleCount).toFixed(2) : '2.5'} units) and 
+                particle size ({particleSize} units) to maintain simulation stability.
+              </p>
+              <p className="warning-suggestion">
+                To add more particles, try decreasing particle size or enabling dynamic container scaling.
+              </p>
+            </div>
+          </div>
+        )}
         
         {densityWarning.warningLevel !== 'none' && (
           <div className={`density-warning density-warning-${densityWarning.warningLevel}`}>
