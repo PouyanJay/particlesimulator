@@ -71,6 +71,9 @@ function App() {
   // Track if we're currently enforcing a particle count adjustment
   const [enforcingParticleLimit, setEnforcingParticleLimit] = useState(false);
   
+  // UI state
+  const [controlPanelVisible, setControlPanelVisible] = useState(true) // Control panel visibility state
+  
   // Function to handle receiving speed data from PhysicsContainer
   const handleSpeedUpdate = (speed: number) => {
     setCurrentSpeed(speed);
@@ -248,7 +251,16 @@ function App() {
 
   return (
     <div className="app-container">
-      <div className="control-panel">
+      {/* Toggle button for control panel on mobile */}
+      <button 
+        className="control-panel-toggle"
+        onClick={() => setControlPanelVisible(!controlPanelVisible)}
+        aria-label={controlPanelVisible ? "Hide controls" : "Show controls"}
+      >
+        {controlPanelVisible ? "×" : "≡"}
+      </button>
+      
+      <div className={`control-panel ${controlPanelVisible ? 'visible' : 'hidden'}`}>
         <div className="control-section-blur">
           <Logo />
         </div>

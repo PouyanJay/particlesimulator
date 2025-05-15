@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -42,11 +42,37 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
 }) => {
   // Use local state but sync with parent through callback
   const [localVisible, setLocalVisible] = useState<boolean>(isVisible);
+  const chartRef = useRef<any>(null);
   
   // Keep local state in sync with prop
   useEffect(() => {
     setLocalVisible(isVisible);
   }, [isVisible]);
+  
+  // Add window resize listener
+  useEffect(() => {
+    const handleResize = () => {
+      // Force resize of chart if visible
+      if (localVisible && chartRef.current) {
+        const chart = chartRef.current;
+        try {
+          // Updated access to chart instance - modern react-chartjs-2 API
+          if (chart && chart.current) {
+            chart.current.resize();
+          }
+        } catch (err) {
+          console.error("Error resizing speed chart:", err);
+        }
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [localVisible]);
   
   // Calculate y-axis limits based on initialVelocity
   const maxYValue = initialVelocity * 1.3;
@@ -155,8 +181,15 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    responsiveAnimationDuration: 0, // Disable animation on resize
     animation: {
       duration: 0 // Disable animation by setting duration to 0
+    },
+    resizeDelay: 0, // Don't delay resize operations
+    devicePixelRatio: window.devicePixelRatio || 1, // Use proper device pixel ratio
+    // Make sure the resize listener is enabled
+    onResize: function(chart: any) {
+      // Simple resize without additional logic
     },
     scales: {
       y: {
@@ -248,9 +281,11 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
       </div>
       <div className="speed-graph">
         <Line 
+          ref={chartRef}
           data={chartData}
           options={options}
           redraw={false}
+          fallbackContent={<div className="chart-fallback">Loading chart...</div>}
         />
       </div>
       <button 
