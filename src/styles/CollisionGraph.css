@@ -21,22 +21,18 @@
 /* Responsive layout for small screens */
 @media (max-width: 768px) {
   .collision-graph-container {
-    position: relative; /* Change to relative positioning */
-    top: 0 !important; /* Override inline styles */
+    position: relative; /* Keep relative positioning */
+    top: 0 !important; /* Override inline styles if any were present, ensure it aligns */
     right: 0;
-    width: 100%; /* Full width */
-    max-width: 100%;
-    /* height: min(180px, 25vh); Let aspect-ratio from App.css control height */
-    aspect-ratio: 2 / 1; /* Enforce aspect ratio, consistent with App.css */
-    margin: 0 0 10px 0; /* Add margin at bottom */
-    border-radius: 0; /* Remove border radius */
-    padding: 10px; /* Adjusted padding */
-    box-shadow: none; /* Remove shadow */
-    border-left: none;
-    border-right: none;
-    border-top: none;
-    border-bottom: 1px solid rgba(248, 113, 113, 0.3);
-    z-index: 9; /* Lower z-index than speed graph */
+    width: calc(50% - 0.25rem); /* 50% of parent width minus half the gap (0.5rem / 2) */
+    max-width: none; /* Remove any max-width that might conflict */
+    aspect-ratio: 1.618 / 1; /* Golden ratio: width / height */
+    margin: 0; /* Remove previous margins */
+    border-radius: 4px; /* Keep a small border radius for aesthetics */
+    padding: 10px; 
+    box-shadow: none; 
+    border: 1px solid rgba(248, 113, 113, 0.3); /* Keep a subtle border */
+    z-index: 9; 
   }
 
   .collision-graph-header {

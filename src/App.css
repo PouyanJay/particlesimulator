@@ -521,24 +521,25 @@ h2 {
     flex-grow: 1;
   }
   
-  .graph-container { /* Style for individual graph containers */
-    width: 100% !important;
-    aspect-ratio: 2 / 1; /* Height will be 50% of the width */
-    margin-bottom: 1rem; /* Add some space between graphs if they stack */
-  }
-  
   .mobile-graphs-container {
-    /* This container already handles flex-direction: column */
-    padding: 0.5rem;
-    max-height: 50vh; /* Example: limit total graph area height if needed */
-    overflow-y: auto; /* Allow scrolling if graphs exceed max-height */
+    display: flex; /* Ensure it is flex, though it should be already */
+    flex-direction: row; /* Lay out graphs side-by-side */
+    flex-wrap: nowrap; /* Prevent wrapping if somehow widths are too large */
+    gap: 0.5rem;         /* Space between the two graphs */
+    padding: 0.5rem;     /* Padding around the container of graphs */
+    /* max-height: 50vh; Remove or adjust: height will be driven by aspect ratio of children */
+    /* overflow-y: auto; May not be needed if height is controlled */
+    width: 100%; /* Ensure it takes full width to distribute children */
   }
   
-  /* Ensure canvas inside graph container is responsive */
+  /* Ensure canvas inside graph container is responsive (this rule might be from an old approach, review if still needed in this context) */
+  /* We expect .speed-graph canvas and .collision-graph canvas to be handled by their own CSS */
+  /*
   .graph-container canvas {
     width: 100% !important;
     height: 100% !important; 
   }
+  */
   
   /* Density warning adjustments for mobile */
   .density-warning, 
