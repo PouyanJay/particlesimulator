@@ -197,7 +197,7 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
       duration: 0 // Disable animation by setting duration to 0
     },
     devicePixelRatio: window.devicePixelRatio || 1, // Use proper device pixel ratio
-    onResize: function(chart: any, size: {width: number, height: number}) {
+    onResize: function(chart: any /*, size: {width: number, height: number} // Removed unused size parameter */) {
       // Ensure y-axis starts at 0 after Chart.js internal resize handling
       if (chart.options && chart.options.scales && chart.options.scales.y) {
         chart.options.scales.y.min = 0; 
