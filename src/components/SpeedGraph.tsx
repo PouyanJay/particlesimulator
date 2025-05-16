@@ -31,6 +31,7 @@ interface SpeedGraphProps {
   initialVelocity: number // Initial velocity value to scale the y-axis
   isVisible?: boolean // Whether the graph is currently visible
   onVisibilityChange?: (visible: boolean) => void // Callback when visibility changes
+  isMobileView?: boolean; // To adapt options for mobile
 }
 
 const SpeedGraph: React.FC<SpeedGraphProps> = ({ 
@@ -38,7 +39,8 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
   currentSpeed,
   initialVelocity,
   isVisible = true,
-  onVisibilityChange
+  onVisibilityChange,
+  isMobileView = false // Default to false if not provided
 }) => {
   // Use local state but sync with parent through callback
   const [localVisible, setLocalVisible] = useState<boolean>(isVisible);
@@ -49,30 +51,40 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
     setLocalVisible(isVisible);
   }, [isVisible]);
   
-  // Add window resize listener
+  // Add window resize listener & initial resize trigger
   useEffect(() => {
-    const handleResize = () => {
-      // Force resize of chart if visible
-      if (localVisible && chartRef.current) {
-        const chart = chartRef.current;
-        try {
-          // Updated access to chart instance - modern react-chartjs-2 API
-          if (chart && chart.current) {
-            chart.current.resize();
-          }
-        } catch (err) {
-          console.error("Error resizing speed chart:", err);
-        }
+    const chartInstance = chartRef.current?.current; // Direct reference to Chart.js instance
+
+    const handleWindowResize = () => {
+      if (localVisible && chartInstance) {
+        chartInstance.resize(); // Just tell the chart to resize itself. onResize in options will handle the rest.
       }
     };
-    
-    window.addEventListener('resize', handleResize);
-    
-    // Clean up
+
+    window.addEventListener('resize', handleWindowResize);
+
+    let timerId: NodeJS.Timeout | undefined;
+    if (localVisible && chartInstance) {
+      timerId = setTimeout(() => {
+        if (chartInstance) { // Check if instance still exists
+          chartInstance.resize(); // Trigger resize, which in turn triggers onResize in options
+          // Forcefully apply y-axis settings after initial resize
+          if (chartInstance.options && chartInstance.options.scales && chartInstance.options.scales.y) {
+            chartInstance.options.scales.y.min = 0;
+            chartInstance.options.scales.y.beginAtZero = true;
+          }
+          chartInstance.update('none'); // Update without animation
+        }
+      }, 100); // Increased delay slightly for more stability on initial load
+    }
+
     return () => {
-      window.removeEventListener('resize', handleResize);
+      if (timerId) {
+        clearTimeout(timerId);
+      }
+      window.removeEventListener('resize', handleWindowResize);
     };
-  }, [localVisible]);
+  }, [localVisible]); // Re-run if visibility changes
   
   // Calculate y-axis limits based on initialVelocity
   const maxYValue = initialVelocity * 1.3;
@@ -181,21 +193,56 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-    responsiveAnimationDuration: 0, // Disable animation on resize
     animation: {
       duration: 0 // Disable animation by setting duration to 0
     },
-    resizeDelay: 0, // Don't delay resize operations
     devicePixelRatio: window.devicePixelRatio || 1, // Use proper device pixel ratio
-    // Make sure the resize listener is enabled
-    onResize: function(chart: any) {
-      // Simple resize without additional logic
+    onResize: function(chart: any, size: {width: number, height: number}) {
+      // Ensure y-axis starts at 0 after Chart.js internal resize handling
+      if (chart.options && chart.options.scales && chart.options.scales.y) {
+        chart.options.scales.y.min = 0; 
+        chart.options.scales.y.beginAtZero = true; 
+      }
+      chart.update('none'); // Force update after applying options
     },
     scales: {
+      x: {
+        grid: {
+          display: false, // Hide x-axis grid lines
+        },
+        ticks: {
+          display: false, // Hide x-axis labels
+        }
+      },
       y: {
-        beginAtZero: true,
-        min: 0,
+        beginAtZero: true, // Always start y-axis at 0
+        min: 0, // Explicitly set minimum to 0
         max: maxYValue, // Dynamic max value based on initialVelocity
+        border: {
+          display: true,
+          width: 1
+        },
+        ticks: {
+          color: 'rgba(255, 255, 255, 0.7)',
+          font: {
+            size: isMobileView ? 9 : 10 // Slightly smaller font for mobile ticks
+          },
+          precision: 2, // Force 2 decimal precision
+          // Force specific values to appear
+          callback: function(tickValue: number | string) {
+            const numValue = typeof tickValue === 'string' ? parseFloat(tickValue) : tickValue;
+            const targetValues = [0, midYValue, maxYValue];
+            const isTargetValue = targetValues.some(target => 
+              Math.abs(numValue - target) < 0.001
+            );
+            // On mobile, show all target values if they are generated, otherwise it might look too sparse.
+            // On desktop, only show the formatted ones, hiding intermediate auto-generated ticks.
+            return isMobileView ? (isTargetValue ? formatTickValue(numValue) : formatTickValue(numValue)) : (isTargetValue ? formatTickValue(numValue) : '');
+          },
+          // Generate enough ticks to include our target values
+          count: isMobileView ? 5 : 7 // Fewer ticks on mobile
+        },
+        // Grid line configuration to ensure consistent display
         grid: {
           color: function(context: ContextWithTickValue) {
             // Only draw grid lines for specific values
@@ -217,36 +264,9 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
               Math.abs(value - target) < 0.001
             );
             return isTargetValue ? 1 : 0;
-          }
-        },
-        ticks: {
-          color: 'rgba(255, 255, 255, 0.7)',
-          font: {
-            size: 10
           },
-          // Force specific values to appear
-          callback: function(tickValue: number | string) {
-            const numValue = typeof tickValue === 'string' ? parseFloat(tickValue) : tickValue;
-            const targetValues = [0, midYValue, maxYValue];
-            const isTargetValue = targetValues.some(target => 
-              Math.abs(numValue - target) < 0.001
-            );
-            return isTargetValue ? formatTickValue(numValue) : '';
-          },
-          // Generate enough ticks to include our target values
-          count: 7 // Should generate enough ticks to include our 3 target values
-        }
-      },
-      x: {
-        grid: {
-          display: false
-        },
-        ticks: {
-          color: 'rgba(255, 255, 255, 0.7)',
-          font: {
-            size: 8
-          },
-          maxTicksLimit: 6
+          drawTicks: true,
+          drawOnChartArea: true
         }
       }
     },
@@ -284,7 +304,7 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
           ref={chartRef}
           data={chartData}
           options={options}
-          redraw={false}
+          redraw={true}
           fallbackContent={<div className="chart-fallback">Loading chart...</div>}
         />
       </div>

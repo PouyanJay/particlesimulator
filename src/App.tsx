@@ -74,6 +74,27 @@ function App() {
   // UI state
   const [controlPanelVisible, setControlPanelVisible] = useState(true) // Control panel visibility state
   
+  // Window size tracking for responsive layout
+  const [isMobileView, setIsMobileView] = useState<boolean>(false);
+  
+  // Detect screen size on mount and window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth <= 768);
+    };
+    
+    // Call once on mount
+    handleResize();
+    
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+  
   // Function to handle receiving speed data from PhysicsContainer
   const handleSpeedUpdate = (speed: number) => {
     setCurrentSpeed(speed);
@@ -295,7 +316,36 @@ function App() {
           />
         </div>
       </div>
-      <div className="simulation-container">
+      <div className={`simulation-container ${isMobileView ? 'simulation-container-mobile' : ''}`}>
+        {/* Mobile view - graphs container at the top */}
+        {isMobileView && (
+          <div className="mobile-graphs-container">
+            {speedGraphVisible && (
+              <SpeedGraph 
+                data={speedHistory} 
+                currentSpeed={currentSpeed} 
+                initialVelocity={initialVelocity}
+                isVisible={speedGraphVisible}
+                onVisibilityChange={setSpeedGraphVisible}
+                isMobileView={isMobileView}
+              />
+            )}
+            
+            {collisionGraphVisible && (
+              <CollisionGraph
+                data={collisionHistory}
+                currentCollisionCount={currentCollisionCount}
+                initialVelocity={initialVelocity}
+                isVisible={collisionGraphVisible}
+                onVisibilityChange={setCollisionGraphVisible}
+                speedGraphVisible={speedGraphVisible}
+                isMobileView={isMobileView}
+              />
+            )}
+          </div>
+        )}
+        
+        {/* Canvas - particle simulation */}
         <Canvas camera={{ position: [6, 6, 6], fov: 45 }}>
           <color attach="background" args={['#0f172a']} />
           <ambientLight intensity={0.3} />
@@ -338,24 +388,27 @@ function App() {
           />
         </Canvas>
         
-        {/* Speed Graph - positioned through CSS */}
-        <SpeedGraph 
-          data={speedHistory} 
-          currentSpeed={currentSpeed} 
-          initialVelocity={initialVelocity}
-          isVisible={speedGraphVisible}
-          onVisibilityChange={setSpeedGraphVisible}
-        />
-        
-        {/* Collision Graph - positioned through CSS */}
-        <CollisionGraph
-          data={collisionHistory}
-          currentCollisionCount={currentCollisionCount}
-          initialVelocity={initialVelocity}
-          isVisible={collisionGraphVisible}
-          onVisibilityChange={setCollisionGraphVisible}
-          speedGraphVisible={speedGraphVisible}
-        />
+        {/* Desktop view - floating graphs */}
+        {!isMobileView && (
+          <>
+            <SpeedGraph 
+              data={speedHistory} 
+              currentSpeed={currentSpeed} 
+              initialVelocity={initialVelocity}
+              isVisible={speedGraphVisible}
+              onVisibilityChange={setSpeedGraphVisible}
+            />
+            
+            <CollisionGraph
+              data={collisionHistory}
+              currentCollisionCount={currentCollisionCount}
+              initialVelocity={initialVelocity}
+              isVisible={collisionGraphVisible}
+              onVisibilityChange={setCollisionGraphVisible}
+              speedGraphVisible={speedGraphVisible}
+            />
+          </>
+        )}
         
         <div className="simulation-status">
           {isPlaying ? "Running" : "Paused"} • {activeParticles} active particles • Restitution: {restitution.toFixed(3)} • Friction: {frictionCoefficient.toFixed(3)} • Max Particles: {maxAllowableParticles}

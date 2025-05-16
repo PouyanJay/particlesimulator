@@ -132,9 +132,24 @@ body {
   flex: 1;
   position: relative;
   background-color: var(--background-primary);
-  overflow: hidden; /* Prevent content from spilling out */
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+/* Mobile optimized layout */
+.simulation-container-mobile {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-graphs-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  z-index: 20;
+  background-color: var(--background-primary);
 }
 
 /* Canvas container - ensures the canvas fills the available space */
@@ -488,34 +503,80 @@ h2 {
   }
   
   .control-panel {
-    flex: 0 0 auto;
-    width: 100%;
-    max-height: 50vh;
-    overflow-y: auto;
-    order: 2; /* Move to bottom on mobile */
+    width: 100%; /* Full width on mobile */
+    max-height: 50vh; /* Limit height and allow scrolling */
+    flex-basis: auto;
+    border-bottom: 1px solid var(--panel-border);
+    position: relative; /* Ensure it's part of the flow for mobile-graphs-container */
+    /* transform: translateY(0); Reset any transform if control panel is not hidden */
   }
   
   .control-panel-inner {
-    min-width: 100%;
-    width: 100%;
+    padding: 1rem; /* Reduced padding on mobile */
+    min-width: unset; /* Allow it to shrink */
   }
   
   .simulation-container {
-    flex: 1 1 auto;
-    min-height: 50vh;
-    order: 1; /* Move to top on mobile */
+    height: auto; /* Adjust height based on content */
+    flex-grow: 1;
   }
   
+  .graph-container { /* Style for individual graph containers */
+    width: 100% !important;
+    aspect-ratio: 2 / 1; /* Height will be 50% of the width */
+    margin-bottom: 1rem; /* Add some space between graphs if they stack */
+  }
+  
+  .mobile-graphs-container {
+    /* This container already handles flex-direction: column */
+    padding: 0.5rem;
+    max-height: 50vh; /* Example: limit total graph area height if needed */
+    overflow-y: auto; /* Allow scrolling if graphs exceed max-height */
+  }
+  
+  /* Ensure canvas inside graph container is responsive */
+  .graph-container canvas {
+    width: 100% !important;
+    height: 100% !important; 
+  }
+  
+  /* Density warning adjustments for mobile */
   .density-warning, 
-  .simulation-status {
-    position: fixed; /* Use fixed positioning on mobile */
-    max-width: calc(100% - 20px);
+  .density-warning-warning, 
+  .density-warning-critical {
     font-size: 0.8rem;
+    padding: 0.6rem;
+    margin: 0.5rem; /* Adjust margin for mobile */
   }
   
   .density-warning {
-    bottom: 50%; /* Position in the middle */
-    right: 10px;
+    max-width: calc(100% - 1rem); /* Ensure it fits within viewport with padding */
+    bottom: 0.5rem;
+    left: 0.5rem;
+    right: 0.5rem; /* Center it better on mobile if it was absolutely positioned */
+    transform: none; /* Reset transform if it was used for centering */
+  }
+  
+  .simulation-status {
+    /* Adjust if status is overlapping or too small */
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    bottom: 0.5rem; /* Align with density warning if needed */
+    right: 0.5rem;
+  }
+  
+  /* Further adjustments for very small screens if needed */
+  /* canvas {
+    min-height: 150px; /* Example minimum height for readability */
+  /*} */
+  
+  .density-warning {
+    position: relative; /* Change from fixed/absolute if it causes issues */
+    bottom: auto;
+    left: auto;
+    right: auto;
+    margin: 10px; /* Add some margin */
+    width: auto; /* Let it take the width of its container */
   }
 }
 
@@ -546,6 +607,20 @@ h2 {
   .warning-explanation, 
   .warning-suggestion {
     font-size: 12px !important;
+  }
+  
+  .control-panel {
+    max-height: 40vh; /* Limit control panel height on very small screens */
+  }
+  
+  .warning-details {
+    max-height: 100px;
+    overflow-y: auto;
+  }
+  
+  .warning-suggestion,
+  .warning-explanation {
+    font-size: 11px !important;
   }
 }
 

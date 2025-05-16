@@ -18,6 +18,75 @@
   flex-direction: column;
 }
 
+/* Responsive layout for small screens */
+@media (max-width: 768px) {
+  .collision-graph-container {
+    position: relative; /* Change to relative positioning */
+    top: 0 !important; /* Override inline styles */
+    right: 0;
+    width: 100%; /* Full width */
+    max-width: 100%;
+    /* height: min(180px, 25vh); Let aspect-ratio from App.css control height */
+    aspect-ratio: 2 / 1; /* Enforce aspect ratio, consistent with App.css */
+    margin: 0 0 10px 0; /* Add margin at bottom */
+    border-radius: 0; /* Remove border radius */
+    padding: 10px; /* Adjusted padding */
+    box-shadow: none; /* Remove shadow */
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    border-bottom: 1px solid rgba(248, 113, 113, 0.3);
+    z-index: 9; /* Lower z-index than speed graph */
+  }
+
+  .collision-graph-header {
+    padding-bottom: 8px; /* Add some space below header */
+    margin-bottom: 6px; /* Reduce margin before graph itself */
+  }
+
+  .collision-graph-title {
+    font-size: clamp(0.7rem, 2.5vw, 0.85rem); /* Responsive font size for title */
+    letter-spacing: 0.25px;
+  }
+
+  .collision-graph-value {
+    font-size: clamp(0.8rem, 3vw, 1rem); /* Responsive font size for value */
+  }
+
+  .collision-graph {
+    background-color: rgba(15, 23, 42, 0.5); /* Slightly darker background for better contrast */
+    /* min-height: 120px; Let aspect ratio define height */
+    border-radius: 4px; /* Smaller border radius */
+    border-width: 1px; /* Ensure border is visible */
+  }
+  
+  /* Ensure chart canvas has proper dimensions */
+  .collision-graph canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .collision-graph-container {
+    /* height: 150px; Let aspect-ratio from App.css control height */
+    padding: 8px;
+  }
+  
+  .collision-graph-header {
+    margin-bottom: 4px;
+    padding-bottom: 6px;
+  }
+  .collision-graph-title {
+    font-size: 0.65rem; /* Slightly smaller fixed size for very small screens */
+  }
+
+  .collision-graph-value {
+    font-size: 0.75rem; /* Slightly smaller fixed size for very small screens */
+  }
+}
+
 .collision-graph {
   width: 100%;
   flex-grow: 1; /* Allow graph to fill the container */
