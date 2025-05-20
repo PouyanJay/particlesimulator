@@ -139,7 +139,6 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   setDynamicContainerSize,
   maxParticleCount = 1000,
   isCompactMode,
-  setIsCompactMode,
 }) => {
   // Check if any friction is enabled
   const isFrictionEnabled = particleParticleFriction || particleWallFriction;
