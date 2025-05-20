@@ -32,7 +32,6 @@ interface ControlPanelProps {
   setDynamicContainerSize: (value: boolean) => void
   maxParticleCount?: number
   isCompactMode: boolean
-  setIsCompactMode: (value: boolean) => void
 }
 
 const CustomSlider = ({ 

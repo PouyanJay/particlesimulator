@@ -341,7 +341,6 @@ function App() {
             setDynamicContainerSize={setDynamicContainerSize}
             maxParticleCount={Math.min(500, maxAllowableParticles)}
             isCompactMode={isCompactMode}
-            setIsCompactMode={setIsCompactMode}
           />
         </div>
       </div>
