@@ -147,9 +147,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   
   // State for collapsible sections
   const [expandedSections, setExpandedSections] = useState({
-    physics: true,
-    particles: true,
-    simulation: true
+    physics: false,
+    particles: false,
+    simulation: false
   });
   
   // Toggle section expansion
@@ -207,7 +207,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     <>
       {/* PHYSICS CONTROLS */}
       <div className={`control-section-glass ${isCompactMode ? 'compact' : ''}`}>  
-        <div className="section-header-glass">
+        <div className={`section-header-glass${!expandedSections.physics ? ' collapsed' : ''}`}>
           <div className="accent-bar" />
           <h3 className="section-title-glass">Physics Controls</h3>
           <button
@@ -272,11 +272,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           </div>
         )}
       </div>
-      <div className="section-divider-glass" />
 
       {/* PARTICLE PARAMETERS */}
       <div className={`control-section-glass ${isCompactMode ? 'compact' : ''}`}>  
-        <div className="section-header-glass">
+        <div className={`section-header-glass${!expandedSections.particles ? ' collapsed' : ''}`}>
           <div className="accent-bar" />
           <h3 className="section-title-glass">Particle Parameters</h3>
           <button
@@ -333,11 +332,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           </div>
         )}
       </div>
-      <div className="section-divider-glass" />
 
       {/* SIMULATION CONTROLS */}
       <div className={`control-section-glass ${isCompactMode ? 'compact' : ''}`}>  
-        <div className="section-header-glass">
+        <div className={`section-header-glass${!expandedSections.simulation ? ' collapsed' : ''}`}>
           <div className="accent-bar" />
           <h3 className="section-title-glass">Simulation Controls</h3>
           <button
