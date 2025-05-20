@@ -312,7 +312,7 @@ function App() {
             setCollisionFadeDuration={setCollisionFadeDuration}
             dynamicContainerSize={dynamicContainerSize}
             setDynamicContainerSize={setDynamicContainerSize}
-            maxParticleCount={maxAllowableParticles}
+            maxParticleCount={Math.min(500, maxAllowableParticles)}
           />
         </div>
       </div>

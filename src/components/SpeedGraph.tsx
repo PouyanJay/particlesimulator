@@ -87,7 +87,8 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
   }, [localVisible]); // Re-run if visibility changes
   
   // Calculate y-axis limits based on initialVelocity
-  const maxYValue = initialVelocity * 1.3;
+  const maxDataValue = Math.max(...data, initialVelocity * 1.3);
+  const maxYValue = Math.max(initialVelocity * 1.3, maxDataValue * 1.1);
   const midYValue = maxYValue * 0.5;
   
   // Format y-axis tick values to 2 decimal places

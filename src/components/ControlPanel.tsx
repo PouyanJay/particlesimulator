@@ -175,7 +175,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         value={particleCount}
         onChange={(value) => setParticleCount(Math.min(value, maxParticleCount))}
         min={10}
-        max={Math.max(1000, maxParticleCount)}
+        max={500}
         step={10}
         formatValue={(v) => Math.round(v).toString()}
         tooltipText="Set the total number of particles in the simulation."
