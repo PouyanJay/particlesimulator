@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useMemo } from 'react'
+import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import * as Rapier from '@react-three/rapier'
 import * as THREE from 'three'
 import * as Fiber from '@react-three/fiber'
@@ -49,6 +49,20 @@ const COLLISION_DETECTION = {
   // Local density detection
   localDensityRadius: 0.5,     // Radius to check for local particle clustering
   localDensityThreshold: 3     // Number of particles in local radius to consider as clustered
+}
+
+// Define density warning thresholds based on physics packing principles
+const DENSITY_WARNINGS = {
+  // Warning level thresholds (particle volume / container volume ratio)
+  warningThreshold: 0.1,   // 10% packing ratio (drastically reduced from 25%)
+  criticalThreshold: 0.2,  // 20% packing ratio (drastically reduced from 40%)
+  
+  // Maximum allowed packing ratio (particles will be capped at this density)
+  maxAllowedPackingRatio: 0.5, // 50% of container volume - conservative limit for simulation stability
+  
+  // Maximum theoretical packing ratio for uniform spheres is ~74% (close packing)
+  // Random packing typically reaches ~64% (random close packing)
+  // When approaching these values, physics simulation becomes increasingly inaccurate
 }
 
 interface PhysicsContainerProps {
@@ -167,51 +181,6 @@ const hasInvalidVelocity = (vel: { x: number, y: number, z: number }) => {
          Math.abs(vel.x) > 100 || Math.abs(vel.y) > 100 || Math.abs(vel.z) > 100 // Lower threshold
 }
 
-// Helper function to calculate dynamic speed threshold based on density
-const calculateDensityAdjustedThreshold = (density: number): {
-  speedChangeThreshold: number,
-  minSpeedForCollision: number
-} => {
-  // Normalize density to a 0-1 scale relative to our thresholds
-  const normalizedDensity = Math.max(0, Math.min(1, 
-    (density - COLLISION_DETECTION.lowDensityThreshold) / 
-    (COLLISION_DETECTION.highDensityThreshold - COLLISION_DETECTION.lowDensityThreshold)
-  ));
-
-  // Apply non-linear scaling for more sensitivity at higher densities
-  // Using a quadratic curve gives us more reduction at higher densities
-  const thresholdReduction = COLLISION_DETECTION.maxDensityThresholdReduction * 
-    Math.pow(normalizedDensity, 2);
-  
-  // Apply the reduction to get our adjusted threshold
-  const speedChangeThreshold = COLLISION_DETECTION.baseSpeedChangeThreshold * 
-    (1.0 - thresholdReduction);
-
-  // Similarly adjust minimum speed threshold with smooth transition
-  const minSpeedForCollision = COLLISION_DETECTION.minSpeedLowDensity -
-    (COLLISION_DETECTION.minSpeedLowDensity - COLLISION_DETECTION.minSpeedHighDensity) * 
-    Math.pow(normalizedDensity, 1.5);  // Use different power for different curve shape
-  
-  return {
-    speedChangeThreshold,
-    minSpeedForCollision
-  };
-};
-
-// Define density warning thresholds based on physics packing principles
-const DENSITY_WARNINGS = {
-  // Warning level thresholds (particle volume / container volume ratio)
-  warningThreshold: 0.1,   // 10% packing ratio (drastically reduced from 25%)
-  criticalThreshold: 0.2,  // 20% packing ratio (drastically reduced from 40%)
-  
-  // Maximum allowed packing ratio (particles will be capped at this density)
-  maxAllowedPackingRatio: 0.5, // 50% of container volume - conservative limit for simulation stability
-  
-  // Maximum theoretical packing ratio for uniform spheres is ~74% (close packing)
-  // Random packing typically reaches ~64% (random close packing)
-  // When approaching these values, physics simulation becomes increasingly inaccurate
-}
-
 // Calculate maximum particles that can fit in the container at the maximum allowed packing ratio
 export const calculateMaxAllowableParticles = (
   particleSize: number, 
@@ -304,6 +273,54 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
   // Use counter to force re-render on reset
   const [resetCounter, setResetCounter] = useState(0)
   
+  // Calculate adaptive thresholds based on props
+  const effectiveProximityThreshold = useMemo(() => {
+    // Even more aggressive scaling for large particles
+    // Use a quadratic scaling to better handle very large particles
+    const sizeMultiplier = Math.max(1.0, Math.pow(particleSize * 3.0, 1.5));
+    return COLLISION_DETECTION.proximityThreshold * sizeMultiplier;
+  }, [particleSize]);
+
+  const effectiveBaseSpeedChangeThreshold = useMemo(() => {
+    // Make speed change detection more sensitive for larger particles
+    const sizeFactor = Math.max(0.3, 1.0 - particleSize * 0.7); // More aggressive reduction for large particles
+    const velocityFactor = Math.max(0.2, 1.0 - initialVelocity / 10); // More sensitive to velocity changes
+    return COLLISION_DETECTION.baseSpeedChangeThreshold * sizeFactor * velocityFactor;
+  }, [particleSize, initialVelocity]);
+
+  // Update calculateDensityAdjustedThreshold to use effectiveBaseSpeedChangeThreshold
+  const calculateDensityAdjustedThreshold = useCallback((density: number): {
+    speedChangeThreshold: number,
+    minSpeedForCollision: number
+  } => {
+    // Normalize density to a 0-1 scale relative to our thresholds
+    const normalizedDensity = Math.max(0, Math.min(1, 
+      (density - COLLISION_DETECTION.lowDensityThreshold) / 
+      (COLLISION_DETECTION.highDensityThreshold - COLLISION_DETECTION.lowDensityThreshold)
+    ));
+
+    // Apply non-linear scaling for more sensitivity at higher densities
+    const thresholdReduction = COLLISION_DETECTION.maxDensityThresholdReduction * 
+      Math.pow(normalizedDensity, 1.5); // Changed from 2 to 1.5 for more sensitivity
+    
+    // Use the effective base speed change threshold
+    const speedChangeThreshold = effectiveBaseSpeedChangeThreshold * 
+      (1.0 - thresholdReduction);
+
+    // Adjust minimum speed threshold based on particle size
+    const minSpeedBase = COLLISION_DETECTION.minSpeedLowDensity -
+      (COLLISION_DETECTION.minSpeedLowDensity - COLLISION_DETECTION.minSpeedHighDensity) * 
+      Math.pow(normalizedDensity, 1.2); // Changed from 1.5 to 1.2 for more sensitivity
+    
+    // Scale minimum speed threshold with particle size - more aggressive reduction
+    const minSpeedForCollision = minSpeedBase * Math.max(0.3, 1.0 - particleSize * 0.7);
+    
+    return {
+      speedChangeThreshold,
+      minSpeedForCollision
+    };
+  }, [effectiveBaseSpeedChangeThreshold, particleSize]);
+
   // Calculate container size based on particle count if dynamic sizing is enabled
   const containerSize = useMemo(() => 
     dynamicContainerSize ? getContainerSize(particleCount) : BASE_CONTAINER_SIZE, 
@@ -526,20 +543,17 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
     return false;
   }
   
-  // Helper function to find nearby particles that might be colliding
-  const findCollidingPairs = (particleId: number, threshold: number, particleCount: number) => {
+  // Update findCollidingPairs to use a more generous threshold for large particles
+  const findCollidingPairs = useCallback((particleId: number, threshold: number, particleCount: number) => {
     const position = particlePositions.current.get(particleId)
     if (!position) return []
     
     const collidingPairs: number[] = []
     
     // For high particle counts, optimize the search by checking a subset of nearby particles
-    // This uses a distance-based priority approach
     if (particleCount > 500) {
-      // Create an array of [otherId, distance] pairs
       const particleDistances: [number, number][] = []
       
-      // Calculate distances to other particles
       particlePositions.current.forEach((otherPos, otherId) => {
         if (otherId !== particleId) {
           const distance = position.distanceTo(otherPos)
@@ -547,30 +561,31 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
         }
       })
       
-      // Sort by distance (closest first)
       particleDistances.sort((a, b) => a[1] - b[1])
       
-      // Check the closest 100 particles or 20% of total, whichever is larger
-      const checkCount = Math.max(100, Math.floor(particleCount * 0.2))
+      // Increase check count more aggressively for larger particles
+      const checkCount = Math.max(150, Math.floor(particleCount * 0.3 * (1 + particleSize * 3)))
       
-      // Add particles within threshold to colliding pairs
       for (let i = 0; i < Math.min(checkCount, particleDistances.length); i++) {
         const [otherId, distance] = particleDistances[i]
-        if (distance < threshold) {
+        // Use a more generous threshold for large particles
+        const adjustedThreshold = threshold * (1 + particleSize * 2) // Doubled the size factor
+        if (distance < adjustedThreshold) {
           collidingPairs.push(otherId)
         }
       }
     } else {
-      // For smaller particle counts, check all particles (original behavior)
+      // For smaller particle counts, check all particles with adjusted threshold
+      const adjustedThreshold = threshold * (1 + particleSize * 2) // Doubled the size factor
       particlePositions.current.forEach((otherPos, otherId) => {
-        if (otherId !== particleId && position.distanceTo(otherPos) < threshold) {
+        if (otherId !== particleId && position.distanceTo(otherPos) < adjustedThreshold) {
           collidingPairs.push(otherId)
         }
       })
     }
     
     return collidingPairs
-  }
+  }, [particleSize]);
   
   // Track potentially stuck particles and last reset time
   const stuckParticleCheck = useRef<{
@@ -742,11 +757,10 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
         // Calculate local density (number of particles within radius)
         let nearbyCount = 0;
         particlePositions.current.forEach((otherPos, otherId) => {
-          if (otherId !== index && position.distanceTo(otherPos) < COLLISION_DETECTION.localDensityRadius) {
+          if (otherId !== index && position.distanceTo(otherPos) < COLLISION_DETECTION.localDensityRadius * (1 + particleSize)) {
             nearbyCount++;
           }
         });
-        // Store local density for this particle
         localDensityMap.current.set(index, nearbyCount);
         
         const vel = body.linvel()
@@ -762,28 +776,6 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
           activeCount++
         }
         
-        // Skip if velocity contains invalid values and reset it
-        if (hasInvalidVelocity(vel)) {
-          // Reset to a safe random velocity with the original speed
-          const originalSpeed = particleSpeeds.current.get(index) || 0.5
-          const safeSpeed = Math.min(originalSpeed, 2.0) // Cap the speed to prevent instability
-          
-          const phi = Math.random() * Math.PI * 2
-          const theta = Math.random() * Math.PI
-          
-          const vx = safeSpeed * Math.sin(theta) * Math.cos(phi)
-          const vy = safeSpeed * Math.sin(theta) * Math.sin(phi)
-          const vz = safeSpeed * Math.cos(theta)
-          
-          body.setLinvel({ x: vx, y: vy, z: vz }, true)
-          lastActivityTime.current = Date.now()
-          
-          // Trigger collision effect for invalid velocities
-          handleParticleCollision(index)
-          
-          return
-        }
-        
         // Get local density for this particle
         const localDensity = localDensityMap.current.get(index) || 0;
         
@@ -791,9 +783,9 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
         const isLocallyDense = localDensity >= COLLISION_DETECTION.localDensityThreshold;
         
         // Blend global and local density for best sensitivity
-        // For locally dense clusters, increase effective density
+        // For locally dense clusters, increase effective density more aggressively
         const effectiveDensity = isLocallyDense 
-          ? Math.min(1.0, particleDensity * 1.5)
+          ? Math.min(1.0, particleDensity * 2.0) // Increased from 1.5 to 2.0
           : particleDensity;
         
         // Get adaptive threshold values based on effective density
@@ -806,21 +798,20 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
         const originalSpeed = particleSpeeds.current.get(index) || 0.5
         const speedChange = Math.abs(currentSpeed - originalSpeed) / (originalSpeed || 0.1)
         
-        // Dynamically adjust threshold for collision detection
-        if (speedChange > densityAdjustedThreshold && currentSpeed > minSpeedForCollision) {
+        // More sensitive collision detection
+        if ((speedChange > densityAdjustedThreshold && currentSpeed > minSpeedForCollision) ||
+            (isLocallyDense && speedChange > densityAdjustedThreshold * 0.8)) { // Added local density check
           potentialCollisions.current.add(index)
         }
         
-        // Check for wall collisions
-        if (isCollidingWithWall(position, vel, previousVelocities.current.get(index), radius)) {
-          // Mark as wall collision
+        // Check for wall collisions with more generous threshold
+        if (isCollidingWithWall(position, vel, previousVelocities.current.get(index), radius * 1.2)) { // Increased radius factor
           handleParticleCollision(index)
         }
         
         // Store current velocity for next frame comparison
         previousVelocities.current.set(index, { ...vel });
       } catch (err) {
-        // Silently catch errors but log if necessary
         if (DEBUG.issues.size < 5) console.error("Position tracking error:", err);
       }
     })
@@ -831,7 +822,7 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
       // With optimized function that considers particle count
       const collisionPartners = findCollidingPairs(
         particleId, 
-        COLLISION_DETECTION.proximityThreshold + particleSize * 2,
+        effectiveProximityThreshold + particleSize * 1.5, // slightly more generous for large particles
         particleCount
       )
       
