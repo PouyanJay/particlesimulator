@@ -167,37 +167,6 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     }
   };
   
-  // Helper for glassy header
-  const SectionHeader = ({
-    title,
-    expanded,
-    onToggle,
-    ariaControls,
-    onKeyDown
-  }: {
-    title: string,
-    expanded: boolean,
-    onToggle: () => void,
-    ariaControls: string,
-    onKeyDown: (e: React.KeyboardEvent) => void
-  }) => (
-    <div className="section-header-glass">
-      <div className="accent-bar" />
-      <h3 className="section-title-glass">{title}</h3>
-      <button
-        className="section-toggle-btn-glass"
-        aria-label={expanded ? `Collapse ${title}` : `Expand ${title}`}
-        aria-expanded={expanded}
-        aria-controls={ariaControls}
-        tabIndex={0}
-        onClick={onToggle}
-        onKeyDown={onKeyDown}
-      >
-        <GradientChevron expanded={expanded} />
-      </button>
-    </div>
-  );
-
   // Debug log
   console.log('expandedSections:', expandedSections);
 
