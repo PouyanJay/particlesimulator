@@ -650,3 +650,350 @@ canvas {
     z-index: 30;
   }
 }
+
+/* Control panel header */
+.control-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  background-color: var(--background-tertiary);
+  border-bottom: 1px solid var(--panel-border);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.control-panel-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.compact-mode-toggle {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all var(--transition-fast);
+}
+
+.compact-mode-toggle:hover {
+  color: var(--accent-primary);
+  background-color: rgba(56, 189, 248, 0.1);
+}
+
+/* Control sections */
+.control-section {
+  border-bottom: 1px solid var(--panel-border);
+  transition: all var(--transition-normal);
+}
+
+.control-section.compact {
+  margin-bottom: 0.5rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 1.1rem 0.45rem 1.1rem;
+  background: linear-gradient(90deg, rgba(30,41,59,0.18) 0%, rgba(51,65,85,0.13) 100%);
+  border-radius: 8px 8px 0 0;
+  border-bottom: 1px solid var(--panel-border);
+  box-shadow: 0 1px 4px 0 rgba(16, 24, 40, 0.04);
+  min-height: 34px;
+  transition: background 0.18s, box-shadow 0.18s;
+}
+.section-header:hover, .section-header:focus-within {
+  background: linear-gradient(90deg, rgba(51,65,85,0.22) 0%, rgba(30,41,59,0.18) 100%);
+  box-shadow: 0 2px 8px 0 rgba(56, 189, 248, 0.07);
+}
+
+.section-title {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin: 0;
+  padding: 0;
+}
+
+.section-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s, color 0.15s;
+  margin-left: 0.5rem;
+}
+.section-toggle-btn:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+.section-toggle-btn:hover {
+  color: var(--accent-primary);
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.chevron-svg {
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  font-size: 1.1rem;
+  margin-left: 2px;
+  margin-right: 2px;
+}
+.chevron-svg.expanded {
+  transform: rotate(180deg);
+}
+
+/* Collapsible content animation */
+.collapsible-content {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), padding 0.2s;
+  background: rgba(30,41,59,0.13);
+  border-radius: 0 0 8px 8px;
+  padding: 0 1.1rem;
+}
+.collapsible-content.expanded {
+  padding: 0.5rem 1.1rem 0.7rem 1.1rem;
+  max-height: 600px;
+}
+
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(56,189,248,0.08) 0%, rgba(129,140,248,0.08) 100%);
+  margin: 0.5rem 0 0.5rem 0;
+  border: none;
+}
+
+/* Refined font and spacing for controls */
+.control-group label,
+.slider-header span,
+.slider-value {
+  font-size: 0.93rem;
+}
+
+.control-group {
+  padding: 6px 0;
+  margin-bottom: 6px;
+}
+
+.slider-container {
+  margin-bottom: 0.6rem;
+}
+
+.button-group {
+  margin-top: 0.7rem;
+}
+
+.button {
+  font-size: 0.88rem;
+  padding: 0.5rem 0.8rem;
+}
+
+/* Compact mode tweaks */
+.control-section.compact .section-header {
+  padding: 0.32rem 0.7rem;
+  min-height: 26px;
+}
+.control-section.compact .collapsible-content,
+.control-section.compact .collapsible-content.expanded {
+  padding: 0.18rem 0.7rem 0.25rem 0.7rem;
+}
+.control-section.compact .button {
+  font-size: 0.82rem;
+  padding: 0.35rem 0.6rem;
+}
+
+@media (max-width: 768px) {
+  .section-header {
+    padding: 0.28rem 0.6rem;
+    min-height: 22px;
+  }
+  .section-title {
+    font-size: 0.87rem;
+  }
+  .collapsible-content,
+  .collapsible-content.expanded {
+    padding: 0.18rem 0.6rem 0.25rem 0.6rem;
+  }
+}
+
+/* Adjust control panel width for compact mode */
+.control-panel.compact {
+  width: var(--control-panel-width-sm);
+}
+
+.control-panel.compact .control-panel-inner {
+  min-width: var(--control-panel-width-sm);
+  padding: 0.75rem;
+}
+
+.sidebar-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+  margin: 0 0 0.5rem 0;
+  padding: 0.5rem 1rem 0.2rem 1rem;
+  background: none;
+  border: none;
+  box-shadow: none;
+  text-transform: uppercase;
+  user-select: none;
+  display: inline-block;
+}
+
+.compact-mode-toggle {
+  margin-left: 0.5rem;
+  margin-top: 0.1rem;
+  vertical-align: middle;
+}
+
+/* If you want the toggle and title on the same line, you can wrap them in a flex container. For now, keep them stacked for clarity. */
+
+/* Glassmorphism section header with accent bar */
+.section-header-glass {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 0.7rem 1.2rem 0.7rem 0.9rem;
+  background: rgba(30,41,59,0.45);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 2px 12px 0 rgba(56,189,248,0.07), 0 1.5px 8px 0 rgba(129,140,248,0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1.5px solid rgba(56,189,248,0.13);
+  margin-bottom: 0;
+  min-height: 38px;
+  transition: background 0.18s, box-shadow 0.18s;
+}
+.section-header-glass:hover, .section-header-glass:focus-within {
+  background: rgba(51,65,85,0.55);
+  box-shadow: 0 4px 18px 0 rgba(56,189,248,0.13);
+}
+
+.accent-bar {
+  width: 5px;
+  height: 28px;
+  border-radius: 4px;
+  margin-right: 1.1rem;
+  background: linear-gradient(180deg, #38bdf8 0%, #818cf8 100%);
+  box-shadow: 0 0 8px 0 rgba(56,189,248,0.18);
+}
+
+.section-title-glass {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #e0eaff;
+  text-transform: uppercase;
+  letter-spacing: 1.1px;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  text-shadow: 0 1px 4px rgba(56,189,248,0.08);
+}
+
+.section-toggle-btn-glass {
+  background: none;
+  border: none;
+  color: #b6d5f7;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.18rem 0.5rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s, color 0.15s, box-shadow 0.18s;
+  margin-left: 0.5rem;
+  box-shadow: 0 0 0 rgba(56,189,248,0);
+}
+.section-toggle-btn-glass:focus {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #38bdf8;
+}
+.section-toggle-btn-glass:hover {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.10);
+}
+
+.chevron-svg {
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  font-size: 1.2rem;
+  margin-left: 2px;
+  margin-right: 2px;
+  filter: drop-shadow(0 1px 2px rgba(56,189,248,0.13));
+}
+.chevron-svg.expanded {
+  transform: rotate(180deg);
+}
+
+/* Card effect for expanded content */
+.collapsible-content-glass {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: max-height 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.25s, padding 0.22s;
+  background: rgba(30,41,59,0.32);
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 6px 32px 0 rgba(56,189,248,0.10), 0 1.5px 8px 0 rgba(129,140,248,0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0 1.2rem;
+  border-top: none;
+}
+.collapsible-content-glass.expanded {
+  padding: 0.7rem 1.2rem 1.1rem 1.2rem;
+  max-height: 600px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.section-divider-glass {
+  height: 2px;
+  background: linear-gradient(90deg, #38bdf8 0%, #818cf8 100%);
+  opacity: 0.13;
+  margin: 0.7rem 0 0.7rem 0;
+  border: none;
+  border-radius: 2px;
+}
+
+/* Compact mode tweaks for glassy sections */
+.control-section-glass.compact .section-header-glass {
+  padding: 0.38rem 0.7rem 0.38rem 0.5rem;
+  min-height: 28px;
+}
+.control-section-glass.compact .collapsible-content-glass,
+.control-section-glass.compact .collapsible-content-glass.expanded {
+  padding: 0.18rem 0.7rem 0.25rem 0.7rem;
+}
+
+@media (max-width: 768px) {
+  .section-header-glass {
+    padding: 0.28rem 0.6rem 0.28rem 0.3rem;
+    min-height: 22px;
+  }
+  .section-title-glass {
+    font-size: 0.93rem;
+  }
+  .collapsible-content-glass,
+  .collapsible-content-glass.expanded {
+    padding: 0.18rem 0.6rem 0.25rem 0.6rem;
+  }
+  .accent-bar {
+    height: 18px;
+    margin-right: 0.6rem;
+  }
+}

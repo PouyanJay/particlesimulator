@@ -73,6 +73,7 @@ function App() {
   
   // UI state
   const [controlPanelVisible, setControlPanelVisible] = useState(true) // Control panel visibility state
+  const [isCompactMode, setIsCompactMode] = useState(false) // Compact mode state
   
   // Window size tracking for responsive layout
   const [isMobileView, setIsMobileView] = useState<boolean>(false);
@@ -270,6 +271,32 @@ function App() {
     return 2.5 * boundedScaleFactor;
   }
 
+  // Add keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Space to toggle play/pause
+      if (event.code === 'Space' && !event.repeat) {
+        event.preventDefault();
+        setIsPlaying(prev => !prev);
+      }
+      
+      // R to reset
+      if (event.code === 'KeyR' && !event.repeat) {
+        event.preventDefault();
+        handleReset();
+      }
+      
+      // C to toggle compact mode
+      if (event.code === 'KeyC' && !event.repeat && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        setIsCompactMode(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
+
   return (
     <div className="app-container">
       {/* Toggle button for control panel on mobile */}
@@ -281,7 +308,7 @@ function App() {
         {controlPanelVisible ? "×" : "≡"}
       </button>
       
-      <div className={`control-panel ${controlPanelVisible ? 'visible' : 'hidden'}`}>
+      <div className={`control-panel ${controlPanelVisible ? 'visible' : 'hidden'} ${isCompactMode ? 'compact' : ''}`}>
         <div className="control-section-blur">
           <Logo />
         </div>
@@ -313,6 +340,8 @@ function App() {
             dynamicContainerSize={dynamicContainerSize}
             setDynamicContainerSize={setDynamicContainerSize}
             maxParticleCount={Math.min(500, maxAllowableParticles)}
+            isCompactMode={isCompactMode}
+            setIsCompactMode={setIsCompactMode}
           />
         </div>
       </div>
