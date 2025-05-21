@@ -746,9 +746,9 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
     
     // First pass: track positions and calculate local densities
     particleRefs.current.forEach((body, index) => {
-      if (!body) return
-      
-      try {
+          if (!body) return
+          
+          try {
         // Get position and store it for proximity detection
         const pos = body.translation()
         const position = new THREE.Vector3(pos.x, pos.y, pos.z)
@@ -813,7 +813,7 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
         previousVelocities.current.set(index, { ...vel });
       } catch (err) {
         if (DEBUG.issues.size < 5) console.error("Position tracking error:", err);
-      }
+        }
     })
     
     // Second pass: apply collision effects to particles and their collision partners
@@ -836,11 +836,11 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
     })
     
     // Third pass: update colors and apply physics corrections
-    particleRefs.current.forEach((body, index) => {
+      particleRefs.current.forEach((body, index) => {
       if (!body) return
-      
-      try {
-        const vel = body.linvel()
+        
+        try {
+          const vel = body.linvel()
           const currentSpeed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z)
         const originalSpeed = particleSpeeds.current.get(index) || 0.5
         
@@ -1055,7 +1055,7 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
           <boxGeometry args={[containerSize, containerSize, containerSize]} />
           <meshStandardMaterial wireframe color="white" transparent opacity={0.3} />
         </mesh>
-      
+
         {/* Density warning indicator */}
         {densityStats.warningLevel !== 'none' && (
           <mesh 

@@ -118,6 +118,10 @@
 }
 
 .collision-graph-value {
+  margin-top: 2px; /* Small margin for spacing */
+  text-align: left;
+  margin-left: 0;
+  padding-left: 0;
   font-size: min(14px, 1.2vw, 1.8vh); /* Responsive font size */
   font-weight: 600;
   color: #f87171;

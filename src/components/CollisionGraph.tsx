@@ -334,9 +334,19 @@ const CollisionGraph: React.FC<CollisionGraphProps> = ({
 
   return (
     <div className="collision-graph-container" style={graphStyle}>
-      <div className="collision-graph-header">
-        <div className="collision-graph-title">COLLISIONS PER SECOND</div>
-        <div className="collision-graph-value">{Math.round(currentCollisionCount)}</div>
+      <div className="collision-graph-header" style={{position: 'relative'}}>
+        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
+          <div className="collision-graph-title">COLLISIONS PER SECOND</div>
+          <div className="collision-graph-value">{Math.round(currentCollisionCount)}</div>
+        </div>
+        <button 
+          className="collision-graph-toggle"
+          onClick={toggleVisibility}
+          title="Hide Collision Graph"
+          style={{position: 'absolute', top: 0, right: 0}}
+        >
+          ×
+        </button>
       </div>
       <div className="collision-graph">
         <Line 
@@ -347,13 +357,6 @@ const CollisionGraph: React.FC<CollisionGraphProps> = ({
           fallbackContent={<div className="chart-fallback">Loading chart...</div>}
         />
       </div>
-      <button 
-        className="collision-graph-toggle"
-        onClick={toggleVisibility}
-        title="Hide Collision Graph"
-      >
-        ×
-      </button>
     </div>
   );
 };

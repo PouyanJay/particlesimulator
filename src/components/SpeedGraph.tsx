@@ -296,9 +296,19 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
 
   return (
     <div className="speed-graph-container">
-      <div className="speed-graph-header">
-        <div className="speed-graph-title">AVERAGE PARTICLE SPEED</div>
-        <div className="speed-graph-value">{currentSpeed.toFixed(2)}</div>
+      <div className="speed-graph-header" style={{position: 'relative'}}>
+        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
+          <div className="speed-graph-title">AVERAGE PARTICLE SPEED</div>
+          <div className="speed-graph-value">{currentSpeed.toFixed(2)}</div>
+        </div>
+        <button 
+          className="speed-graph-toggle"
+          onClick={toggleVisibility}
+          title="Hide Speed Graph"
+          style={{position: 'absolute', top: 0, right: 0}}
+        >
+          ×
+        </button>
       </div>
       <div className="speed-graph">
         <Line 
@@ -309,13 +319,6 @@ const SpeedGraph: React.FC<SpeedGraphProps> = ({
           fallbackContent={<div className="chart-fallback">Loading chart...</div>}
         />
       </div>
-      <button 
-        className="speed-graph-toggle"
-        onClick={toggleVisibility}
-        title="Hide Speed Graph"
-      >
-        ×
-      </button>
     </div>
   );
 };

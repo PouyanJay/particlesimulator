@@ -195,25 +195,25 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             className="collapsible-content-glass expanded"
           >
             <div className="control-group">
-              <ToggleSwitch
-                isActive={particleParticleFriction}
-                onChange={() => setParticleParticleFriction(!particleParticleFriction)}
-                label="Particle-Particle Friction"
+      <ToggleSwitch
+        isActive={particleParticleFriction}
+        onChange={() => setParticleParticleFriction(!particleParticleFriction)}
+        label="Particle-Particle Friction"
                 tooltipText="Enable/disable friction between particles."
-              />
-              <ToggleSwitch
-                isActive={particleWallFriction}
-                onChange={() => setParticleWallFriction(!particleWallFriction)}
-                label="Particle-Wall Friction"
+      />
+      <ToggleSwitch
+        isActive={particleWallFriction}
+        onChange={() => setParticleWallFriction(!particleWallFriction)}
+        label="Particle-Wall Friction"
                 tooltipText="Enable/disable friction between particles and container walls."
-              />
+      />
               <div className={`control-subgroup ${isFrictionEnabled ? '' : 'control-subgroup-disabled'}`}> 
-                <CustomSlider
-                  label="Restitution"
-                  value={restitution}
-                  onChange={setRestitution}
-                  min={0.1}
-                  max={1.0}
+      <CustomSlider
+        label="Restitution"
+        value={restitution}
+        onChange={setRestitution}
+        min={0.1}
+        max={1.0}
                   disabled={!isFrictionEnabled}
                   tooltipText="Controls bounciness of particles. Higher values = more bouncy."
                 />
@@ -263,14 +263,14 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             className="collapsible-content-glass expanded"
           >
             <div className="control-group">
-              <CustomSlider
+      <CustomSlider
                 label={`Particle Count (Max: ${maxParticleCount})`}
-                value={particleCount}
+        value={particleCount}
                 onChange={(value) => setParticleCount(Math.min(value, maxParticleCount))}
-                min={10}
-                max={500}
-                step={10}
-                formatValue={(v) => Math.round(v).toString()}
+        min={10}
+        max={500}
+        step={10}
+        formatValue={(v) => Math.round(v).toString()}
                 tooltipText="Set the total number of particles in the simulation."
               />
               <ToggleSwitch
@@ -279,20 +279,20 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 label="Scale Container with Particle Count"
                 tooltipText="Automatically adjust container size based on particle count."
               />
-              <CustomSlider
-                label="Particle Size"
-                value={particleSize}
-                onChange={setParticleSize}
-                min={0.02}
-                max={0.2}
+      <CustomSlider
+        label="Particle Size"
+        value={particleSize}
+        onChange={setParticleSize}
+        min={0.02}
+        max={0.2}
                 tooltipText="Set the radius of each particle."
-              />
-              <CustomSlider
-                label="Initial Velocity"
-                value={initialVelocity}
-                onChange={setInitialVelocity}
-                min={0.1}
-                max={5.0}
+      />
+      <CustomSlider
+        label="Initial Velocity"
+        value={initialVelocity}
+        onChange={setInitialVelocity}
+        min={0.1}
+        max={5.0}
                 tooltipText="Set the starting speed of particles."
               />
             </div>
@@ -323,11 +323,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             className="collapsible-content-glass expanded"
           >
             <div className="control-group">
-              <CustomSlider
-                label="δt (Simulation Speed)"
-                value={deltaTime}
-                onChange={setDeltaTime}
-                min={0.01}
+      <CustomSlider
+        label="δt (Simulation Speed)"
+        value={deltaTime}
+        onChange={setDeltaTime}
+        min={0.01}
                 max={5.0}
                 step={0.01}
                 formatValue={(v) => v.toFixed(2)}
@@ -343,13 +343,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 formatValue={(v) => v.toFixed(1) + 's'}
                 tooltipText="How long particle color changes after a collision (in seconds)."
               />
-              <div className="button-group">
+      <div className="button-group">
                 <button className="button" onClick={onReset} title="Reset simulation to initial parameters (R)">
-                  Reset
-                </button>
+          Reset
+        </button>
                 <button className="button" onClick={() => setIsPlaying(!isPlaying)} title={isPlaying ? "Pause the simulation (Space)" : "Resume the simulation (Space)"}>
-                  {isPlaying ? 'Pause' : 'Play'}
-                </button>
+          {isPlaying ? 'Pause' : 'Play'}
+        </button>
               </div>
             </div>
           </div>
