@@ -38,7 +38,6 @@ function App() {
   
   // Add key to force physics container to re-render on reset
   const [resetKey, setResetKey] = useState(0)
-  const [physicsKey, setPhysicsKey] = useState(0)
 
   // Active particle count for status display
   const [activeParticles, setActiveParticles] = useState(0)
@@ -47,7 +46,6 @@ function App() {
   const [currentSpeed, setCurrentSpeed] = useState(0)
   const [speedHistory, setSpeedHistory] = useState<number[]>([0, 0]) // Initialize with placeholder data
   const speedUpdateInterval = useRef<number | null>(null)
-  const elapsedTimeRef = useRef<number>(0) // Track elapsed simulation time
   
   // Collision tracking for graph
   const [currentCollisionCount, setCurrentCollisionCount] = useState(0)
@@ -195,31 +193,20 @@ function App() {
     // Reset to initial state with placeholder data points
     setSpeedHistory([0, 0]);
     setCollisionHistory([0, 0]);
-    elapsedTimeRef.current = 0; // Reset elapsed time on simulation reset
   }, [resetKey]);
 
   const handleReset = () => {
     // Increment reset key to force re-render
     setResetKey((prev: number) => prev + 1)
-    setPhysicsKey((prev: number) => prev + 1)
     
-    // Reset speed history and elapsed time
+    // Reset speed history
     setSpeedHistory([0, 0])
-    elapsedTimeRef.current = 0;
     
     // Pause and then resume the simulation
     setIsPlaying(false)
     setTimeout(() => setIsPlaying(true), 100)
   }
 
-  // Reset physics when simulation parameters change
-  useEffect(() => {
-    // Don't automatically change restitution and friction coefficient
-    // Let the user control these parameters independently
-    
-    // Don't update physicsKey for friction changes - let the PhysicsContainer handle this
-  }, [gravity, particleParticleFriction, particleWallFriction, frictionCoefficient]);
-  
   // Handle deltaTime changes separately to avoid unnecessary full resets
   useEffect(() => {
     // Ensure deltaTime is never zero
@@ -227,16 +214,8 @@ function App() {
       setDeltaTime(0.01);
       return;
     }
-    
-    // Only update physics key for deltaTime changes since this affects the Physics world timeStep
-    setPhysicsKey((prev: number) => prev + 1);
   }, [deltaTime]);
   
-  // Update physics when particle parameters change without full reset
-  useEffect(() => {
-    // Don't update physicsKey for these parameters - let the PhysicsContainer handle this
-  }, [particleCount, particleSize, initialVelocity, dynamicContainerSize])
-
   // Determine proper physics settings based on deltaTime only (not friction)
   const baseTimeStep = 1/90   // Use consistent timeStep regardless of friction
   
