@@ -371,39 +371,36 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
   // Keep track of last activity time to detect stalls
   const lastActivityTime = useRef(Date.now())
   
-  // Calculate effective damping based on friction coefficient - NEW
-  const effectiveDamping = useMemo(() => {
-    // Only apply damping when friction is enabled
-    if (!particleParticleFriction && !particleWallFriction) return 0;
+  // Calculate effective damping based on friction coefficient - use constant value to avoid recreation
+  const effectiveDamping = frictionCoefficient * 0.1; // Simple linear relationship without automatic changes
+  
+  // For restitution, use the value passed as prop without automatic changes
+  const effectiveRestitution = restitution;
+  
+  // For friction coefficient, use the value passed as prop without automatic changes  
+  const effectiveFrictionCoefficient = frictionCoefficient;
+  
+  // Handle physics settings that should NOT cause a reset (friction and gravity)
+  useEffect(() => {
+    // Just update effective values but don't reset simulation
+    // This allows the simulation to continue from current state with new physics settings
     
-    // Scale damping with friction coefficient (less damping at low friction)
-    return Math.pow(frictionCoefficient, 1.5) * 0.1;
-  }, [frictionCoefficient, particleParticleFriction, particleWallFriction]);
+    // Reset debug state in case of issues
+    DEBUG.logCount = 0
+    DEBUG.issues.clear()
+    setHasDetectedIssue(false)
+    setSimulationActive(true)
+    lastActivityTime.current = Date.now()
+  }, [particleParticleFriction, particleWallFriction, gravity])
   
-  // For restitution, ensure perfect elasticity when no friction
-  const effectiveRestitution = useMemo(() => {
-    return (!particleParticleFriction && !particleWallFriction) ? 1.0 : restitution;
-  }, [restitution, particleParticleFriction, particleWallFriction]);
-  
-  // For friction coefficient, ensure zero when no friction
-  const effectiveFrictionCoefficient = useMemo(() => {
-    return (!particleParticleFriction && !particleWallFriction) ? 0.0 : frictionCoefficient;
-  }, [frictionCoefficient, particleParticleFriction, particleWallFriction]);
-  
-  // Force container re-render when frictions or gravity change
+  // Force container re-render ONLY when parameters that affect initialization change
   useEffect(() => {
     setResetCounter(prev => prev + 1)
     // Clean up refs when we reset
     particleRefs.current = []
     // Clear previous velocities
     previousVelocities.current.clear()
-    // Reset debug state
-    DEBUG.logCount = 0
-    DEBUG.issues.clear()
-    setHasDetectedIssue(false)
-    setSimulationActive(true)
-    lastActivityTime.current = Date.now()
-  }, [particleParticleFriction, particleWallFriction, gravity, particleCount, particleSize, initialVelocity, restitution])
+  }, [particleCount, particleSize, initialVelocity])
 
   // Rotate the container for an isometric view
   const groupRef = useRef<THREE.Group>(null)
@@ -876,8 +873,9 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
         
         // Special handling for zero-friction mode
         if (!particleParticleFriction && !particleWallFriction) {
-          // If speed is almost zero, give it a small push
-          if (currentSpeed < 0.05) {
+          // Only prevent particles from getting stuck at very low speeds
+          // Don't boost speeds or correct velocities - let physics handle it naturally
+          if (currentSpeed < 0.01) {
             const safeOriginalSpeed = Math.min(originalSpeed, 1.0)
             const phi = Math.random() * Math.PI * 2
             const theta = Math.random() * Math.PI
@@ -891,34 +889,7 @@ const PhysicsContainer: React.FC<PhysicsContainerProps> = ({
             return
           }
           
-          // If speed is too high, cap it to prevent instability
-          if (currentSpeed > 10.0) {
-            const scale = 10.0 / currentSpeed
-            body.setLinvel({ 
-              x: vel.x * scale, 
-              y: vel.y * scale, 
-              z: vel.z * scale 
-            }, true)
-            lastActivityTime.current = Date.now()
-            return
-          }
-          
-          // Conservative speed correction
-          // Only apply for deviations > 15% and cap max speed at 5.0
-          if (Math.abs(currentSpeed - originalSpeed) / originalSpeed > 0.15 &&
-              currentSpeed < originalSpeed * 0.85) { // Only boost if significantly slower than expected
-            
-            // Normalize current velocity and scale by original speed (with cap)
-            const safeSpeed = Math.min(originalSpeed, 5.0)
-            const scale = safeSpeed / currentSpeed
-            
-            body.setLinvel({ 
-              x: vel.x * scale, 
-              y: vel.y * scale, 
-              z: vel.z * scale 
-            }, true)
-            lastActivityTime.current = Date.now()
-          }
+          // Remove all other velocity corrections - let the physics engine handle it
         } else if (frictionCoefficient < 0.05) {
           // For very low friction modes, still do some minimal corrections to prevent energy loss
           // Only correct if the speed has dropped significantly compared to original

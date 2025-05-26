@@ -214,13 +214,10 @@ function App() {
 
   // Reset physics when simulation parameters change
   useEffect(() => {
-    // When there is no friction, set default values for friction-related properties
-    if (!particleParticleFriction && !particleWallFriction) {
-      setRestitution(1.0); // Perfect elasticity when no friction
-      setFrictionCoefficient(0.0); // Zero friction coefficient
-    }
+    // Don't automatically change restitution and friction coefficient
+    // Let the user control these parameters independently
     
-    setPhysicsKey((prev: number) => prev + 1);
+    // Don't update physicsKey for friction changes - let the PhysicsContainer handle this
   }, [gravity, particleParticleFriction, particleWallFriction, frictionCoefficient]);
   
   // Handle deltaTime changes separately to avoid unnecessary full resets
@@ -231,19 +228,17 @@ function App() {
       return;
     }
     
-    // No need to fully reset, just update the physics key
+    // Only update physics key for deltaTime changes since this affects the Physics world timeStep
     setPhysicsKey((prev: number) => prev + 1);
   }, [deltaTime]);
   
-  // Reset simulation when particle parameters change
+  // Update physics when particle parameters change without full reset
   useEffect(() => {
-    handleReset()
+    // Don't update physicsKey for these parameters - let the PhysicsContainer handle this
   }, [particleCount, particleSize, initialVelocity, dynamicContainerSize])
 
-  // Determine proper physics settings based on friction state and deltaTime
-  const baseTimeStep = (!particleParticleFriction && !particleWallFriction) 
-    ? 1/180  // Less extreme difference (changed from 1/240)
-    : 1/90   // More precision for normal cases (changed from 1/60)
+  // Determine proper physics settings based on deltaTime only (not friction)
+  const baseTimeStep = 1/90   // Use consistent timeStep regardless of friction
   
   // Scale timeStep by deltaTime with a wider range of effect (0.01 to 5.0)
   // Using a non-linear scale for better control at lower values
@@ -379,7 +374,6 @@ function App() {
           <ambientLight intensity={0.3} />
           <directionalLight position={[10, 10, 10]} intensity={1.2} />
           <Physics
-            key={physicsKey}
             gravity={gravity ? [0, -9.81, 0] : [0, 0, 0]}
             timeStep={timeStep}
             paused={!isPlaying}
