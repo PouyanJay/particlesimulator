@@ -53,8 +53,8 @@ function App() {
   const collisionUpdateInterval = useRef<number | null>(null)
   
   // Graph visibility states for coordinating positions
-  const [speedGraphVisible, setSpeedGraphVisible] = useState(true)
-  const [collisionGraphVisible, setCollisionGraphVisible] = useState(true)
+  const [speedGraphVisible, setSpeedGraphVisible] = useState(false)
+  const [collisionGraphVisible, setCollisionGraphVisible] = useState(false)
   
   // Density warning state
   const [densityWarning, setDensityWarning] = useState<DensityWarningData>({
