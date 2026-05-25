@@ -28,8 +28,11 @@ type GasParams = ParamValues<typeof elasticGasSchema>
 const GRAVITY = -9.81 // m/s² applied on the Y axis when enabled.
 const PARTICLE_MASS = 1 // equal mass for all particles.
 
-// SI-style units with unit particle mass and k_B = 1 (so the kinetic temperature is in K).
-const UNITS = { speed: 'm/s', energy: 'J', temperature: 'K', pressure: 'Pa', momentum: 'kg·m/s' } as const
+// Mechanical quantities are SI with unit particle mass (1 kg, so energy is in J, etc.).
+// Temperature, however, is reduced/dimensionless: with k_B = 1 it is k_B·T expressed in the
+// energy unit, not kelvin — a value of ~0.2–2 is a normal gas, not 0.2 K. (Using a real
+// k_B = 1.38e-23 J/K with these unit-mass velocities would instead give absurd ~1e22 K.)
+const UNITS = { speed: 'm/s', energy: 'J', temperature: 'reduced', pressure: 'Pa', momentum: 'kg·m/s' } as const
 
 export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
   // Internal state in Float64 for accuracy; a Float32 view is produced for rendering.

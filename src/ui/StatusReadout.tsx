@@ -24,11 +24,8 @@ export function StatusReadout() {
 function Metric({ label, value, unit }: { label: string; value: string; unit?: string }) {
   return (
     <span className="status__metric">
-      <span className="status__metric-label">{label}</span>
-      <span className="status__metric-value">
-        {value}
-        {unit ? <span className="status__metric-unit"> {unit}</span> : null}
-      </span>
+      <span className="status__metric-label">{unit ? `${label} (${unit})` : label}</span>
+      <span className="status__metric-value">{value}</span>
     </span>
   )
 }

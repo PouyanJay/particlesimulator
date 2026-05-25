@@ -43,7 +43,7 @@ describe('MeasurementReadouts', () => {
     expect(screen.queryByText('Total momentum')).not.toBeInTheDocument()
   })
 
-  it('appends each mode-supplied unit to its value', () => {
+  it('puts each mode-supplied unit in the label and keeps the value a bare number', () => {
     useTelemetryStore.getState().push({
       particleCount: 10,
       averageSpeed: 1,
@@ -51,16 +51,16 @@ describe('MeasurementReadouts', () => {
       temperature: 0.8,
       pressure: 0.25,
       momentum: [3, 0, 4],
-      units: { energy: 'J', temperature: 'K', pressure: 'Pa', momentum: 'kg·m/s' },
+      units: { energy: 'J', temperature: 'reduced', pressure: 'Pa', momentum: 'kg·m/s' },
     })
     render(<MeasurementReadouts />)
-    // Value and unit are separate elements; read the whole row's value text content.
-    const valueFor = (label: string) =>
-      screen.getByText(label).closest('.readouts__row')?.querySelector('.readouts__value')?.textContent
-    expect(valueFor('Kinetic energy')).toBe('12.50 J')
-    expect(valueFor('Temperature')).toBe('0.800 K')
-    expect(valueFor('Pressure')).toBe('0.250 Pa')
-    expect(valueFor('Total momentum')).toBe('5.000 kg·m/s')
+    // Unit is in the label; the value column stays a clean bare number.
+    expect(screen.getByText('Kinetic energy (J)')).toBeInTheDocument()
+    expect(screen.getByText('Temperature (reduced)')).toBeInTheDocument()
+    expect(screen.getByText('Pressure (Pa)')).toBeInTheDocument()
+    expect(screen.getByText('Total momentum (kg·m/s)')).toBeInTheDocument()
+    expect(screen.getByText('12.50')).toBeInTheDocument()
+    expect(screen.getByText('5.000')).toBeInTheDocument() // hypot(3,0,4), no unit appended
   })
 
   it('flags an inelastic run', () => {
