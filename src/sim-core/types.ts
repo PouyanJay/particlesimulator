@@ -60,6 +60,8 @@ export interface ParticleBuffers {
   positions: Float32Array
   /** Optional xyz-interleaved velocities, length 3 * count (drives color-by-speed). */
   velocities?: Float32Array
+  /** Optional per-particle type index, length count (drives categorical color-by-type). */
+  types?: Uint8Array
   /** Optional rgb colors, xyz-interleaved, length 3 * count. */
   colors?: Float32Array
   /** Particle render radius in world units (uniform for now). */
