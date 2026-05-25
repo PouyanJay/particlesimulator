@@ -1,7 +1,8 @@
 import { computeGravityAccelerations } from '../physics/gravity'
 import { velocityVerlet, type AccelFn, type Integrator } from '../integrators/integrators'
 import { seedNbodyDisk } from './nbodySeed'
-import type { ParamValues, ParticleBuffers, SimContext, SimMode } from '../types'
+import { totalMomentum } from '../measure/conservedQuantities'
+import type { ParamValues, ParticleBuffers, SimContext, SimMode, Telemetry } from '../types'
 
 /**
  * N-body gravity — every body attracts every other (all-pairs, equal unit mass). Starts
@@ -82,7 +83,7 @@ export function createNbodyMode(): SimMode<typeof nbodySchema> {
     return { count, positions: renderPositions, velocities: renderVelocities, radius }
   }
 
-  function getTelemetry() {
+  function getTelemetry(): Telemetry {
     let speedSum = 0
     let keSum = 0
     const speedSamples = new Float32Array(count)
@@ -99,6 +100,7 @@ export function createNbodyMode(): SimMode<typeof nbodySchema> {
       averageSpeed: count > 0 ? speedSum / count : 0,
       kineticEnergy: 0.5 * keSum, // unit mass
       speedSamples,
+      momentum: totalMomentum(velocities, count), // gravity is internal; walls perturb it
     }
   }
 

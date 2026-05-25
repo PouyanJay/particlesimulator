@@ -263,3 +263,27 @@ describe('molecularDynamics thermalises toward Maxwell–Boltzmann', () => {
     expect(ratio).toBeCloseTo(MB_MOMENT_RATIO, 1)
   })
 })
+
+describe('molecularDynamics conserved-quantity telemetry', () => {
+  it('reports near-zero total momentum at init (centre-of-mass velocity removed)', () => {
+    const mode = createMolecularDynamicsMode()
+    mode.init(ctx({ particleCount: 125, temperature: 1 }))
+    const [px, py, pz] = mode.getTelemetry().momentum!
+    expect(Math.hypot(px, py, pz)).toBeLessThan(1e-9)
+  })
+
+  it('reports temperature consistent with equipartition T = 2·KE / (3·N)', () => {
+    const mode = createMolecularDynamicsMode()
+    mode.init(ctx({ particleCount: 125, temperature: 1.2 }))
+    const t = mode.getTelemetry()
+    expect(t.temperature!).toBeCloseTo((2 * t.kineticEnergy) / (3 * t.particleCount), 6)
+  })
+
+  it('measures zero pressure before stepping and positive pressure once the gas runs', () => {
+    const mode = createMolecularDynamicsMode()
+    mode.init(ctx({ particleCount: 125, temperature: 1.5, containerSize: 8 }))
+    expect(mode.getTelemetry().pressure).toBe(0)
+    for (let i = 0; i < 400; i++) mode.step(1 / 60)
+    expect(mode.getTelemetry().pressure!).toBeGreaterThan(0)
+  })
+})
