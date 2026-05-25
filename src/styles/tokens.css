@@ -48,6 +48,9 @@
   /* Focus ring (repeated across interactive elements) */
   --focus-ring-width: 3px;
 
+  /* Shared height for toolbar controls (buttons, selects) so they align. */
+  --control-height: 32px;
+
   /* Elevation */
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.35);

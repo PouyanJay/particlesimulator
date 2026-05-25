@@ -214,10 +214,16 @@
 
 /* Button */
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: var(--control-height);
+  padding: 0 var(--space-3);
   font-family: var(--font-ui);
   font-size: var(--text-sm);
   font-weight: 500;
-  padding: var(--space-2) var(--space-4);
+  line-height: 1;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-strong);
   background: var(--bg-elevated);
@@ -228,8 +234,15 @@
     border-color var(--motion-fast) var(--ease);
 }
 
+/* Square icon-only button. */
+.btn--icon {
+  width: var(--control-height);
+  padding: 0;
+}
+
 .btn:hover {
-  border-color: var(--accent);
+  border-color: var(--border-strong);
+  background: var(--bg-surface);
 }
 
 .btn:focus-visible {
@@ -279,25 +292,45 @@
   color: var(--text-muted);
 }
 
+.select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
 .select {
+  appearance: none;
+  -webkit-appearance: none;
+  height: var(--control-height);
+  /* Extra right padding leaves room for the custom chevron. */
+  padding: 0 var(--space-6) 0 var(--space-3);
   font-family: var(--font-ui);
   font-size: var(--text-sm);
+  line-height: 1;
   color: var(--text-primary);
   background: var(--bg-elevated);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-3);
   cursor: pointer;
-  transition: border-color var(--motion-fast) var(--ease);
+  transition:
+    background var(--motion-fast) var(--ease),
+    border-color var(--motion-fast) var(--ease);
 }
 
 .select:hover {
-  border-color: var(--accent);
+  background: var(--bg-surface);
 }
 
 .select:focus-visible {
   outline: none;
   box-shadow: 0 0 0 var(--focus-ring-width) var(--accent-subtle);
+}
+
+.select-chevron {
+  position: absolute;
+  right: var(--space-2);
+  color: var(--text-muted);
+  pointer-events: none;
 }
 
 /* Status readout */
