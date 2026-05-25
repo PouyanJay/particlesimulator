@@ -5,10 +5,20 @@
 NPM := npm
 
 .DEFAULT_GOAL := help
-.PHONY: help install ci dev build preview typecheck lint lint-fix test test-watch coverage check verify clean clean-all
+.PHONY: help run install ci dev build preview typecheck lint lint-fix test test-watch coverage check verify clean clean-all
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
+
+run: node_modules ## Zero-to-running: install deps if needed, then launch the app in the browser
+	$(NPM) run dev -- --open
+
+# Install only when dependencies are missing or the manifests changed. Not .PHONY:
+# the directory's existence/mtime gates whether `npm install` runs (so `run` is fast
+# on a warm checkout and self-bootstrapping on a fresh clone). No `##` ⇒ hidden from help.
+node_modules: package.json package-lock.json
+	$(NPM) install
+	@touch node_modules
 
 install: ## Install dependencies (npm install)
 	$(NPM) install
