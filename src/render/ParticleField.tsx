@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three/webgpu'
 import { createSimDriver, type SimDriver } from './simDriver'
@@ -21,8 +21,19 @@ const MAX_INSTANCES = 20000
  * getState() so playback toggling never re-renders React.
  */
 export function ParticleField() {
-  const meshRef = useRef<THREE.InstancedMesh>(null)
+  const meshRef = useRef<THREE.InstancedMesh | null>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
+
+  // Pre-allocate instanceColor the moment the mesh is created (before the node material
+  // compiles), so MeshStandardNodeMaterial reliably injects the per-instance color tint.
+  // Lazy creation via setColorAt is timing-fragile under StrictMode material recreation.
+  const setMesh = useCallback((mesh: THREE.InstancedMesh | null) => {
+    meshRef.current = mesh
+    if (mesh && !mesh.instanceColor) {
+      mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(MAX_INSTANCES * 3).fill(1), 3)
+      mesh.instanceColor.setUsage(THREE.DynamicDrawUsage)
+    }
+  }, [])
   const tmpColor = useMemo(() => new THREE.Color(), [])
   // Reused scratch so the per-particle color computation allocates nothing per frame.
   const rgb = useMemo<[number, number, number]>(() => [0, 0, 0], [])
@@ -115,5 +126,5 @@ export function ParticleField() {
     if (sample) useTelemetryStore.getState().push(sample)
   })
 
-  return <instancedMesh ref={meshRef} args={[geometry, material, MAX_INSTANCES]} frustumCulled={false} />
+  return <instancedMesh ref={setMesh} args={[geometry, material, MAX_INSTANCES]} frustumCulled={false} />
 }

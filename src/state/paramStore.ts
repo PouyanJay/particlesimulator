@@ -57,6 +57,9 @@ export const useParamStore = create<ParamState>()(
     }),
     {
       name: 'particle-lab:params',
+      // Bump when the mode set or schemas change so incompatible persisted state is
+      // discarded (rather than rehydrating stale params for a since-changed schema).
+      version: 1,
       storage: createJSONStorage(() => clientStorage),
       // Persist the scenario only — not the transient playback flag.
       partialize: (s) => ({ modeId: s.modeId, seed: s.seed, params: s.params }),
