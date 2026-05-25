@@ -27,6 +27,13 @@ describe('speedToRgb', () => {
     expect(speedToRgb(1, 0)).toEqual(SLOW_COLOR)
   })
 
+  it('writes into and returns the provided out array (no allocation)', () => {
+    const out: [number, number, number] = [0, 0, 0]
+    const result = speedToRgb(1, 2, out)
+    expect(result).toBe(out) // same reference, not a fresh array
+    expect(out[0]).toBeCloseTo((SLOW_COLOR[0] + FAST_COLOR[0]) / 2, 6)
+  })
+
   it('keeps every channel within [0, 1]', () => {
     for (let s = 0; s <= 2; s += 0.1) {
       for (const c of speedToRgb(s, 2)) {

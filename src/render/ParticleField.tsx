@@ -7,10 +7,11 @@ import { useParamStore } from '../state/paramStore'
 import { useTelemetryStore } from '../state/telemetryStore'
 import { speedToRgb } from './colorRamp'
 
-// Fixed instance capacity (the elastic gas schema caps particleCount here). We render
+// Fixed instance capacity (matches the elastic gas schema's particleCount max). We render
 // `mesh.count` ≤ capacity each frame, so changing the particle count never reallocates
-// or remounts the mesh.
-const MAX_INSTANCES = 2000
+// or remounts the mesh. The spatial-grid broadphase keeps the CPU sim feasible at this
+// scale; the Sprite/Points tier for 100k+ lands with the Phase 2 GPU backend.
+const MAX_INSTANCES = 20000
 
 /**
  * Renders the active simulation as a single instanced mesh, driven entirely by the
@@ -23,6 +24,8 @@ export function ParticleField() {
   const meshRef = useRef<THREE.InstancedMesh>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
   const tmpColor = useMemo(() => new THREE.Color(), [])
+  // Reused scratch so the per-particle color computation allocates nothing per frame.
+  const rgb = useMemo<[number, number, number]>(() => [0, 0, 0], [])
 
   // StrictMode-safe lazy resources. React 19 StrictMode (which R3F 9 now inherits) mounts
   // → unmounts → remounts in dev; the unmount cleanup disposes AND nulls these, so the
@@ -91,8 +94,8 @@ export function ParticleField() {
           const vx = velocities[o]
           const vy = velocities[o + 1]
           const vz = velocities[o + 2]
-          const [r, g, b] = speedToRgb(Math.sqrt(vx * vx + vy * vy + vz * vz), vMax)
-          tmpColor.setRGB(r, g, b, THREE.SRGBColorSpace)
+          speedToRgb(Math.sqrt(vx * vx + vy * vy + vz * vz), vMax, rgb)
+          tmpColor.setRGB(rgb[0], rgb[1], rgb[2], THREE.SRGBColorSpace)
           mesh.setColorAt(i, tmpColor)
         }
       }
