@@ -6,7 +6,7 @@ describe('SimMode registry', () => {
   it('lists registered modes by id and label', () => {
     const reg = createRegistry()
     reg.register(createElasticGasMode)
-    expect(reg.list()).toEqual([{ id: 'elastic-gas', label: 'Elastic Gas' }])
+    expect(reg.list()).toEqual([{ id: 'elastic-gas', label: 'Elastic Gas', backend: 'cpu' }])
   })
 
   it('reports membership via has()', () => {
