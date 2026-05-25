@@ -3,6 +3,7 @@ import { createElasticGasMode } from '../sim-core/modes/elasticGas'
 import { createParticleLifeMode } from '../sim-core/modes/particleLife'
 import { createNbodyMode } from '../sim-core/modes/nbody'
 import { createGpuNbodyMode } from '../sim-core/modes/gpuNbody'
+import { createBoidsMode } from '../sim-core/modes/boids'
 import { createMolecularDynamicsMode } from '../sim-core/modes/molecularDynamics'
 
 /**
@@ -15,4 +16,5 @@ simRegistry.register(createElasticGasMode)
 simRegistry.register(createParticleLifeMode)
 simRegistry.register(createNbodyMode)
 simRegistry.register(createGpuNbodyMode)
+simRegistry.register(createBoidsMode)
 simRegistry.register(createMolecularDynamicsMode)
