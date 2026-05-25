@@ -37,6 +37,9 @@ export function ParticleField() {
   const tmpColor = useMemo(() => new THREE.Color(), [])
   // Reused scratch so the per-particle color computation allocates nothing per frame.
   const rgb = useMemo<[number, number, number]>(() => [0, 0, 0], [])
+  // Smoothed reference speed for the color ramp — auto-scales to the current speed range
+  // (mode-agnostic; uses last frame's value, then eases toward this frame's max).
+  const vMaxRef = useRef(1)
   // Pre-built categorical colors for color-by-type modes (hex is sRGB).
   const typeColors = useMemo(() => TYPE_PALETTE.map((hex) => new THREE.Color(hex)), [])
 
@@ -95,10 +98,10 @@ export function ParticleField() {
       const n = Math.min(buffers.count, MAX_INSTANCES)
       const velocities = buffers.velocities
       const particleTypes = buffers.types
-      // Reference speed for the color ramp: the mode's max initial velocity.
-      const vMax = typeof params.initialVelocity === 'number' ? params.initialVelocity : 1
       // Coloring: by type (categorical) when the mode provides types, else by speed.
       const colored = Boolean(particleTypes || velocities)
+      const vMax = vMaxRef.current // last frame's smoothed max speed
+      let frameMaxSpeedSq = 0
       for (let i = 0; i < n; i++) {
         const o = i * 3
         dummy.position.set(buffers.positions[o], buffers.positions[o + 1], buffers.positions[o + 2])
@@ -112,7 +115,9 @@ export function ParticleField() {
           const vx = velocities[o]
           const vy = velocities[o + 1]
           const vz = velocities[o + 2]
-          speedToRgb(Math.sqrt(vx * vx + vy * vy + vz * vz), vMax, rgb)
+          const speedSq = vx * vx + vy * vy + vz * vz
+          if (speedSq > frameMaxSpeedSq) frameMaxSpeedSq = speedSq
+          speedToRgb(Math.sqrt(speedSq), vMax, rgb)
           tmpColor.setRGB(rgb[0], rgb[1], rgb[2], THREE.SRGBColorSpace)
           mesh.setColorAt(i, tmpColor)
         }
@@ -120,6 +125,10 @@ export function ParticleField() {
       mesh.count = n
       mesh.instanceMatrix.needsUpdate = true
       if (colored && mesh.instanceColor) mesh.instanceColor.needsUpdate = true
+      // Ease the color-ramp ceiling toward this frame's max speed (mode-agnostic).
+      if (velocities) {
+        vMaxRef.current = Math.max(1e-6, vMaxRef.current * 0.9 + Math.sqrt(frameMaxSpeedSq) * 0.1)
+      }
     }
 
     const sample = driver.consumeTelemetry()
