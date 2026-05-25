@@ -73,6 +73,11 @@ export interface Telemetry {
   particleCount: number
   averageSpeed: number
   kineticEnergy: number
+  /**
+   * Optional per-particle speeds for the live speed histogram (e.g. Maxwell–Boltzmann).
+   * Modes with a meaningful speed distribution populate it; others leave it undefined.
+   */
+  speedSamples?: Float32Array
 }
 
 export type SimBackend = 'cpu' | 'rapier' | 'webgpu-compute'

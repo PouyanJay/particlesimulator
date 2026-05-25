@@ -162,16 +162,20 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
   function getTelemetry() {
     let speedSum = 0
     let keSum = 0
+    const speedSamples = new Float32Array(count)
     for (let i = 0; i < count; i++) {
       const o = i * 3
       const speedSq = velocities[o] ** 2 + velocities[o + 1] ** 2 + velocities[o + 2] ** 2
-      speedSum += Math.sqrt(speedSq)
+      const speed = Math.sqrt(speedSq)
+      speedSamples[i] = speed
+      speedSum += speed
       keSum += speedSq
     }
     return {
       particleCount: count,
       averageSpeed: count > 0 ? speedSum / count : 0,
       kineticEnergy: 0.5 * PARTICLE_MASS * keSum,
+      speedSamples,
     }
   }
 

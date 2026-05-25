@@ -1,6 +1,7 @@
 import './App.css'
 import { SimulationCanvas } from './render/SimulationCanvas'
 import { ControlPanel } from './ui/ControlPanel'
+import { Measurements } from './ui/Measurements'
 import { Toolbar } from './ui/Toolbar'
 import { StatusReadout } from './ui/StatusReadout'
 
@@ -18,6 +19,7 @@ export default function App() {
       </header>
       <aside className="app__sidebar">
         <ControlPanel />
+        <Measurements />
       </aside>
       <main className="app__viewport">
         <SimulationCanvas />
