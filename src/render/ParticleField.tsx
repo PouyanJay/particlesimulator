@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import * as THREE from 'three'
+import * as THREE from 'three/webgpu'
 import { createSimDriver, type SimDriver } from './simDriver'
 import { simRegistry } from '../state/simRegistry'
 import { useParamStore } from '../state/paramStore'
@@ -29,10 +29,11 @@ export function ParticleField() {
   // return non-null locals for the render below.
   const driverRef = useRef<SimDriver | null>(null)
   const geometryRef = useRef<THREE.SphereGeometry | null>(null)
-  const materialRef = useRef<THREE.MeshStandardMaterial | null>(null)
+  const materialRef = useRef<THREE.MeshStandardNodeMaterial | null>(null)
   const driver = (driverRef.current ??= createSimDriver({ registry: simRegistry }))
   const geometry = (geometryRef.current ??= new THREE.SphereGeometry(1, 16, 16))
-  const material = (materialRef.current ??= new THREE.MeshStandardMaterial({
+  // Node material (TSL): compiles to WGSL on WebGPU and GLSL on the WebGL2 fallback.
+  const material = (materialRef.current ??= new THREE.MeshStandardNodeMaterial({
     color: theme.accent,
     roughness: 0.4,
     metalness: 0.1,
