@@ -1,5 +1,6 @@
 import { simRegistry } from '../state/simRegistry'
 import { useParamStore } from '../state/paramStore'
+import { ChevronDownIcon } from './icons'
 
 /**
  * Switches the active simulation mode. Options come straight from the registry, and
@@ -14,18 +15,21 @@ export function ModeSelect() {
   return (
     <label className="mode-select">
       <span className="mode-select__label">Mode</span>
-      <select
-        className="select"
-        value={modeId}
-        onChange={(e) => selectMode(e.target.value)}
-        aria-label="Simulation mode"
-      >
-        {modes.map((mode) => (
-          <option key={mode.id} value={mode.id}>
-            {mode.label}
-          </option>
-        ))}
-      </select>
+      <span className="select-wrap">
+        <select
+          className="select"
+          value={modeId}
+          onChange={(e) => selectMode(e.target.value)}
+          aria-label="Simulation mode"
+        >
+          {modes.map((mode) => (
+            <option key={mode.id} value={mode.id}>
+              {mode.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDownIcon className="select-chevron" />
+      </span>
     </label>
   )
 }
