@@ -1,7 +1,8 @@
 import { createRng, randomInRange, type Rng } from '../rng'
 import { resolveElasticCollision } from '../physics/elasticCollision'
 import { createSpatialGrid, type SpatialGrid } from '../physics/spatialGrid'
-import type { ParamValues, ParticleBuffers, SimContext, SimMode } from '../types'
+import { totalMomentum, temperature } from '../measure/conservedQuantities'
+import type { ParamValues, ParticleBuffers, SimContext, SimMode, Telemetry } from '../types'
 import type { Vec3 } from '../math/vec3'
 
 /**
@@ -39,6 +40,12 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
   let renderPositions = new Float32Array(0)
   let renderVelocities = new Float32Array(0)
 
+  // Pressure measurement: accumulate the impulse delivered to the walls and the simulated
+  // time elapsed, both since the last telemetry read; pressure = impulse / (area · time).
+  let wallArea = 0 // total area of the 6 reflecting faces (the box the centres bounce in).
+  let wallImpulse = 0
+  let simTimeAccum = 0
+
   // Collision broadphase. `probeIndex`/`contactDistSq` are scratch shared with the
   // grid neighbour callback so it allocates no per-frame closures.
   let grid: SpatialGrid | null = null
@@ -52,6 +59,10 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
     restitution = params.restitution
     gravityOn = params.gravity
     halfBound = params.containerSize / 2 - radius
+    // The reflecting box has side 2·halfBound; its 6 faces are the area pressure acts on.
+    wallArea = 6 * (2 * halfBound) * (2 * halfBound)
+    wallImpulse = 0
+    simTimeAccum = 0
     // Cell size = contact distance, so neighbours within 2·r fall in adjacent cells.
     grid = createSpatialGrid(2 * radius)
 
@@ -74,6 +85,7 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
   }
 
   function step(dt: number): void {
+    simTimeAccum += dt
     if (gravityOn) {
       for (let i = 0; i < count; i++) velocities[i * 3 + 1] += GRAVITY * dt
     }
@@ -94,9 +106,12 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
       for (let axis = 0; axis < 3; axis++) {
         const k = o + axis
         if (positions[k] > halfBound && velocities[k] > 0) {
+          // Impulse on the wall = m·Δv = m·|v_in|·(1 + restitution) (v_out = −e·v_in).
+          wallImpulse += PARTICLE_MASS * velocities[k] * (1 + restitution)
           positions[k] = halfBound
           velocities[k] = -velocities[k] * restitution
         } else if (positions[k] < -halfBound && velocities[k] < 0) {
+          wallImpulse += PARTICLE_MASS * -velocities[k] * (1 + restitution)
           positions[k] = -halfBound
           velocities[k] = -velocities[k] * restitution
         }
@@ -159,7 +174,7 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
     return { count, positions: renderPositions, velocities: renderVelocities, radius }
   }
 
-  function getTelemetry() {
+  function getTelemetry(): Telemetry {
     let speedSum = 0
     let keSum = 0
     const speedSamples = new Float32Array(count)
@@ -171,11 +186,21 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
       speedSum += speed
       keSum += speedSq
     }
+    // Time-averaged wall pressure over the interval since the last read, then reset the
+    // window. (getTelemetry is sampled on an interval by the driver — see simDriver.)
+    const pressure = simTimeAccum > 0 && wallArea > 0 ? wallImpulse / (wallArea * simTimeAccum) : 0
+    wallImpulse = 0
+    simTimeAccum = 0
     return {
       particleCount: count,
       averageSpeed: count > 0 ? speedSum / count : 0,
       kineticEnergy: 0.5 * PARTICLE_MASS * keSum,
       speedSamples,
+      momentum: totalMomentum(velocities, count, PARTICLE_MASS),
+      temperature: temperature(velocities, count, PARTICLE_MASS),
+      pressure,
+      // Elastic walls + elastic collisions conserve KE; restitution < 1 or gravity break it.
+      inelastic: restitution < 1 || gravityOn,
     }
   }
 
@@ -186,6 +211,8 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
     renderVelocities = new Float32Array(0)
     grid = null
     count = 0
+    wallImpulse = 0
+    simTimeAccum = 0
   }
 
   return {

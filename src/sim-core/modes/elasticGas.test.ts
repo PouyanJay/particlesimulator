@@ -197,3 +197,63 @@ describe('elasticGas physics invariants', () => {
   // feasible through the public API: init() scatters particles to the walls, whose
   // (legitimate) impulses change total momentum during any run long enough to collide.
 })
+
+describe('elasticGas conserved-quantity telemetry', () => {
+  it('reports momentum, temperature, and pressure', () => {
+    const mode = createElasticGasMode()
+    mode.init(ctx({ particleCount: 100 }))
+    const t = mode.getTelemetry()
+    expect(t.momentum).toHaveLength(3)
+    expect(t.temperature).toBeGreaterThan(0)
+    expect(t.pressure).toBeDefined()
+  })
+
+  it('reports temperature consistent with equipartition T = 2·KE / (3·N)', () => {
+    const mode = createElasticGasMode()
+    mode.init(ctx({ particleCount: 200, initialVelocity: 2 }))
+    const t = mode.getTelemetry()
+    expect(t.temperature!).toBeCloseTo((2 * t.kineticEnergy) / (3 * t.particleCount), 6)
+  })
+
+  it('flags inelastic runs (restitution < 1 or gravity), not the elastic default', () => {
+    const elastic = createElasticGasMode()
+    elastic.init(ctx())
+    expect(elastic.getTelemetry().inelastic).toBe(false)
+
+    const damped = createElasticGasMode()
+    damped.init(ctx({ restitution: 0.8 }))
+    expect(damped.getTelemetry().inelastic).toBe(true)
+
+    const withGravity = createElasticGasMode()
+    withGravity.init(ctx({ gravity: true }))
+    expect(withGravity.getTelemetry().inelastic).toBe(true)
+  })
+
+  it('measures zero pressure before stepping, positive pressure once walls are struck', () => {
+    const mode = createElasticGasMode()
+    mode.init(ctx({ particleCount: 200, initialVelocity: 3, containerSize: 2.5, particleRadius: 0.05 }))
+    expect(mode.getTelemetry().pressure).toBe(0)
+    for (let i = 0; i < 600; i++) mode.step(1 / 90)
+    expect(mode.getTelemetry().pressure!).toBeGreaterThan(0)
+  })
+
+  it('satisfies the ideal-gas law P·V = N·k_B·T for a dilute elastic gas (k_B = 1)', () => {
+    // The acceptance test for the pressure measurement: kinetic theory predicts
+    // P·V = N·k_B·T for point-like elastic particles. Tiny radius ⇒ negligible excluded
+    // volume; the wall-impulse pressure, the box volume, N and the kinetic temperature must
+    // therefore agree to within sampling noise. A wrong impulse factor or area would fail.
+    const containerSize = 3
+    const radius = 0.02
+    const count = 400
+    const mode = createElasticGasMode()
+    mode.init(ctx({ particleCount: count, particleRadius: radius, containerSize, initialVelocity: 2.5, restitution: 1, gravity: false }))
+    mode.getTelemetry() // reset the pressure window so it averages only the run below
+    for (let i = 0; i < 3000; i++) mode.step(1 / 90)
+    const t = mode.getTelemetry()
+    const lEff = containerSize - 2 * radius // particle centres bounce in this box
+    const pv = t.pressure! * lEff ** 3
+    const nkt = t.particleCount * t.temperature! // k_B = 1
+    expect(pv / nkt).toBeGreaterThan(0.8)
+    expect(pv / nkt).toBeLessThan(1.2)
+  })
+})

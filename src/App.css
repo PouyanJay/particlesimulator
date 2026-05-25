@@ -101,6 +101,47 @@
   color: var(--accent);
 }
 
+/* Conserved-quantity readouts */
+.readouts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-6);
+}
+
+.readouts--empty {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.readouts__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.readouts__label {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.readouts__value {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.readouts__flag {
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--warning);
+}
+
 .chart {
   width: 100%;
 }

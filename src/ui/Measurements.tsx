@@ -1,15 +1,18 @@
 import { SpeedChart } from './charts/SpeedChart'
 import { SpeedDistribution } from './charts/SpeedDistribution'
+import { MeasurementReadouts } from './MeasurementReadouts'
 
 /**
- * Live measurement panel — turns the simulation into a lab. Shows average speed over
- * time and the speed distribution with the analytic Maxwell–Boltzmann overlay.
+ * Live measurement panel — turns the simulation into a lab. Shows the conserved/derived
+ * quantities (energy, temperature, pressure, momentum), average speed over time, and the
+ * speed distribution with the analytic Maxwell–Boltzmann overlay.
  * (Telemetry is sampled by the CPU sim loop; GPU-resident modes don't feed it yet.)
  */
 export function Measurements() {
   return (
     <section className="panel measurements" aria-label="Measurements">
       <h2 className="panel__title">Measurements</h2>
+      <MeasurementReadouts />
       <div className="measurements__group">
         <div className="measurements__chart">
           <span className="measurements__label">Average speed</span>
