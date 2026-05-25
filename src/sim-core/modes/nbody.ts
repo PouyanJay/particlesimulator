@@ -1,6 +1,6 @@
-import { createRng, randomInRange } from '../rng'
 import { computeGravityAccelerations } from '../physics/gravity'
 import { velocityVerlet, type AccelFn, type Integrator } from '../integrators/integrators'
+import { seedNbodyDisk } from './nbodySeed'
 import type { ParamValues, ParticleBuffers, SimContext, SimMode } from '../types'
 
 /**
@@ -52,22 +52,8 @@ export function createNbodyMode(): SimMode<typeof nbodySchema> {
     renderVelocities = new Float32Array(count * 3)
     integrator = velocityVerlet(count * 3)
 
-    const rng = createRng(ctx.seed)
-    // A flattened disk (y compressed), spun about the Y axis (rigid rotation v = ω × r).
-    const r = p.containerSize * 0.25
-    const w = p.rotation
-    for (let i = 0; i < count; i++) {
-      const o = i * 3
-      const x = randomInRange(rng, -r, r)
-      const y = randomInRange(rng, -r * 0.3, r * 0.3)
-      const z = randomInRange(rng, -r, r)
-      positions[o] = x
-      positions[o + 1] = y
-      positions[o + 2] = z
-      velocities[o] = w * z
-      velocities[o + 1] = 0
-      velocities[o + 2] = -w * x
-    }
+    // A flattened disk spun about the Y axis (shared with the GPU N-body mode).
+    seedNbodyDisk(ctx.seed, count, p.containerSize, p.rotation, positions, velocities)
   }
 
   function step(dt: number): void {
