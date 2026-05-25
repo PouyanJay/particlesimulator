@@ -1,5 +1,6 @@
 import { createRegistry } from '../sim-core/registry'
 import { createElasticGasMode } from '../sim-core/modes/elasticGas'
+import { createParticleLifeMode } from '../sim-core/modes/particleLife'
 
 /**
  * The application's simulation registry. Modes register here once; the UI and render
@@ -8,3 +9,4 @@ import { createElasticGasMode } from '../sim-core/modes/elasticGas'
  */
 export const simRegistry = createRegistry()
 simRegistry.register(createElasticGasMode)
+simRegistry.register(createParticleLifeMode)
