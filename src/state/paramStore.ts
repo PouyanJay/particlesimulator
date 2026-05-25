@@ -1,11 +1,11 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { defaultParamValues } from '../sim-core/paramSchema'
+import type { ParamValue } from '../sim-core/types'
 import { simRegistry } from './simRegistry'
 import { clientStorage } from './clientStorage'
 
-/** A single tunable parameter value (matches the schema's number/boolean params). */
-export type ParamValue = number | boolean
+export type { ParamValue }
 
 const INITIAL_MODE_ID = 'elastic-gas'
 

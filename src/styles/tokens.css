@@ -1,0 +1,78 @@
+/*
+ * Design tokens — the single source of truth for the "Refined dark technical" UI.
+ * Every color, space, radius, font, and motion value used in the DOM comes from here
+ * (see CLAUDE.md § UI/UX). Canvas/WebGL colors mirror these in src/ui/theme.ts.
+ */
+:root {
+  /* Surfaces */
+  --bg-base: #0b0e14;
+  --bg-surface: #12161f;
+  --bg-elevated: #1a1f2b;
+  --border: #232a37;
+  --border-strong: #313a4b;
+
+  /* Text */
+  --text-primary: #e6eaf2;
+  --text-secondary: #9ba6b7;
+  /* Lightened from #6b7588 so small muted text clears WCAG AA (4.5:1) on surfaces. */
+  --text-muted: #7e8a9c;
+  --text-on-accent: #0b0e14;
+
+  /* Accent (used sparingly: primary action, active state, focus ring) */
+  --accent: #6366f1;
+  --accent-hover: #7c7ff2;
+  --accent-subtle: rgba(99, 102, 241, 0.12);
+
+  /* Semantic */
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --info: #60a5fa;
+
+  /* Spacing (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* Focus ring (repeated across interactive elements) */
+  --focus-ring-width: 3px;
+
+  /* Elevation */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.35);
+
+  /* Typography */
+  --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, 'JetBrains Mono', 'SF Mono', monospace;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 24px;
+
+  /* Motion */
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 320ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+}
