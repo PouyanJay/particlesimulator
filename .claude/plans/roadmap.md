@@ -8,8 +8,8 @@
 
 | Phase | Status | Notes |
 |---|---|---|
-| 0 — Foundation & de-risking | ⬜ Not started | Hard prerequisite for all later phases |
-| 1 — Rendering leap & visual wow | ⬜ Not started | |
+| 0 — Foundation & de-risking | ✅ Done (2026-05-25) | Decoupled sim-core/state/render/ui, SimMode plugin, Zustand, TDD (73 tests). **three.js→r17x/R3F9/WebGPU upgrade deferred to Phase 1** — not needed for the decoupling; done with browser verification where GPU compute requires it. |
+| 1 — Rendering leap & visual wow | ⬜ Not started | **Starts with the deferred renderer upgrade** (three r17x+, R3F 9, WebGPURenderer + WebGL2 fallback) as its first task. |
 | 2 — Simulation engine & first GPU modes | ⬜ Not started | |
 | 3 — Educational lab core | ⬜ Not started | |
 | 4 — Advanced simulations | ⬜ Not started | |
@@ -60,7 +60,10 @@ prop-drilled `useState` cannot absorb new modes. Both block everything else.
 
 ### Workstreams
 
-1. **Dependency upgrade (de-risk first).**
+1. **Dependency upgrade (de-risk first).** — ⏭️ **Deferred to Phase 1** (2026-05-25). The decoupling
+   below was achievable on the current stack (sim-core is framework-agnostic), so the major, browser-only
+   renderer upgrade was moved to the start of Phase 1 where GPU compute actually needs it, rather than risk
+   the freshly-decoupled app on an upgrade that can't be verified headlessly.
    - Bump `three` `0.149 → r17x+` and `@react-three/fiber` `8 → 9` (async `gl` prop for `await renderer.init()`),
      `@react-three/drei`, `@react-three/rapier` to matching versions. Expect breaking changes; do it on a branch.
    - Verify the existing sim still works on the upgraded stack (WebGLRenderer first), then introduce
