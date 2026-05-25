@@ -36,6 +36,7 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
   let positions = new Float64Array(0)
   let velocities = new Float64Array(0)
   let renderPositions = new Float32Array(0)
+  let renderVelocities = new Float32Array(0)
 
   function init(ctx: SimContext<typeof elasticGasSchema>): void {
     const params: GasParams = ctx.params
@@ -48,6 +49,7 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
     positions = new Float64Array(count * 3)
     velocities = new Float64Array(count * 3)
     renderPositions = new Float32Array(count * 3)
+    renderVelocities = new Float32Array(count * 3)
 
     const rng = createRng(ctx.seed)
     for (let i = 0; i < count; i++) {
@@ -126,8 +128,11 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
   }
 
   function getBuffers(): ParticleBuffers {
-    for (let i = 0; i < renderPositions.length; i++) renderPositions[i] = positions[i]
-    return { count, positions: renderPositions, radius }
+    for (let i = 0; i < renderPositions.length; i++) {
+      renderPositions[i] = positions[i]
+      renderVelocities[i] = velocities[i]
+    }
+    return { count, positions: renderPositions, velocities: renderVelocities, radius }
   }
 
   function getTelemetry() {
@@ -150,6 +155,7 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
     positions = new Float64Array(0)
     velocities = new Float64Array(0)
     renderPositions = new Float32Array(0)
+    renderVelocities = new Float32Array(0)
     count = 0
   }
 

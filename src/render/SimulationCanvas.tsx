@@ -3,6 +3,7 @@ import * as THREE from 'three/webgpu'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { ParticleField } from './ParticleField'
+import { PostFx } from './PostFx'
 import { useParamStore } from '../state/paramStore'
 import { theme } from '../ui/theme'
 
@@ -33,6 +34,7 @@ export function SimulationCanvas() {
           ...props,
           forceWebGL: FORCE_WEBGL,
         } as ConstructorParameters<typeof THREE.WebGPURenderer>[0])
+        renderer.toneMapping = THREE.ACESFilmicToneMapping
         await renderer.init()
         return renderer
       }}
@@ -49,6 +51,9 @@ export function SimulationCanvas() {
       </mesh>
 
       <OrbitControls enablePan enableZoom enableRotate minDistance={2} maxDistance={20} makeDefault />
+
+      {/* Must be last: takes over the render to present the post-processed (bloom) frame. */}
+      <PostFx />
     </Canvas>
   )
 }
