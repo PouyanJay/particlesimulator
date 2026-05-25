@@ -6,7 +6,9 @@ import type { ParticleBuffers, SimMode } from '../types'
  */
 export const gpuNbodySchema = {
   particleCount: { type: 'number', label: 'Bodies', default: 20000, min: 1000, max: 100000, step: 1000 },
-  gravity: { type: 'number', label: 'Gravity Strength', default: 0.02, min: 0.001, max: 0.2, step: 0.001 },
+  // Mean-field strength (≈ G·total-mass): the kernel divides by body count, so this is
+  // count-independent. ~10 gives the CPU mode's feel at any N.
+  gravity: { type: 'number', label: 'Gravity Strength', default: 10, min: 1, max: 100, step: 1 },
   softening: { type: 'number', label: 'Softening', default: 0.2, min: 0.05, max: 1, step: 0.01, unit: 'm' },
   rotation: { type: 'number', label: 'Initial Spin', default: 0.6, min: 0, max: 2, step: 0.1 },
   containerSize: { type: 'number', label: 'Bounds', default: 10, min: 4, max: 20, step: 1, unit: 'm' },

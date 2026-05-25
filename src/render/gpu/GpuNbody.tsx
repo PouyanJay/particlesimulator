@@ -53,7 +53,10 @@ export function GpuNbody() {
     if (!active) return
 
     // Drive uniforms from the param store (read in the loop, never via props).
-    active.uniforms.g.value = num(params.gravity, 0.02)
+    // Normalize gravity by body count (mean-field): all-pairs acceleration scales with N,
+    // so dividing keeps "Gravity Strength" stable across counts and avoids blow-up at 20k+.
+    const count = Math.max(1, num(params.particleCount, 1))
+    active.uniforms.g.value = num(params.gravity, 0.02) / count
     const soft = num(params.softening, 0.2)
     active.uniforms.softeningSq.value = soft * soft
     active.uniforms.dt.value = FIXED_DT
