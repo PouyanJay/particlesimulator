@@ -142,6 +142,12 @@
   color: var(--warning);
 }
 
+.readouts__note {
+  margin: var(--space-2) 0 var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
 .chart {
   width: 100%;
 }

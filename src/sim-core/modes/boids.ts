@@ -29,15 +29,15 @@ import type { ParamValues, ParticleBuffers, SimContext, SimMode } from '../types
  */
 export const boidsSchema = {
   particleCount: { type: 'number', label: 'Boid Count', default: 1200, min: 50, max: 20000, step: 10 },
-  perceptionRadius: { type: 'number', label: 'Perception Radius', default: 0.7, min: 0.2, max: 2, step: 0.05, unit: 'm' },
-  separationRadius: { type: 'number', label: 'Separation Radius', default: 0.3, min: 0.05, max: 1, step: 0.05, unit: 'm' },
+  perceptionRadius: { type: 'number', label: 'Perception Radius', default: 0.7, min: 0.2, max: 2, step: 0.05 },
+  separationRadius: { type: 'number', label: 'Separation Radius', default: 0.3, min: 0.05, max: 1, step: 0.05 },
   separationWeight: { type: 'number', label: 'Separation', default: 1.6, min: 0, max: 5, step: 0.1 },
   alignmentWeight: { type: 'number', label: 'Alignment', default: 1.2, min: 0, max: 5, step: 0.1 },
   cohesionWeight: { type: 'number', label: 'Cohesion', default: 0.9, min: 0, max: 5, step: 0.1 },
-  maxSpeed: { type: 'number', label: 'Max Speed', default: 1.6, min: 0.2, max: 5, step: 0.1, unit: 'm/s' },
-  maxForce: { type: 'number', label: 'Max Force', default: 3, min: 0.2, max: 12, step: 0.1, unit: 'm/s²' },
-  containerSize: { type: 'number', label: 'Container Size', default: 6, min: 2, max: 12, step: 0.5, unit: 'm' },
-  particleRadius: { type: 'number', label: 'Boid Size', default: 0.04, min: 0.02, max: 0.12, step: 0.01, unit: 'm' },
+  maxSpeed: { type: 'number', label: 'Max Speed', default: 1.6, min: 0.2, max: 5, step: 0.1 },
+  maxForce: { type: 'number', label: 'Max Force', default: 3, min: 0.2, max: 12, step: 0.1 },
+  containerSize: { type: 'number', label: 'Container Size', default: 6, min: 2, max: 12, step: 0.5 },
+  particleRadius: { type: 'number', label: 'Boid Size', default: 0.04, min: 0.02, max: 0.12, step: 0.01 },
 } as const
 
 type Params = ParamValues<typeof boidsSchema>
@@ -248,7 +248,6 @@ export function createBoidsMode(): BoidsMode {
       particleCount: count,
       averageSpeed: count > 0 ? speedSum / count : 0,
       kineticEnergy: 0.5 * keSum,
-      units: { speed: 'm/s', energy: 'J' },
       // Boids speeds cluster near maxSpeed (not Maxwell–Boltzmann), so no histogram.
     }
   }

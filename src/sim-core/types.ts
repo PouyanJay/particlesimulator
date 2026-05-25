@@ -96,23 +96,11 @@ export interface Telemetry {
   /**
    * True when total kinetic energy is not conserved this run (inelastic restitution, or an
    * external force such as gravity) — flags that conservation readouts will drift.
+   *
+   * All telemetry values are in **dimensionless reduced units** (k_B = 1, unit particle mass);
+   * the lab models no specific substance, so quantities are pure numbers (see the UI note).
    */
   inelastic?: boolean
-  /**
-   * Unit labels for the readouts above. Each mode declares the units of its own system —
-   * SI-style with unit mass (and k_B = 1) for the gas/N-body modes; reduced LJ units (σ, ε)
-   * for molecular dynamics — so the UI can label values without assuming one unit system.
-   */
-  units?: TelemetryUnits
-}
-
-/** Display unit labels for the telemetry quantities (mode-specific; see Telemetry.units). */
-export interface TelemetryUnits {
-  speed?: string
-  energy?: string
-  temperature?: string
-  pressure?: string
-  momentum?: string
 }
 
 export type SimBackend = 'cpu' | 'rapier' | 'webgpu-compute'
