@@ -136,6 +136,10 @@
   color: var(--text-primary);
 }
 
+.readouts__unit {
+  color: var(--text-muted);
+}
+
 .readouts__flag {
   margin-top: var(--space-1);
   font-size: var(--text-xs);
@@ -380,16 +384,19 @@
   gap: var(--space-2);
 }
 
-/* Mode selector */
+/* Mode selector — top of the instrument sidebar, above the parameters it governs. */
 .mode-select {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: var(--space-2);
-  margin-right: var(--space-2);
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--border);
 }
 
 .mode-select__label {
   font-size: var(--text-xs);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
@@ -397,7 +404,11 @@
 
 .dropdown {
   position: relative;
-  display: inline-flex;
+  display: flex;
+}
+
+.mode-select .select {
+  width: 100%;
 }
 
 /* Dropdown trigger button */
@@ -537,6 +548,10 @@
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
+}
+
+.status__metric-unit {
+  color: var(--text-muted);
 }
 
 /* Narrow screens: stack the sidebar above the viewport. */

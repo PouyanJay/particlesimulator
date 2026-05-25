@@ -154,6 +154,7 @@ export function createParticleLifeMode(): SimMode<typeof particleLifeSchema> {
       particleCount: count,
       averageSpeed: count > 0 ? speedSum / count : 0,
       kineticEnergy: 0,
+      units: { speed: 'm/s', energy: 'J' },
     }
   }
 

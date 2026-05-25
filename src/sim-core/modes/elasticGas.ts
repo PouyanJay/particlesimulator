@@ -28,6 +28,9 @@ type GasParams = ParamValues<typeof elasticGasSchema>
 const GRAVITY = -9.81 // m/s² applied on the Y axis when enabled.
 const PARTICLE_MASS = 1 // equal mass for all particles.
 
+// SI-style units with unit particle mass and k_B = 1 (so the kinetic temperature is in K).
+const UNITS = { speed: 'm/s', energy: 'J', temperature: 'K', pressure: 'Pa', momentum: 'kg·m/s' } as const
+
 export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
   // Internal state in Float64 for accuracy; a Float32 view is produced for rendering.
   let count = 0
@@ -201,6 +204,7 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
       pressure,
       // Elastic walls + elastic collisions conserve KE; restitution < 1 or gravity break it.
       inelastic: restitution < 1 || gravityOn,
+      units: UNITS,
     }
   }
 

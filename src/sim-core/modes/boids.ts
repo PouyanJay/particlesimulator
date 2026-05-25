@@ -248,6 +248,7 @@ export function createBoidsMode(): BoidsMode {
       particleCount: count,
       averageSpeed: count > 0 ? speedSum / count : 0,
       kineticEnergy: 0.5 * keSum,
+      units: { speed: 'm/s', energy: 'J' },
       // Boids speeds cluster near maxSpeed (not Maxwell–Boltzmann), so no histogram.
     }
   }
