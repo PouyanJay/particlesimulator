@@ -136,10 +136,6 @@
   color: var(--text-primary);
 }
 
-.readouts__unit {
-  color: var(--text-muted);
-}
-
 .readouts__flag {
   margin-top: var(--space-1);
   font-size: var(--text-xs);
@@ -548,10 +544,6 @@
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
-}
-
-.status__metric-unit {
-  color: var(--text-muted);
 }
 
 /* Narrow screens: stack the sidebar above the viewport. */

@@ -34,14 +34,13 @@ export function MeasurementReadouts() {
   )
 }
 
+// The unit lives in the label — "Kinetic energy (J)" — so the values form a clean,
+// right-aligned numeric column (per the design system's tabular-figure rule).
 function Readout({ label, value, unit }: { label: string; value: string; unit?: string }) {
   return (
     <div className="readouts__row">
-      <dt className="readouts__label">{label}</dt>
-      <dd className="readouts__value">
-        {value}
-        {unit ? <span className="readouts__unit"> {unit}</span> : null}
-      </dd>
+      <dt className="readouts__label">{unit ? `${label} (${unit})` : label}</dt>
+      <dd className="readouts__value">{value}</dd>
     </div>
   )
 }
