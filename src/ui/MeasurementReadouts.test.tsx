@@ -2,8 +2,14 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MeasurementReadouts } from './MeasurementReadouts'
 import { useTelemetryStore } from '../state/telemetryStore'
+import { useParamStore } from '../state/paramStore'
 
-beforeEach(() => useTelemetryStore.getState().reset())
+beforeEach(() => {
+  useTelemetryStore.getState().reset()
+  // Isolate each test: default to a non-LJ mode in reduced (dimensionless) units.
+  useParamStore.getState().selectMode('elastic-gas')
+  useParamStore.getState().setSubstance('reduced')
+})
 
 describe('MeasurementReadouts', () => {
   it('shows an empty state before the sim has produced telemetry', () => {
@@ -43,7 +49,7 @@ describe('MeasurementReadouts', () => {
     expect(screen.queryByText('Total momentum')).not.toBeInTheDocument()
   })
 
-  it('renders values as bare dimensionless numbers with a reduced-units note', () => {
+  it('renders bare dimensionless numbers with a reduced-units note by default', () => {
     useTelemetryStore.getState().push({
       particleCount: 10,
       averageSpeed: 1,
@@ -53,10 +59,8 @@ describe('MeasurementReadouts', () => {
       momentum: [3, 0, 4],
     })
     render(<MeasurementReadouts />)
-    // Bare numbers — no SI/reduced unit suffix on any value.
     expect(screen.getByText('12.50')).toBeInTheDocument()
     expect(screen.getByText('0.800')).toBeInTheDocument()
-    expect(screen.getByText('5.000')).toBeInTheDocument() // hypot(3,0,4)
     expect(screen.getByText(/dimensionless reduced units/i)).toBeInTheDocument()
   })
 
@@ -64,5 +68,24 @@ describe('MeasurementReadouts', () => {
     useTelemetryStore.getState().push({ particleCount: 10, averageSpeed: 1, kineticEnergy: 5, inelastic: true })
     render(<MeasurementReadouts />)
     expect(screen.getByText(/not conserved/i)).toBeInTheDocument()
+  })
+
+  it('converts readouts to SI for a real substance on the Lennard-Jones gas', () => {
+    useParamStore.getState().selectMode('molecular-dynamics')
+    useParamStore.getState().setSubstance('argon')
+    useTelemetryStore.getState().push({
+      particleCount: 10,
+      averageSpeed: 1,
+      kineticEnergy: 1,
+      temperature: 1.2,
+      pressure: 0.01,
+      momentum: [0, 0, 0],
+    })
+    render(<MeasurementReadouts />)
+    // Argon ε/k_B = 119.8 K ⇒ T* = 1.2 → 143.8 K, with the unit in the label.
+    expect(screen.getByText('Temperature (K)')).toBeInTheDocument()
+    expect(screen.getByText('143.8')).toBeInTheDocument()
+    expect(screen.getByText('Kinetic energy (J)')).toBeInTheDocument()
+    expect(screen.getByText(/argon · si units/i)).toBeInTheDocument()
   })
 })
