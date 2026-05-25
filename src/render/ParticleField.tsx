@@ -21,15 +21,22 @@ const MAX_INSTANCES = 2000
  */
 export function ParticleField() {
   const meshRef = useRef<THREE.InstancedMesh>(null)
-  const driverRef = useRef<SimDriver | null>(null)
-  if (!driverRef.current) driverRef.current = createSimDriver({ registry: simRegistry })
-
   const dummy = useMemo(() => new THREE.Object3D(), [])
-  const geometry = useMemo(() => new THREE.SphereGeometry(1, 16, 16), [])
-  const material = useMemo(
-    () => new THREE.MeshStandardMaterial({ color: theme.accent, roughness: 0.4, metalness: 0.1 }),
-    [],
-  )
+
+  // StrictMode-safe lazy resources. React 19 StrictMode (which R3F 9 now inherits) mounts
+  // → unmounts → remounts in dev; the unmount cleanup disposes AND nulls these, so the
+  // remount recreates fresh GPU objects instead of reusing disposed ones. The `??=` reads
+  // return non-null locals for the render below.
+  const driverRef = useRef<SimDriver | null>(null)
+  const geometryRef = useRef<THREE.SphereGeometry | null>(null)
+  const materialRef = useRef<THREE.MeshStandardMaterial | null>(null)
+  const driver = (driverRef.current ??= createSimDriver({ registry: simRegistry }))
+  const geometry = (geometryRef.current ??= new THREE.SphereGeometry(1, 16, 16))
+  const material = (materialRef.current ??= new THREE.MeshStandardMaterial({
+    color: theme.accent,
+    roughness: 0.4,
+    metalness: 0.1,
+  }))
 
   const modeId = useParamStore((s) => s.modeId)
   const seed = useParamStore((s) => s.seed)
@@ -40,19 +47,21 @@ export function ParticleField() {
   // TODO(phase-1): split "structural" params (count, seed) that justify a reload from
   // "live" params (e.g. restitution, gravity) applied to the running mode in place.
   useEffect(() => {
-    driverRef.current?.load({ modeId, seed, params })
+    driver.load({ modeId, seed, params })
     useTelemetryStore.getState().reset()
-  }, [modeId, seed, params])
+  }, [driver, modeId, seed, params])
 
-  // Release GPU resources on unmount.
+  // Dispose and null GPU resources on unmount so a StrictMode remount recreates them.
   useEffect(() => {
-    const driver = driverRef.current
     return () => {
-      geometry.dispose()
-      material.dispose()
-      driver?.dispose()
+      driverRef.current?.dispose()
+      geometryRef.current?.dispose()
+      materialRef.current?.dispose()
+      driverRef.current = null
+      geometryRef.current = null
+      materialRef.current = null
     }
-  }, [geometry, material])
+  }, [])
 
   useFrame((_, delta) => {
     const driver = driverRef.current
