@@ -40,6 +40,25 @@ export function ResetIcon({ className }: IconProps) {
   )
 }
 
+export function CheckIcon({ className }: IconProps) {
+  return (
+    <svg
+      className={className}
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 8.5l3.5 3.5L13 5" />
+    </svg>
+  )
+}
+
 export function ChevronDownIcon({ className }: IconProps) {
   return (
     <svg

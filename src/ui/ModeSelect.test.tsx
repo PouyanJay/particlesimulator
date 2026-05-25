@@ -7,17 +7,26 @@ import { useParamStore } from '../state/paramStore'
 beforeEach(() => useParamStore.getState().selectMode('elastic-gas'))
 
 describe('ModeSelect', () => {
-  it('lists the registered modes as options', () => {
+  it('lists the registered modes once the menu is opened', async () => {
     render(<ModeSelect />)
-    expect(screen.getByRole('option', { name: 'Elastic Gas' })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: 'Particle Life' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Simulation mode' }))
+    expect(screen.getByRole('menuitem', { name: 'Elastic Gas' })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: 'Particle Life' })).toBeInTheDocument()
   })
 
-  it('switching the mode updates the store and loads the new mode defaults', async () => {
+  it('selecting a mode updates the store and loads the new mode defaults', async () => {
     render(<ModeSelect />)
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Simulation mode' }), 'particle-life')
+    await userEvent.click(screen.getByRole('button', { name: 'Simulation mode' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Particle Life' }))
     expect(useParamStore.getState().modeId).toBe('particle-life')
     // Params reset to the selected mode's schema defaults.
     expect(useParamStore.getState().params.numTypes).toBe(4)
+  })
+
+  it('closes the menu after a selection', async () => {
+    render(<ModeSelect />)
+    await userEvent.click(screen.getByRole('button', { name: 'Simulation mode' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Particle Life' }))
+    expect(screen.queryByRole('menuitem')).toBeNull()
   })
 })
