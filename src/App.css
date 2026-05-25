@@ -73,6 +73,68 @@
   gap: var(--space-4);
 }
 
+/* Measurements */
+.measurements {
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border);
+}
+
+.measurements__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.measurements__chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.measurements__label {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.measurements__legend {
+  color: var(--accent);
+}
+
+.chart {
+  width: 100%;
+}
+
+.chart--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 110px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+/* Speed distribution (SVG histogram + Maxwell–Boltzmann overlay) */
+.distribution {
+  width: 100%;
+  height: 90px;
+  display: block;
+}
+
+.distribution__bar {
+  fill: var(--accent-subtle);
+  stroke: var(--accent);
+  stroke-width: 0.3;
+}
+
+.distribution__curve {
+  fill: none;
+  stroke: var(--warning);
+  stroke-width: 1.5;
+}
+
 /* Field (range + toggle) */
 .field {
   display: flex;
