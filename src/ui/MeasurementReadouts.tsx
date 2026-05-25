@@ -14,32 +14,33 @@ export function MeasurementReadouts() {
     return <div className="readouts readouts--empty">Run the simulation to measure</div>
   }
 
-  const { kineticEnergy, temperature, pressure, momentum, inelastic, units } = telemetry
+  const { kineticEnergy, temperature, pressure, momentum, inelastic } = telemetry
   const momentumMagnitude = momentum ? Math.hypot(momentum[0], momentum[1], momentum[2]) : null
 
   return (
-    <dl className="readouts" aria-label="Conserved quantities">
-      <Readout label="Kinetic energy" value={kineticEnergy.toFixed(2)} unit={units?.energy} />
-      {temperature !== undefined && <Readout label="Temperature" value={temperature.toFixed(3)} unit={units?.temperature} />}
-      {pressure !== undefined && <Readout label="Pressure" value={pressure.toFixed(3)} unit={units?.pressure} />}
-      {momentumMagnitude !== null && (
-        <Readout label="Total momentum" value={momentumMagnitude.toFixed(3)} unit={units?.momentum} />
-      )}
-      {inelastic ? (
-        <div className="readouts__flag" role="note">
-          Inelastic — kinetic energy not conserved
-        </div>
-      ) : null}
-    </dl>
+    <>
+      <dl className="readouts" aria-label="Conserved quantities">
+        <Readout label="Kinetic energy" value={kineticEnergy.toFixed(2)} />
+        {temperature !== undefined && <Readout label="Temperature" value={temperature.toFixed(3)} />}
+        {pressure !== undefined && <Readout label="Pressure" value={pressure.toFixed(3)} />}
+        {momentumMagnitude !== null && <Readout label="Total momentum" value={momentumMagnitude.toFixed(3)} />}
+        {inelastic ? (
+          <div className="readouts__flag" role="note">
+            Inelastic — kinetic energy not conserved
+          </div>
+        ) : null}
+      </dl>
+      {/* The lab models no specific substance, so every value is a pure number. */}
+      <p className="readouts__note">Dimensionless reduced units · k_B = 1</p>
+    </>
   )
 }
 
-// The unit lives in the label — "Kinetic energy (J)" — so the values form a clean,
-// right-aligned numeric column (per the design system's tabular-figure rule).
-function Readout({ label, value, unit }: { label: string; value: string; unit?: string }) {
+// Values are bare numbers (reduced units), so they form a clean right-aligned column.
+function Readout({ label, value }: { label: string; value: string }) {
   return (
     <div className="readouts__row">
-      <dt className="readouts__label">{unit ? `${label} (${unit})` : label}</dt>
+      <dt className="readouts__label">{label}</dt>
       <dd className="readouts__value">{value}</dd>
     </div>
   )

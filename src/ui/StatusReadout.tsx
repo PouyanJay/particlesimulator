@@ -13,18 +13,18 @@ export function StatusReadout() {
       {telemetry ? (
         <>
           <Metric label="Particles" value={telemetry.particleCount.toString()} />
-          <Metric label="Avg speed" value={telemetry.averageSpeed.toFixed(3)} unit={telemetry.units?.speed} />
-          <Metric label="Kinetic energy" value={telemetry.kineticEnergy.toFixed(2)} unit={telemetry.units?.energy} />
+          <Metric label="Avg speed" value={telemetry.averageSpeed.toFixed(3)} />
+          <Metric label="Kinetic energy" value={telemetry.kineticEnergy.toFixed(2)} />
         </>
       ) : null}
     </div>
   )
 }
 
-function Metric({ label, value, unit }: { label: string; value: string; unit?: string }) {
+function Metric({ label, value }: { label: string; value: string }) {
   return (
     <span className="status__metric">
-      <span className="status__metric-label">{unit ? `${label} (${unit})` : label}</span>
+      <span className="status__metric-label">{label}</span>
       <span className="status__metric-value">{value}</span>
     </span>
   )

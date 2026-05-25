@@ -43,7 +43,7 @@ describe('MeasurementReadouts', () => {
     expect(screen.queryByText('Total momentum')).not.toBeInTheDocument()
   })
 
-  it('puts each mode-supplied unit in the label and keeps the value a bare number', () => {
+  it('renders values as bare dimensionless numbers with a reduced-units note', () => {
     useTelemetryStore.getState().push({
       particleCount: 10,
       averageSpeed: 1,
@@ -51,16 +51,13 @@ describe('MeasurementReadouts', () => {
       temperature: 0.8,
       pressure: 0.25,
       momentum: [3, 0, 4],
-      units: { energy: 'J', temperature: 'reduced', pressure: 'Pa', momentum: 'kg·m/s' },
     })
     render(<MeasurementReadouts />)
-    // Unit is in the label; the value column stays a clean bare number.
-    expect(screen.getByText('Kinetic energy (J)')).toBeInTheDocument()
-    expect(screen.getByText('Temperature (reduced)')).toBeInTheDocument()
-    expect(screen.getByText('Pressure (Pa)')).toBeInTheDocument()
-    expect(screen.getByText('Total momentum (kg·m/s)')).toBeInTheDocument()
+    // Bare numbers — no SI/reduced unit suffix on any value.
     expect(screen.getByText('12.50')).toBeInTheDocument()
-    expect(screen.getByText('5.000')).toBeInTheDocument() // hypot(3,0,4), no unit appended
+    expect(screen.getByText('0.800')).toBeInTheDocument()
+    expect(screen.getByText('5.000')).toBeInTheDocument() // hypot(3,0,4)
+    expect(screen.getByText(/dimensionless reduced units/i)).toBeInTheDocument()
   })
 
   it('flags an inelastic run', () => {

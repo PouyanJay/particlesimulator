@@ -23,20 +23,17 @@ import type { ParamValues, ParticleBuffers, SimContext, SimMode, Telemetry } fro
  */
 export const molecularDynamicsSchema = {
   particleCount: { type: 'number', label: 'Atom Count', default: 216, min: 8, max: 4000, step: 1 },
-  temperature: { type: 'number', label: 'Temperature', default: 1.2, min: 0.1, max: 5, step: 0.1, unit: 'ε/k_B' },
-  epsilon: { type: 'number', label: 'Well Depth (ε)', default: 1.0, min: 0.1, max: 5, step: 0.1, unit: 'ε' },
-  sigma: { type: 'number', label: 'Atom Diameter (σ)', default: 1.0, min: 0.5, max: 2, step: 0.1, unit: 'σ' },
-  cutoff: { type: 'number', label: 'Cutoff', default: 2.5, min: 1.5, max: 4, step: 0.1, unit: 'σ' },
-  containerSize: { type: 'number', label: 'Box Size', default: 14, min: 6, max: 30, step: 1, unit: 'σ' },
-  particleRadius: { type: 'number', label: 'Atom Size', default: 0.4, min: 0.1, max: 1, step: 0.05, unit: 'σ' },
+  temperature: { type: 'number', label: 'Temperature', default: 1.2, min: 0.1, max: 5, step: 0.1 },
+  epsilon: { type: 'number', label: 'Well Depth (ε)', default: 1.0, min: 0.1, max: 5, step: 0.1 },
+  sigma: { type: 'number', label: 'Atom Diameter (σ)', default: 1.0, min: 0.5, max: 2, step: 0.1 },
+  cutoff: { type: 'number', label: 'Cutoff', default: 2.5, min: 1.5, max: 4, step: 0.1 },
+  containerSize: { type: 'number', label: 'Box Size', default: 14, min: 6, max: 30, step: 1 },
+  particleRadius: { type: 'number', label: 'Atom Size', default: 0.4, min: 0.1, max: 1, step: 0.05 },
 } as const
 
 type Params = ParamValues<typeof molecularDynamicsSchema>
 
 const PARTICLE_MASS = 1 // reduced units: equal unit mass for every atom.
-
-// Reduced Lennard-Jones units: lengths in σ, energies in ε, time in τ = σ√(m/ε), k_B = 1.
-const UNITS = { speed: 'σ/τ', energy: 'ε', temperature: 'ε/k_B', pressure: 'ε/σ³', momentum: '√(mε)' } as const
 
 /**
  * Fixed internal MD timestep (reduced units). LJ forces near contact are stiff; the
@@ -219,7 +216,6 @@ export function createMolecularDynamicsMode(): SimMode<typeof molecularDynamicsS
       momentum: totalMomentum(velocities, count, PARTICLE_MASS),
       temperature: temperature(velocities, count, PARTICLE_MASS),
       pressure,
-      units: UNITS,
     }
   }
 

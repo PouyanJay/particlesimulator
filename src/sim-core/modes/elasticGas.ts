@@ -16,23 +16,17 @@ import type { Vec3 } from '../math/vec3'
  */
 export const elasticGasSchema = {
   particleCount: { type: 'number', label: 'Particle Count', default: 200, min: 10, max: 20000, step: 10 },
-  particleRadius: { type: 'number', label: 'Particle Size', default: 0.08, min: 0.02, max: 0.2, step: 0.01, unit: 'm' },
-  initialVelocity: { type: 'number', label: 'Initial Velocity', default: 1.0, min: 0.1, max: 5.0, step: 0.1, unit: 'm/s' },
+  particleRadius: { type: 'number', label: 'Particle Size', default: 0.08, min: 0.02, max: 0.2, step: 0.01 },
+  initialVelocity: { type: 'number', label: 'Initial Velocity', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
   restitution: { type: 'number', label: 'Restitution', default: 1.0, min: 0.1, max: 1.0, step: 0.001 },
-  containerSize: { type: 'number', label: 'Container Size', default: 2.5, min: 1, max: 6, step: 0.5, unit: 'm' },
+  containerSize: { type: 'number', label: 'Container Size', default: 2.5, min: 1, max: 6, step: 0.5 },
   gravity: { type: 'boolean', label: 'Gravity', default: false },
 } as const
 
 type GasParams = ParamValues<typeof elasticGasSchema>
 
-const GRAVITY = -9.81 // m/s² applied on the Y axis when enabled.
+const GRAVITY = -9.81 // applied on the Y axis when enabled (reduced units).
 const PARTICLE_MASS = 1 // equal mass for all particles.
-
-// Mechanical quantities are SI with unit particle mass (1 kg, so energy is in J, etc.).
-// Temperature, however, is reduced/dimensionless: with k_B = 1 it is k_B·T expressed in the
-// energy unit, not kelvin — a value of ~0.2–2 is a normal gas, not 0.2 K. (Using a real
-// k_B = 1.38e-23 J/K with these unit-mass velocities would instead give absurd ~1e22 K.)
-const UNITS = { speed: 'm/s', energy: 'J', temperature: 'reduced', pressure: 'Pa', momentum: 'kg·m/s' } as const
 
 export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
   // Internal state in Float64 for accuracy; a Float32 view is produced for rendering.
@@ -207,7 +201,6 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
       pressure,
       // Elastic walls + elastic collisions conserve KE; restitution < 1 or gravity break it.
       inelastic: restitution < 1 || gravityOn,
-      units: UNITS,
     }
   }
 

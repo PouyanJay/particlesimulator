@@ -16,16 +16,13 @@ import type { ParamValues, ParticleBuffers, SimContext, SimMode, Telemetry } fro
 export const nbodySchema = {
   particleCount: { type: 'number', label: 'Bodies', default: 600, min: 50, max: 3000, step: 10 },
   gravity: { type: 'number', label: 'Gravity Strength', default: 0.02, min: 0.001, max: 0.2, step: 0.001 },
-  softening: { type: 'number', label: 'Softening', default: 0.15, min: 0.02, max: 1, step: 0.01, unit: 'm' },
+  softening: { type: 'number', label: 'Softening', default: 0.15, min: 0.02, max: 1, step: 0.01 },
   rotation: { type: 'number', label: 'Initial Spin', default: 0.6, min: 0, max: 2, step: 0.1 },
-  containerSize: { type: 'number', label: 'Bounds', default: 8, min: 4, max: 16, step: 1, unit: 'm' },
-  particleRadius: { type: 'number', label: 'Body Size', default: 0.04, min: 0.02, max: 0.12, step: 0.01, unit: 'm' },
+  containerSize: { type: 'number', label: 'Bounds', default: 8, min: 4, max: 16, step: 1 },
+  particleRadius: { type: 'number', label: 'Body Size', default: 0.04, min: 0.02, max: 0.12, step: 0.01 },
 } as const
 
 type Params = ParamValues<typeof nbodySchema>
-
-// SI-style units with unit body mass.
-const UNITS = { speed: 'm/s', energy: 'J', momentum: 'kg·m/s' } as const
 
 export function createNbodyMode(): SimMode<typeof nbodySchema> {
   let count = 0
@@ -104,7 +101,6 @@ export function createNbodyMode(): SimMode<typeof nbodySchema> {
       kineticEnergy: 0.5 * keSum, // unit mass
       speedSamples,
       momentum: totalMomentum(velocities, count), // gravity is internal; walls perturb it
-      units: UNITS,
     }
   }
 

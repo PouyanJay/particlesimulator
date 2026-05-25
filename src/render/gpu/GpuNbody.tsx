@@ -10,7 +10,6 @@ const FIXED_DT = 1 / 90
 // How often (simulated seconds) to read the GPU velocity buffer back for the readouts —
 // matches the CPU driver's telemetry cadence. Read-back is a GPU→CPU copy, so it's throttled.
 const TELEMETRY_INTERVAL = 0.5
-const NBODY_UNITS = { speed: 'm/s', energy: 'J', momentum: 'kg·m/s' } as const
 const num = (v: unknown, fallback: number) => (typeof v === 'number' ? v : fallback)
 
 /**
@@ -133,6 +132,5 @@ async function publishTelemetry(
     kineticEnergy: 0.5 * keSum, // unit mass
     speedSamples,
     momentum: [px, py, pz],
-    units: NBODY_UNITS,
   })
 }
