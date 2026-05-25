@@ -14,15 +14,17 @@ export function MeasurementReadouts() {
     return <div className="readouts readouts--empty">Run the simulation to measure</div>
   }
 
-  const { kineticEnergy, temperature, pressure, momentum, inelastic } = telemetry
+  const { kineticEnergy, temperature, pressure, momentum, inelastic, units } = telemetry
   const momentumMagnitude = momentum ? Math.hypot(momentum[0], momentum[1], momentum[2]) : null
 
   return (
     <dl className="readouts" aria-label="Conserved quantities">
-      <Readout label="Kinetic energy" value={kineticEnergy.toFixed(2)} />
-      {temperature !== undefined && <Readout label="Temperature" value={temperature.toFixed(3)} />}
-      {pressure !== undefined && <Readout label="Pressure" value={pressure.toFixed(3)} />}
-      {momentumMagnitude !== null && <Readout label="Total momentum" value={momentumMagnitude.toFixed(3)} />}
+      <Readout label="Kinetic energy" value={kineticEnergy.toFixed(2)} unit={units?.energy} />
+      {temperature !== undefined && <Readout label="Temperature" value={temperature.toFixed(3)} unit={units?.temperature} />}
+      {pressure !== undefined && <Readout label="Pressure" value={pressure.toFixed(3)} unit={units?.pressure} />}
+      {momentumMagnitude !== null && (
+        <Readout label="Total momentum" value={momentumMagnitude.toFixed(3)} unit={units?.momentum} />
+      )}
       {inelastic ? (
         <div className="readouts__flag" role="note">
           Inelastic — kinetic energy not conserved
@@ -32,11 +34,14 @@ export function MeasurementReadouts() {
   )
 }
 
-function Readout({ label, value }: { label: string; value: string }) {
+function Readout({ label, value, unit }: { label: string; value: string; unit?: string }) {
   return (
     <div className="readouts__row">
       <dt className="readouts__label">{label}</dt>
-      <dd className="readouts__value">{value}</dd>
+      <dd className="readouts__value">
+        {value}
+        {unit ? <span className="readouts__unit"> {unit}</span> : null}
+      </dd>
     </div>
   )
 }

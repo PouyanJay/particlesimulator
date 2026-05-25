@@ -24,6 +24,9 @@ export const nbodySchema = {
 
 type Params = ParamValues<typeof nbodySchema>
 
+// SI-style units with unit body mass.
+const UNITS = { speed: 'm/s', energy: 'J', momentum: 'kg·m/s' } as const
+
 export function createNbodyMode(): SimMode<typeof nbodySchema> {
   let count = 0
   let radius = 0
@@ -101,6 +104,7 @@ export function createNbodyMode(): SimMode<typeof nbodySchema> {
       kineticEnergy: 0.5 * keSum, // unit mass
       speedSamples,
       momentum: totalMomentum(velocities, count), // gravity is internal; walls perturb it
+      units: UNITS,
     }
   }
 

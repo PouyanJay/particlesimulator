@@ -35,6 +35,9 @@ type Params = ParamValues<typeof molecularDynamicsSchema>
 
 const PARTICLE_MASS = 1 // reduced units: equal unit mass for every atom.
 
+// Reduced Lennard-Jones units: lengths in σ, energies in ε, time in τ = σ√(m/ε), k_B = 1.
+const UNITS = { speed: 'σ/τ', energy: 'ε', temperature: 'ε/k_B', pressure: 'ε/σ³', momentum: '√(mε)' } as const
+
 /**
  * Fixed internal MD timestep (reduced units). LJ forces near contact are stiff; the
  * characteristic vibration time at the well is τ ≈ σ·√(m/ε) ≈ 1, so a step of 0.005 keeps
@@ -216,6 +219,7 @@ export function createMolecularDynamicsMode(): SimMode<typeof molecularDynamicsS
       momentum: totalMomentum(velocities, count, PARTICLE_MASS),
       temperature: temperature(velocities, count, PARTICLE_MASS),
       pressure,
+      units: UNITS,
     }
   }
 

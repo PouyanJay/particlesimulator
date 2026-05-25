@@ -98,6 +98,21 @@ export interface Telemetry {
    * external force such as gravity) — flags that conservation readouts will drift.
    */
   inelastic?: boolean
+  /**
+   * Unit labels for the readouts above. Each mode declares the units of its own system —
+   * SI-style with unit mass (and k_B = 1) for the gas/N-body modes; reduced LJ units (σ, ε)
+   * for molecular dynamics — so the UI can label values without assuming one unit system.
+   */
+  units?: TelemetryUnits
+}
+
+/** Display unit labels for the telemetry quantities (mode-specific; see Telemetry.units). */
+export interface TelemetryUnits {
+  speed?: string
+  energy?: string
+  temperature?: string
+  pressure?: string
+  momentum?: string
 }
 
 export type SimBackend = 'cpu' | 'rapier' | 'webgpu-compute'
