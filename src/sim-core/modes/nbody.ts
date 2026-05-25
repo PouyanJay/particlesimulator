@@ -84,14 +84,21 @@ export function createNbodyMode(): SimMode<typeof nbodySchema> {
 
   function getTelemetry() {
     let speedSum = 0
+    let keSum = 0
+    const speedSamples = new Float32Array(count)
     for (let i = 0; i < count; i++) {
       const o = i * 3
-      speedSum += Math.sqrt(velocities[o] ** 2 + velocities[o + 1] ** 2 + velocities[o + 2] ** 2)
+      const speedSq = velocities[o] ** 2 + velocities[o + 1] ** 2 + velocities[o + 2] ** 2
+      const speed = Math.sqrt(speedSq)
+      speedSamples[i] = speed
+      speedSum += speed
+      keSum += speedSq
     }
     return {
       particleCount: count,
       averageSpeed: count > 0 ? speedSum / count : 0,
-      kineticEnergy: 0.5 * speedSum, // approx (unit mass); detailed energy is a Phase 3 readout
+      kineticEnergy: 0.5 * keSum, // unit mass
+      speedSamples,
     }
   }
 
