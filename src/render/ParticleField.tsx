@@ -5,7 +5,7 @@ import { createSimDriver, type SimDriver } from './simDriver'
 import { simRegistry } from '../state/simRegistry'
 import { useParamStore } from '../state/paramStore'
 import { useTelemetryStore } from '../state/telemetryStore'
-import { speedToHsl } from './colorRamp'
+import { speedToRgb } from './colorRamp'
 
 // Fixed instance capacity (the elastic gas schema caps particleCount here). We render
 // `mesh.count` ≤ capacity each frame, so changing the particle count never reallocates
@@ -91,8 +91,8 @@ export function ParticleField() {
           const vx = velocities[o]
           const vy = velocities[o + 1]
           const vz = velocities[o + 2]
-          const [h, s, l] = speedToHsl(Math.sqrt(vx * vx + vy * vy + vz * vz), vMax)
-          tmpColor.setHSL(h, s, l)
+          const [r, g, b] = speedToRgb(Math.sqrt(vx * vx + vy * vy + vz * vz), vMax)
+          tmpColor.setRGB(r, g, b, THREE.SRGBColorSpace)
           mesh.setColorAt(i, tmpColor)
         }
       }

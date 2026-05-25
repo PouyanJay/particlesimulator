@@ -25,7 +25,9 @@ export function PostFx() {
   // recreates the pipeline instead of reusing disposed render targets.
   if (!pipelineRef.current) {
     const scenePass = pass(scene, camera)
-    const bloomPass = bloom(scenePass, 0.6, 0.4, 0.1) // strength, radius, threshold
+    // Tight, bright-only glow: a small radius avoids the dense cluster's blooms merging
+    // into a broad halo, and a higher threshold keeps dim pixels out of the bloom.
+    const bloomPass = bloom(scenePass, 0.45, 0.15, 0.3) // strength, radius, threshold
     const pipeline = new THREE.RenderPipeline(gl)
     pipeline.outputNode = scenePass.add(bloomPass)
     pipelineRef.current = pipeline
