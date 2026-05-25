@@ -5,7 +5,7 @@ import { createSimDriver, type SimDriver } from './simDriver'
 import { simRegistry } from '../state/simRegistry'
 import { useParamStore } from '../state/paramStore'
 import { useTelemetryStore } from '../state/telemetryStore'
-import { speedToRgb } from './colorRamp'
+import { speedToRgb, TYPE_PALETTE } from './colorRamp'
 
 // Fixed instance capacity (matches the elastic gas schema's particleCount max). We render
 // `mesh.count` ≤ capacity each frame, so changing the particle count never reallocates
@@ -26,6 +26,8 @@ export function ParticleField() {
   const tmpColor = useMemo(() => new THREE.Color(), [])
   // Reused scratch so the per-particle color computation allocates nothing per frame.
   const rgb = useMemo<[number, number, number]>(() => [0, 0, 0], [])
+  // Pre-built categorical colors for color-by-type modes (hex is sRGB).
+  const typeColors = useMemo(() => TYPE_PALETTE.map((hex) => new THREE.Color(hex)), [])
 
   // StrictMode-safe lazy resources. React 19 StrictMode (which R3F 9 now inherits) mounts
   // → unmounts → remounts in dev; the unmount cleanup disposes AND nulls these, so the
@@ -81,8 +83,11 @@ export function ParticleField() {
     if (buffers) {
       const n = Math.min(buffers.count, MAX_INSTANCES)
       const velocities = buffers.velocities
+      const particleTypes = buffers.types
       // Reference speed for the color ramp: the mode's max initial velocity.
       const vMax = typeof params.initialVelocity === 'number' ? params.initialVelocity : 1
+      // Coloring: by type (categorical) when the mode provides types, else by speed.
+      const colored = Boolean(particleTypes || velocities)
       for (let i = 0; i < n; i++) {
         const o = i * 3
         dummy.position.set(buffers.positions[o], buffers.positions[o + 1], buffers.positions[o + 2])
@@ -90,7 +95,9 @@ export function ParticleField() {
         dummy.updateMatrix()
         mesh.setMatrixAt(i, dummy.matrix)
 
-        if (velocities) {
+        if (particleTypes) {
+          mesh.setColorAt(i, typeColors[particleTypes[i] % typeColors.length])
+        } else if (velocities) {
           const vx = velocities[o]
           const vy = velocities[o + 1]
           const vz = velocities[o + 2]
@@ -101,7 +108,7 @@ export function ParticleField() {
       }
       mesh.count = n
       mesh.instanceMatrix.needsUpdate = true
-      if (velocities && mesh.instanceColor) mesh.instanceColor.needsUpdate = true
+      if (colored && mesh.instanceColor) mesh.instanceColor.needsUpdate = true
     }
 
     const sample = driver.consumeTelemetry()

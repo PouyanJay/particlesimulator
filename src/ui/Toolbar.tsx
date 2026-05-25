@@ -1,5 +1,6 @@
 import { useParamStore } from '../state/paramStore'
 import { Button } from './controls/Button'
+import { ModeSelect } from './ModeSelect'
 
 /**
  * Global simulation controls: play/pause and reset. Reset assigns a new seed, which
@@ -12,6 +13,7 @@ export function Toolbar() {
 
   return (
     <div className="toolbar" role="group" aria-label="Simulation controls">
+      <ModeSelect />
       <Button variant="primary" onClick={togglePlaying} aria-pressed={isPlaying}>
         {isPlaying ? 'Pause' : 'Play'}
       </Button>

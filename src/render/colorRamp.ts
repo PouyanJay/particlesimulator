@@ -16,6 +16,19 @@ export const SLOW_COLOR: readonly [number, number, number] = [0.231, 0.51, 0.965
 /** Fast-end color (max speed): red (#ef4444). */
 export const FAST_COLOR: readonly [number, number, number] = [0.937, 0.267, 0.267]
 
+/**
+ * Categorical palette for color-by-type modes (e.g. Particle Life). The Okabe–Ito set
+ * is color-blind-safe; indexed by particle type (wraps if there are more types).
+ */
+export const TYPE_PALETTE: readonly string[] = [
+  '#56b4e9', // sky blue
+  '#e69f00', // orange
+  '#009e73', // green
+  '#f0e442', // yellow
+  '#cc79a7', // pink
+  '#0072b2', // blue
+]
+
 export function speedToRgb(
   speed: number,
   vMax: number,
