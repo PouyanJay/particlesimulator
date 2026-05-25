@@ -32,9 +32,15 @@ export type ParamDef = NumberParam | BooleanParam
 
 export type ParamSchema = Record<string, ParamDef>
 
-/** The resolved values for a schema (number params → number, boolean params → boolean). */
+/**
+ * The resolved values for a schema (number params → number, boolean params → boolean).
+ * The three-way conditional degrades gracefully to `number | boolean` for the erased
+ * `ParamSchema` (used at the registry/driver boundary), while concrete schemas resolve
+ * each key precisely.
+ */
+export type ParamValue = number | boolean
 export type ParamValues<S extends ParamSchema> = {
-  [K in keyof S]: S[K] extends NumberParam ? number : boolean
+  [K in keyof S]: S[K] extends NumberParam ? number : S[K] extends BooleanParam ? boolean : ParamValue
 }
 
 // ---------------------------------------------------------------------------
@@ -84,5 +90,9 @@ export interface SimMode<S extends ParamSchema = ParamSchema> {
   dispose(): void
 }
 
-/** A zero-arg factory that constructs a fresh mode instance. */
+/**
+ * A zero-arg factory that constructs a fresh mode instance. Must be cheap and
+ * side-effect-free before `init` is called — the registry constructs a throwaway
+ * probe to read `id`/`label` for listings.
+ */
 export type SimModeFactory = () => SimMode

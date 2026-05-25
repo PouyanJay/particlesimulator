@@ -1,14 +1,5 @@
 /// <reference types="vite/client" />
 
-// Declare modules for CSS imports
-declare module '*.css' {
-  const classes: { [key: string]: string };
-  export default classes;
-}
-
-// Make sure TypeScript knows about JSX
-declare namespace JSX {
-  interface IntrinsicElements {
-    [elemName: string]: any;
-  }
-}
+// Side-effect CSS imports (`import './x.css'`). React Three Fiber augments the global
+// JSX namespace with three.js element types, so no manual JSX declaration is needed.
+declare module '*.css'
