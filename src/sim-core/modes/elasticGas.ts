@@ -1,5 +1,6 @@
 import { createRng, randomInRange, type Rng } from '../rng'
 import { resolveElasticCollision } from '../physics/elasticCollision'
+import { createSpatialGrid, type SpatialGrid } from '../physics/spatialGrid'
 import type { ParamValues, ParticleBuffers, SimContext, SimMode } from '../types'
 import type { Vec3 } from '../math/vec3'
 
@@ -38,6 +39,12 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
   let renderPositions = new Float32Array(0)
   let renderVelocities = new Float32Array(0)
 
+  // Collision broadphase. `probeIndex`/`contactDistSq` are scratch shared with the
+  // grid neighbour callback so it allocates no per-frame closures.
+  let grid: SpatialGrid | null = null
+  let contactDistSq = 0
+  let probeIndex = 0
+
   function init(ctx: SimContext<typeof elasticGasSchema>): void {
     const params: GasParams = ctx.params
     count = params.particleCount
@@ -45,6 +52,8 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
     restitution = params.restitution
     gravityOn = params.gravity
     halfBound = params.containerSize / 2 - radius
+    // Cell size = contact distance, so neighbours within 2·r fall in adjacent cells.
+    grid = createSpatialGrid(2 * radius)
 
     positions = new Float64Array(count * 3)
     velocities = new Float64Array(count * 3)
@@ -96,34 +105,49 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
   }
 
   /**
-   * Brute-force pairwise elastic collisions for overlapping, approaching particles.
-   * Velocity-only resolution (no positional push-out): the "approaching" guard in the
-   * kernel keeps this energy-neutral, but at high density particles can linger in
-   * overlap. Harmless at current CPU-tier densities; revisit for the GPU port.
+   * Resolve `probeIndex` against one neighbour candidate supplied by the spatial grid.
+   * Each pair is handled once (`other > probeIndex`) and re-checked against the exact
+   * contact distance. Velocity-only resolution (no positional push-out): the kernel's
+   * "approaching" guard keeps it energy-neutral, though dense overlaps can linger.
+   */
+  function onNeighbor(other: number): void {
+    if (other <= probeIndex) return
+    const oi = probeIndex * 3
+    const oj = other * 3
+    const dx = positions[oj] - positions[oi]
+    const dy = positions[oj + 1] - positions[oi + 1]
+    const dz = positions[oj + 2] - positions[oi + 2]
+    if (dx * dx + dy * dy + dz * dz >= contactDistSq) return
+
+    const pi: Vec3 = [positions[oi], positions[oi + 1], positions[oi + 2]]
+    const pj: Vec3 = [positions[oj], positions[oj + 1], positions[oj + 2]]
+    const vi: Vec3 = [velocities[oi], velocities[oi + 1], velocities[oi + 2]]
+    const vj: Vec3 = [velocities[oj], velocities[oj + 1], velocities[oj + 2]]
+    const [ni, nj] = resolveElasticCollision(pi, vi, PARTICLE_MASS, pj, vj, PARTICLE_MASS, restitution)
+    velocities[oi] = ni[0]
+    velocities[oi + 1] = ni[1]
+    velocities[oi + 2] = ni[2]
+    velocities[oj] = nj[0]
+    velocities[oj + 1] = nj[1]
+    velocities[oj + 2] = nj[2]
+  }
+
+  /**
+   * Elastic collisions via a uniform spatial grid (cell size = contact distance), so the
+   * broadphase is ~O(N) instead of O(N²). The grid finds every pair within the contact
+   * distance (proven against brute force in spatialGrid.test.ts), so the resolved pair
+   * set matches the naive all-pairs version.
    */
   function resolveCollisions(): void {
-    const contactDistSq = (2 * radius) * (2 * radius)
+    if (!grid) return
+    contactDistSq = (2 * radius) * (2 * radius)
+    grid.clear()
     for (let i = 0; i < count; i++) {
-      const oi = i * 3
-      for (let j = i + 1; j < count; j++) {
-        const oj = j * 3
-        const dx = positions[oj] - positions[oi]
-        const dy = positions[oj + 1] - positions[oi + 1]
-        const dz = positions[oj + 2] - positions[oi + 2]
-        if (dx * dx + dy * dy + dz * dz >= contactDistSq) continue
-
-        const pi: Vec3 = [positions[oi], positions[oi + 1], positions[oi + 2]]
-        const pj: Vec3 = [positions[oj], positions[oj + 1], positions[oj + 2]]
-        const vi: Vec3 = [velocities[oi], velocities[oi + 1], velocities[oi + 2]]
-        const vj: Vec3 = [velocities[oj], velocities[oj + 1], velocities[oj + 2]]
-        const [ni, nj] = resolveElasticCollision(pi, vi, PARTICLE_MASS, pj, vj, PARTICLE_MASS, restitution)
-        velocities[oi] = ni[0]
-        velocities[oi + 1] = ni[1]
-        velocities[oi + 2] = ni[2]
-        velocities[oj] = nj[0]
-        velocities[oj + 1] = nj[1]
-        velocities[oj + 2] = nj[2]
-      }
+      grid.insert(i, positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2])
+    }
+    for (let i = 0; i < count; i++) {
+      probeIndex = i
+      grid.forEachNeighbor(i, positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2], onNeighbor)
     }
   }
 
@@ -156,6 +180,7 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
     velocities = new Float64Array(0)
     renderPositions = new Float32Array(0)
     renderVelocities = new Float32Array(0)
+    grid = null
     count = 0
   }
 
