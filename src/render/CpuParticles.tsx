@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three/webgpu'
 import { createSimDriver, type SimDriver } from './simDriver'
@@ -12,6 +12,13 @@ import { speedToRgb, TYPE_PALETTE } from './colorRamp'
 // or remounts the mesh. The spatial-grid broadphase keeps the CPU sim feasible at this
 // scale; GPU-backed modes (100k+) render via <GpuNbody> instead.
 const MAX_INSTANCES = 20000
+
+/** The disposable GPU/sim resources owned by one mount of this component. */
+interface CpuResources {
+  driver: SimDriver
+  geometry: THREE.SphereGeometry
+  material: THREE.MeshStandardNodeMaterial
+}
 
 /**
  * Renders any CPU-backed simulation as a single instanced mesh, driven by the
@@ -43,23 +50,32 @@ export function CpuParticles() {
   // Pre-built categorical colors for color-by-type modes (hex is sRGB).
   const typeColors = useMemo(() => TYPE_PALETTE.map((hex) => new THREE.Color(hex)), [])
 
-  // StrictMode-safe lazy resources. React 19 StrictMode (which R3F 9 now inherits) mounts
-  // → unmounts → remounts in dev; the unmount cleanup disposes AND nulls these, so the
-  // remount recreates fresh GPU objects instead of reusing disposed ones. The `??=` reads
-  // return non-null locals for the render below.
-  const driverRef = useRef<SimDriver | null>(null)
-  const geometryRef = useRef<THREE.SphereGeometry | null>(null)
-  const materialRef = useRef<THREE.MeshStandardNodeMaterial | null>(null)
-  const driver = (driverRef.current ??= createSimDriver({ registry: simRegistry }))
-  const geometry = (geometryRef.current ??= new THREE.SphereGeometry(1, 16, 16))
-  // Node material (TSL): compiles to WGSL on WebGPU and GLSL on the WebGL2 fallback.
-  // Base color is white so the per-instance speed tint (instanceColor, applied
-  // multiplicatively by the node material) renders faithfully.
-  const material = (materialRef.current ??= new THREE.MeshStandardNodeMaterial({
-    color: 0xffffff,
-    roughness: 0.4,
-    metalness: 0.1,
-  }))
+  // Own the disposable resources (sim driver + geometry + node material) entirely within a
+  // single effect: build on mount, dispose on unmount. Creating and disposing in the *same*
+  // effect is what makes this StrictMode-safe — React 19's dev mount→unmount→remount runs
+  // cleanup then setup, so it always ends on a fresh, live build. Building in the render body
+  // and disposing in a separate effect (the previous approach) left the resources disposed
+  // after the dance with nothing to rebuild them unless an incidental re-render happened —
+  // which is why switching *from* the GPU mode (the only path that fresh-mounts this
+  // component) froze on a default instanced mesh (the lone white sphere) with a dead driver.
+  const [resources, setResources] = useState<CpuResources | null>(null)
+  useEffect(() => {
+    const built: CpuResources = {
+      driver: createSimDriver({ registry: simRegistry }),
+      geometry: new THREE.SphereGeometry(1, 16, 16),
+      // Node material (TSL): compiles to WGSL on WebGPU and GLSL on the WebGL2 fallback.
+      // Base color is white so the per-instance speed tint (instanceColor, applied
+      // multiplicatively by the node material) renders faithfully.
+      material: new THREE.MeshStandardNodeMaterial({ color: 0xffffff, roughness: 0.4, metalness: 0.1 }),
+    }
+    setResources(built)
+    return () => {
+      built.driver.dispose()
+      built.geometry.dispose()
+      built.material.dispose()
+      setResources(null)
+    }
+  }, [])
 
   const modeId = useParamStore((s) => s.modeId)
   const seed = useParamStore((s) => s.seed)
@@ -69,24 +85,13 @@ export function CpuParticles() {
   // TODO(phase-1): split "structural" params (count, seed) that justify a reload from
   // "live" params (e.g. restitution, gravity) applied to the running mode in place.
   useEffect(() => {
-    driver.load({ modeId, seed, params })
+    if (!resources) return
+    resources.driver.load({ modeId, seed, params })
     useTelemetryStore.getState().reset()
-  }, [driver, modeId, seed, params])
-
-  // Dispose and null GPU resources on unmount so a StrictMode remount recreates them.
-  useEffect(() => {
-    return () => {
-      driverRef.current?.dispose()
-      geometryRef.current?.dispose()
-      materialRef.current?.dispose()
-      driverRef.current = null
-      geometryRef.current = null
-      materialRef.current = null
-    }
-  }, [])
+  }, [resources, modeId, seed, params])
 
   useFrame((_, delta) => {
-    const activeDriver = driverRef.current
+    const activeDriver = resources?.driver
     const mesh = meshRef.current
     if (!activeDriver || !mesh) return
 
@@ -134,5 +139,7 @@ export function CpuParticles() {
     if (sample) useTelemetryStore.getState().push(sample)
   })
 
-  return <instancedMesh ref={setMesh} args={[geometry, material, MAX_INSTANCES]} frustumCulled={false} />
+  return resources ? (
+    <instancedMesh ref={setMesh} args={[resources.geometry, resources.material, MAX_INSTANCES]} frustumCulled={false} />
+  ) : null
 }
