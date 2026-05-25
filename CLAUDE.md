@@ -57,7 +57,7 @@ interface SimMode<P extends ParamSchema = ParamSchema> {
   id: string;
   label: string;
   paramSchema: P;                 // drives auto-generated Leva controls + presets + URL state
-  backend: 'rapier' | 'webgpu-compute';
+  backend: 'cpu' | 'rapier' | 'webgpu-compute';
   init(ctx: SimContext): void;    // allocate buffers / Rapier world from seed + params
   step(dt: number): void;         // fixed-timestep advance (see integrators below)
   getTelemetry(): Telemetry;      // measured quantities for charts/readouts
