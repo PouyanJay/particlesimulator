@@ -34,7 +34,24 @@ describe('elasticGas mode', () => {
     const b = mode.getBuffers()
     expect(b.count).toBe(50)
     expect(b.positions.length).toBe(150)
+    expect(b.velocities?.length).toBe(150)
     expect(b.radius).toBe(0.1)
+  })
+
+  it('exposes per-particle velocities consistent with the reported average speed', () => {
+    const mode = createElasticGasMode()
+    mode.init(ctx({ particleCount: 100, initialVelocity: 2 }))
+    const { count, velocities } = mode.getBuffers()
+    expect(velocities).toBeDefined()
+    let speedSum = 0
+    for (let i = 0; i < count; i++) {
+      const vx = velocities![i * 3]
+      const vy = velocities![i * 3 + 1]
+      const vz = velocities![i * 3 + 2]
+      speedSum += Math.sqrt(vx * vx + vy * vy + vz * vz)
+    }
+    // Same underlying state as telemetry, so the mean speeds must agree (Float32 tol).
+    expect(speedSum / count).toBeCloseTo(mode.getTelemetry().averageSpeed, 5)
   })
 
   it('starts every particle inside the container', () => {
