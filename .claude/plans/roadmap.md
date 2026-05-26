@@ -330,16 +330,25 @@ curriculum* — turning a powerful tool into something people actually share and
 
 **Goal:** harden, document, and ship.
 
-### Workstreams
+### Workstreams (in order)
 - **Performance hardening:** meet per-tier budgets; profile with `r3f-perf`/`stats-gl`/Spector.js; LOD,
   frustum culling, count caps; verify WebGL2 fallback and mobile tiers.
 - **Content:** scenario gallery, onboarding tour, per-mode explainer copy, the live demo & README refresh.
-- **Docs:** architecture doc, "how to add a SimMode" guide, contribution notes.
+- **Code structure review & polish:** a whole-codebase pass against best practices *before* docs are
+  written (so the docs describe the final shape). Audit the layer boundaries and folder structure,
+  de-duplicate (extract the shared primitives the reviewers flagged — `SegmentedControl`/roving-tabindex,
+  `ButtonGroup`; compose `TextField` in the share/rename inputs), tokenize stragglers (dialog/palette
+  widths, backdrop blur), prune dead code, and run `simplify` + the reviewer agents. **Scrub the
+  commit history of AI-authorship footprints** (the `Co-Authored-By: Claude …` trailers and any
+  `🤖 Generated with…` lines) so the shipped history reads as the author's own.
+- **Docs:** clean up and update all docs to the final code — architecture doc, "how to add a SimMode"
+  guide, contribution notes, and refresh the plan/README so they match what actually shipped.
 - **QA:** cross-browser (Chrome/Safari/Firefox), mobile, reduced-motion, keyboard nav.
 - **Deploy:** keep GitHub Pages CI; ensure WebGPU works under the Pages base path; add analytics if desired.
 
 ### Success criteria
-- Smooth on target hardware tiers; graceful on fallback; documented; deployed; demo-ready.
+- Smooth on target hardware tiers; graceful on fallback; clean, well-structured code; commit history free
+  of AI-authorship trailers; documented; deployed; demo-ready.
 
 ---
 
