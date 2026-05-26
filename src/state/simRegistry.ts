@@ -7,6 +7,7 @@ import { createBoidsMode } from '../sim-core/modes/boids'
 import { createMolecularDynamicsMode } from '../sim-core/modes/molecularDynamics'
 import { createElectrostaticsMode } from '../sim-core/modes/electrostatics'
 import { createSpringMassMode } from '../sim-core/modes/springMass'
+import { createClothXpbdMode } from '../sim-core/modes/clothXpbd'
 
 /**
  * The application's simulation registry. Modes register here once; the UI and render
@@ -22,3 +23,4 @@ simRegistry.register(createBoidsMode)
 simRegistry.register(createMolecularDynamicsMode)
 simRegistry.register(createElectrostaticsMode)
 simRegistry.register(createSpringMassMode)
+simRegistry.register(createClothXpbdMode)

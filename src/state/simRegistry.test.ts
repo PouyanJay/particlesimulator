@@ -9,6 +9,7 @@ describe('simRegistry', () => {
     expect(ids).toContain('nbody')
     expect(ids).toContain('nbody-gpu')
     expect(ids).toContain('spring-mass')
+    expect(ids).toContain('xpbd-cloth')
   })
 
   it('exposes each mode backend for render dispatch', () => {
