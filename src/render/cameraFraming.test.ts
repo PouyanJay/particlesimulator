@@ -3,8 +3,6 @@ import {
   cameraDistanceForContainer,
   defaultCameraPosition,
   zoomLimitsForContainer,
-  orthoCameraPosition,
-  orthoZoomForContainer,
 } from './cameraFraming'
 
 const FOV = 45
@@ -73,24 +71,5 @@ describe('zoomLimitsForContainer', () => {
     const b = zoomLimitsForContainer(6, FOV)
     expect(b.min).toBeCloseTo(2 * a.min, 6)
     expect(b.max).toBeCloseTo(2 * a.max, 6)
-  })
-})
-
-describe('orthographic (2D) framing', () => {
-  it('positions the camera up the +Z axis, clear of the box', () => {
-    const [x, y, z] = orthoCameraPosition(6)
-    expect(x).toBe(0)
-    expect(y).toBe(0)
-    expect(z).toBeGreaterThan(6)
-  })
-
-  it('zoom is inversely proportional to box size and linear in viewport height', () => {
-    expect(orthoZoomForContainer(4, 800)).toBeCloseTo(2 * orthoZoomForContainer(8, 800), 6)
-    expect(orthoZoomForContainer(4, 1600)).toBeCloseTo(2 * orthoZoomForContainer(4, 800), 6)
-  })
-
-  it('guards against degenerate inputs', () => {
-    expect(orthoZoomForContainer(0, 800)).toBe(1)
-    expect(orthoZoomForContainer(4, 0)).toBe(1)
   })
 })

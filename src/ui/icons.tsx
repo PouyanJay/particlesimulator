@@ -70,6 +70,7 @@ export function CheckIcon({ className }: IconProps) {
 }
 
 export function UndoIcon({ className }: IconProps) {
+  // Classic "curved arrow pointing left" undo glyph.
   return (
     <svg
       className={className}
@@ -83,13 +84,14 @@ export function UndoIcon({ className }: IconProps) {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d="M3 7v6h6" />
-      <path d="M3.5 13a9 9 0 1 0 2.3-9.3L3 7" />
+      <path d="M9 14 4 9l5-5" />
+      <path d="M4 9h11a5 5 0 0 1 0 10h-1" />
     </svg>
   )
 }
 
 export function RedoIcon({ className }: IconProps) {
+  // Mirror of UndoIcon — curved arrow pointing right.
   return (
     <svg
       className={className}
@@ -103,8 +105,8 @@ export function RedoIcon({ className }: IconProps) {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d="M21 7v6h-6" />
-      <path d="M20.5 13a9 9 0 1 0-2.3-9.3L21 7" />
+      <path d="m15 14 5-5-5-5" />
+      <path d="M20 9H9a5 5 0 0 0 0 10h1" />
     </svg>
   )
 }

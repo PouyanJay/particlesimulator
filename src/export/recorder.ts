@@ -1,47 +1,51 @@
-import { Recorder } from 'canvas-record'
-import { recordFormatInfo, type RecordFormat } from './recordFormats'
+import { triggerDownload } from './download'
+import { timestampedFilename } from './filenames'
+import { mimeCandidates, extensionForMime, type RecordFormat } from './recordFormats'
 
-/**
- * A live recording: `step()` encodes one frame (call it once per rendered frame), `stop()`
- * finalizes and triggers the download.
- */
+/** A live recording. `stop()` finalizes the file and triggers its download. */
 export interface ActiveRecording {
-  step(): Promise<void>
   stop(): Promise<void>
 }
 
-/**
- * Begin recording the given canvas with canvas-record (WebCodecs MP4 / WebM / GIF). We drive
- * frames manually via `step()` from the render loop so capture timing matches the fixed-step
- * sim, not wall-clock. WebGPU canvases expose no 2D context, so we hand canvas-record the
- * canvas's own GPU/WebGL context (it extracts frames via createImageBitmap regardless).
- *
- * Browser-only: canvas-record needs WebCodecs/MediaRecorder and a real canvas, so this path is
- * verified in-browser rather than headlessly.
- */
-export async function startCanvasRecording(
-  canvas: HTMLCanvasElement,
-  format: RecordFormat,
-  frameRate = 60,
-): Promise<ActiveRecording> {
-  const context =
-    canvas.getContext('webgpu') ?? canvas.getContext('webgl2') ?? canvas.getContext('2d')
-  if (!context) throw new Error('Canvas has no renderable context to record')
+/** First MIME the browser's MediaRecorder actually supports for the requested format, else WebM. */
+function pickMime(format: RecordFormat): string | undefined {
+  const candidates = [...mimeCandidates(format), ...mimeCandidates('webm')]
+  return candidates.find((m) => MediaRecorder.isTypeSupported(m))
+}
 
-  const recorder = new Recorder(context as unknown as RenderingContext, {
-    name: 'particle-lab',
-    extension: recordFormatInfo(format).extension,
-    frameRate,
-    duration: Infinity, // open-ended; stopped explicitly by the user
-    download: true, // canvas-record saves the file on stop
+/**
+ * Record the canvas via its MediaStream. `captureStream` composites the live WebGPU/WebGL
+ * frames (including post-processing) without needing a preserved drawing buffer, which is why
+ * this works where pulling frames out of the GPU context directly does not. The browser encodes
+ * to whichever supported codec matches the requested format, falling back to WebM.
+ *
+ * Browser-only (needs MediaRecorder + canvas.captureStream); verified in-browser.
+ */
+export function startCanvasRecording(canvas: HTMLCanvasElement, format: RecordFormat, frameRate = 60): ActiveRecording {
+  const capture = canvas as HTMLCanvasElement & { captureStream?: (fps?: number) => MediaStream }
+  if (typeof capture.captureStream !== 'function' || typeof MediaRecorder === 'undefined') {
+    throw new Error('Recording is not supported in this browser')
+  }
+  const stream = capture.captureStream(frameRate)
+  const mimeType = pickMime(format)
+  const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
+  const chunks: BlobPart[] = []
+  recorder.ondataavailable = (e) => {
+    if (e.data.size > 0) chunks.push(e.data)
+  }
+  const finished = new Promise<void>((resolve) => {
+    recorder.onstop = () => resolve()
   })
-  await recorder.start()
+  recorder.start()
 
   return {
-    step: () => recorder.step(),
-    stop: async () => {
-      await recorder.stop()
-      await recorder.dispose()
+    async stop() {
+      if (recorder.state !== 'inactive') recorder.stop()
+      stream.getTracks().forEach((track) => track.stop())
+      await finished
+      const type = recorder.mimeType || mimeType || 'video/webm'
+      const blob = new Blob(chunks, { type })
+      triggerDownload(timestampedFilename('particle-lab', extensionForMime(type)), blob)
     },
   }
 }
