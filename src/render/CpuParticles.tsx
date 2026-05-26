@@ -6,6 +6,7 @@ import { simRegistry } from '../state/simRegistry'
 import { useParamStore } from '../state/paramStore'
 import { useTelemetryStore } from '../state/telemetryStore'
 import { speedToRgb, TYPE_PALETTE } from './colorRamp'
+import { SURFACE_METALNESS, SURFACE_ROUGHNESS } from './materialConstants'
 import { theme } from '../ui/theme'
 
 // Fixed instance capacity (matches the CPU schemas' particleCount max). We render
@@ -78,7 +79,7 @@ export function CpuParticles() {
       // Node material (TSL): compiles to WGSL on WebGPU and GLSL on the WebGL2 fallback.
       // Base color is white so the per-instance speed tint (instanceColor, applied
       // multiplicatively by the node material) renders faithfully.
-      material: new THREE.MeshStandardNodeMaterial({ color: 0xffffff, roughness: 0.4, metalness: 0.1 }),
+      material: new THREE.MeshStandardNodeMaterial({ color: 0xffffff, roughness: SURFACE_ROUGHNESS, metalness: SURFACE_METALNESS }),
       lineGeometry: new THREE.BufferGeometry(),
       // Structural connector color (tokenised — mirrors --text-muted, ≈3.9:1 on bg-base so the
       // spring network reads clearly as structure without competing with the speed-coloured

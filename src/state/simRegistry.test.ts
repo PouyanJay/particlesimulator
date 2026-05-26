@@ -10,12 +10,14 @@ describe('simRegistry', () => {
     expect(ids).toContain('nbody-gpu')
     expect(ids).toContain('spring-mass')
     expect(ids).toContain('xpbd-cloth')
+    expect(ids).toContain('rigid-bodies')
   })
 
   it('exposes each mode backend for render dispatch', () => {
     const byId = Object.fromEntries(simRegistry.list().map((m) => [m.id, m.backend]))
     expect(byId['elastic-gas']).toBe('cpu')
     expect(byId['nbody-gpu']).toBe('webgpu-compute')
+    expect(byId['rigid-bodies']).toBe('rapier')
   })
 
   it('can create the registered modes', () => {

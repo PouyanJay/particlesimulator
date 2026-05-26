@@ -81,8 +81,31 @@ export interface ParticleBuffers {
    * layer can draw line segments between particles; particle-only modes leave it undefined.
    */
   edges?: Uint32Array
-  /** Particle render radius in world units (uniform for now). */
+  /**
+   * Optional per-body orientation quaternions (xyzw-interleaved, length 4 * count). Rigid-body
+   * modes populate it so the render layer can draw *oriented* shapes; orientation-free particle
+   * modes leave it undefined (rendered upright).
+   */
+  orientations?: Float32Array
+  /**
+   * Optional per-body shape index, length count (see `ShapeType`). Lets a single mode mix
+   * shapes (e.g. boxes and spheres in the rigid-body sandbox); undefined ⇒ all rendered as the
+   * default sphere of `radius`.
+   */
+  shapeTypes?: Uint8Array
+  /**
+   * Optional per-body half-extents (xyz-interleaved, length 3 * count). A sphere uses [x] as its
+   * radius; a box uses (x, y, z) as its half-sides. Undefined ⇒ uniform `radius` for every body.
+   */
+  halfExtents?: Float32Array
+  /** Particle render radius in world units (uniform fallback when `halfExtents` is absent). */
   radius: number
+}
+
+/** Render shape for a body in `ParticleBuffers.shapeTypes`. */
+export enum ShapeType {
+  Sphere = 0,
+  Box = 1,
 }
 
 /** Measured quantities surfaced to charts and readouts. Extended per mode over time. */
