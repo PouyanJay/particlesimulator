@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { useParamStore, mergePersistedState } from './paramStore'
+import { useParamStore, mergePersistedState, scenarioFromState } from './paramStore'
 import { defaultParamValues } from '../sim-core/paramSchema'
 import { simRegistry } from './simRegistry'
+import type { Scenario } from '../sim-core/scenario'
 
 const gasDefaults = defaultParamValues(simRegistry.create('elastic-gas').paramSchema)
 
@@ -52,6 +53,55 @@ describe('paramStore', () => {
     const before = useParamStore.getState().isPlaying
     useParamStore.getState().togglePlaying()
     expect(useParamStore.getState().isPlaying).toBe(!before)
+  })
+
+  it('defaults to the 3D view and setView switches projection', () => {
+    expect(useParamStore.getState().view).toBe('3d')
+    useParamStore.getState().setView('2d')
+    expect(useParamStore.getState().view).toBe('2d')
+  })
+
+  it('loadScenario applies mode + params + seed + substance + view atomically (no reset to defaults)', () => {
+    const scenario: Scenario = {
+      modeId: 'boids',
+      seed: 123,
+      params: { particleCount: 77 },
+      substanceId: 'reduced',
+      view: '2d',
+    }
+    useParamStore.getState().loadScenario(scenario)
+    const s = useParamStore.getState()
+    expect(s.modeId).toBe('boids')
+    expect(s.seed).toBe(123)
+    expect(s.params).toEqual({ particleCount: 77 }) // kept verbatim, not reset to boids defaults
+    expect(s.substanceId).toBe('reduced')
+    expect(s.view).toBe('2d')
+  })
+
+  it('loadScenario defaults substance to reduced and view to 3d when omitted', () => {
+    useParamStore.getState().setSubstance('argon')
+    useParamStore.getState().setView('2d')
+    useParamStore.getState().loadScenario({ modeId: 'elastic-gas', seed: 5, params: { particleCount: 10 } })
+    const s = useParamStore.getState()
+    expect(s.substanceId).toBe('reduced')
+    expect(s.view).toBe('3d')
+  })
+
+  it('scenarioFromState captures the current scenario (camera optional)', () => {
+    useParamStore.getState().loadScenario({ modeId: 'boids', seed: 9, params: { particleCount: 30 } })
+    const scenario = scenarioFromState(useParamStore.getState())
+    expect(scenario).toEqual({
+      modeId: 'boids',
+      seed: 9,
+      params: { particleCount: 30 },
+      substanceId: 'reduced',
+      view: '3d',
+    })
+    const withCamera = scenarioFromState(useParamStore.getState(), {
+      position: [1, 2, 3],
+      target: [0, 0, 0],
+    })
+    expect(withCamera.camera).toEqual({ position: [1, 2, 3], target: [0, 0, 0] })
   })
 })
 
