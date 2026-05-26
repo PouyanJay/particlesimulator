@@ -1,11 +1,11 @@
 import { useParamStore } from '../state/paramStore'
 import { Button } from './controls/Button'
-import { ModeSelect } from './ModeSelect'
 import { PlayIcon, PauseIcon, ResetIcon } from './icons'
 
 /**
- * Global simulation controls: mode selector, play/pause, and reset. Reset assigns a new
- * seed, which re-initialises the scenario with fresh initial conditions.
+ * Global run controls: play/pause and reset. Reset assigns a new seed, which re-initialises
+ * the scenario with fresh initial conditions. The mode selector lives at the top of the
+ * instrument sidebar (next to the parameters it governs), not here.
  */
 export function Toolbar() {
   const isPlaying = useParamStore((s) => s.isPlaying)
@@ -14,7 +14,6 @@ export function Toolbar() {
 
   return (
     <div className="toolbar" role="group" aria-label="Simulation controls">
-      <ModeSelect />
       <Button
         variant="primary"
         icon

@@ -23,6 +23,12 @@ interface ParamState {
   isPlaying: boolean
   /** Current parameter values for the active mode. */
   params: Record<string, ParamValue>
+  /**
+   * Display unit system: 'reduced' (dimensionless, the default) or a substance id (e.g.
+   * 'argon') that maps the Lennard-Jones gas readouts to real SI. A view preference, not a
+   * simulation parameter — it never affects the dynamics, only how values are labelled.
+   */
+  substanceId: string
 
   setParam: (key: string, value: ParamValue) => void
   selectMode: (modeId: string) => void
@@ -31,6 +37,7 @@ interface ParamState {
   randomizeSeed: () => void
   setPlaying: (isPlaying: boolean) => void
   togglePlaying: () => void
+  setSubstance: (substanceId: string) => void
 }
 
 /**
@@ -46,6 +53,7 @@ export const useParamStore = create<ParamState>()(
       seed: 1,
       isPlaying: true,
       params: defaultsFor(INITIAL_MODE_ID),
+      substanceId: 'reduced',
 
       setParam: (key, value) => set((s) => ({ params: { ...s.params, [key]: value } })),
       selectMode: (modeId) => set({ modeId, params: defaultsFor(modeId) }),
@@ -54,6 +62,7 @@ export const useParamStore = create<ParamState>()(
       randomizeSeed: () => set({ seed: Math.floor(Math.random() * 0xffffffff) }),
       setPlaying: (isPlaying) => set({ isPlaying }),
       togglePlaying: () => set((s) => ({ isPlaying: !s.isPlaying })),
+      setSubstance: (substanceId) => set({ substanceId }),
     }),
     {
       name: 'particle-lab:params',
@@ -61,8 +70,8 @@ export const useParamStore = create<ParamState>()(
       // discarded (rather than rehydrating stale params for a since-changed schema).
       version: 1,
       storage: createJSONStorage(() => clientStorage),
-      // Persist the scenario only — not the transient playback flag.
-      partialize: (s) => ({ modeId: s.modeId, seed: s.seed, params: s.params }),
+      // Persist the scenario + the display unit system — not the transient playback flag.
+      partialize: (s) => ({ modeId: s.modeId, seed: s.seed, params: s.params, substanceId: s.substanceId }),
     },
   ),
 )

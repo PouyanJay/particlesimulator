@@ -1,10 +1,12 @@
 import { useParamStore } from '../state/paramStore'
 import { useTelemetryStore } from '../state/telemetryStore'
+import { useReadoutUnits, formatSi } from './measurementDisplay'
 
 /** Compact live readout of run state and derived telemetry. Mono, tabular figures. */
 export function StatusReadout() {
   const isPlaying = useParamStore((s) => s.isPlaying)
   const telemetry = useTelemetryStore((s) => s.current)
+  const { substance, dimensional } = useReadoutUnits()
 
   return (
     <div className="status" aria-live="polite">
@@ -13,8 +15,17 @@ export function StatusReadout() {
       {telemetry ? (
         <>
           <Metric label="Particles" value={telemetry.particleCount.toString()} />
-          <Metric label="Avg speed" value={telemetry.averageSpeed.toFixed(3)} />
-          <Metric label="Kinetic energy" value={telemetry.kineticEnergy.toFixed(2)} />
+          {dimensional ? (
+            <>
+              <Metric label={`Avg speed (${substance.unit.speed})`} value={formatSi(telemetry.averageSpeed * substance.scale.speed)} />
+              <Metric label={`Kinetic energy (${substance.unit.energy})`} value={formatSi(telemetry.kineticEnergy * substance.scale.energy)} />
+            </>
+          ) : (
+            <>
+              <Metric label="Avg speed" value={telemetry.averageSpeed.toFixed(3)} />
+              <Metric label="Kinetic energy" value={telemetry.kineticEnergy.toFixed(2)} />
+            </>
+          )}
         </>
       ) : null}
     </div>
