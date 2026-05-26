@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { useParamStore } from './paramStore'
+import { useParamStore, mergePersistedState } from './paramStore'
 import { defaultParamValues } from '../sim-core/paramSchema'
 import { simRegistry } from './simRegistry'
 
@@ -52,5 +52,47 @@ describe('paramStore', () => {
     const before = useParamStore.getState().isPlaying
     useParamStore.getState().togglePlaying()
     expect(useParamStore.getState().isPlaying).toBe(!before)
+  })
+})
+
+describe('mergePersistedState — rehydration resilience', () => {
+  const current = useParamStore.getState()
+
+  it('keeps a valid persisted scenario', () => {
+    const merged = mergePersistedState(
+      { modeId: 'boids', seed: 9, params: { particleCount: 42 }, substanceId: 'reduced' },
+      current,
+    )
+    expect(merged.modeId).toBe('boids')
+    expect(merged.seed).toBe(9)
+    expect(merged.params).toEqual({ particleCount: 42 })
+  })
+
+  it('falls back to the default mode when the persisted modeId no longer exists', () => {
+    // Regression: a removed mode (e.g. a deleted Phase 4 mode) used to crash the app on load —
+    // simRegistry.create() throws for an unknown id, blanking the screen.
+    expect(simRegistry.has('removed-phase4-mode')).toBe(false)
+    const merged = mergePersistedState(
+      { modeId: 'removed-phase4-mode', seed: 9, params: { stale: 1 }, substanceId: 'reduced' },
+      current,
+    )
+    expect(merged.modeId).toBe('elastic-gas')
+    expect(merged.params).toEqual(gasDefaults) // reset to the default mode's schema, not the stale params
+    expect(merged.seed).toBe(9) // unrelated prefs preserved
+    expect(merged.substanceId).toBe('reduced')
+    // The fallback mode is constructable (this is exactly what would have thrown).
+    expect(() => simRegistry.create(merged.modeId)).not.toThrow()
+  })
+
+  it('falls back when no modeId was persisted', () => {
+    const merged = mergePersistedState({}, current)
+    expect(merged.modeId).toBe('elastic-gas')
+    expect(merged.params).toEqual(gasDefaults)
+  })
+
+  it('keeps the store actions intact after merging', () => {
+    const merged = mergePersistedState({ modeId: 'removed', seed: 1, params: {} }, current)
+    expect(typeof merged.selectMode).toBe('function')
+    expect(typeof merged.setParam).toBe('function')
   })
 })
