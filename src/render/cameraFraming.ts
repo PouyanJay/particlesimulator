@@ -53,3 +53,28 @@ export function zoomLimitsForContainer(containerSize: number, fovDeg: number): {
     max: cameraDistanceForContainer(containerSize, fovDeg) * 3,
   }
 }
+
+// --- Orthographic (2D top-down) framing ---------------------------------------------------
+
+/** Margin around the box for the flat 2D view (1 = box edges touch the viewport). */
+const ORTHO_MARGIN = 1.1
+
+/**
+ * Top-down orthographic camera position: straight up the +Z axis, far enough that the whole
+ * box sits inside the near/far planes. Distance doesn't affect size in an orthographic
+ * projection (zoom does), so it only needs to clear the box.
+ */
+export function orthoCameraPosition(containerSize: number): [number, number, number] {
+  return [0, 0, containerSize * 2]
+}
+
+/**
+ * Orthographic `zoom` so an origin-centred box of side `containerSize` fits the viewport height
+ * with a little margin. drei's OrthographicCamera maps 1 world unit → `zoom` pixels, so to show
+ * `containerSize` world units across `viewportHeightPx` pixels we need this zoom. Inverse in box
+ * size, linear in viewport height — the same standardized-framing idea as the perspective path.
+ */
+export function orthoZoomForContainer(containerSize: number, viewportHeightPx: number): number {
+  if (containerSize <= 0 || viewportHeightPx <= 0) return 1
+  return viewportHeightPx / (containerSize * ORTHO_MARGIN)
+}
