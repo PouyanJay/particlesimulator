@@ -43,7 +43,7 @@ describe('molecularDynamics mode', () => {
 
   it('starts every atom inside the container with no NaNs', () => {
     const containerSize = 8
-    const radius = molecularDynamicsSchema.particleRadius.default
+    const radius = 0.5 * molecularDynamicsSchema.sigma.default
     const mode = createMolecularDynamicsMode()
     mode.init(ctx({ particleCount: 125, containerSize }))
     const { positions } = mode.getBuffers()
@@ -87,7 +87,7 @@ describe('molecularDynamics mode', () => {
     // verify conservation in a regime where no atom reaches a wall: a tight cluster centred
     // in a large, cold box. The test also asserts the window stayed wall-free.
     const containerSize = 30
-    const radius = molecularDynamicsSchema.particleRadius.default
+    const radius = 0.5 * molecularDynamicsSchema.sigma.default
     const bound = containerSize / 2 - radius
     const mode = createMolecularDynamicsMode()
     mode.init(ctx({ particleCount: 64, temperature: 0.4, containerSize, sigma: 1 }))
@@ -152,7 +152,7 @@ describe('molecularDynamics mode', () => {
 
   it('stays finite and contained over a long run with default parameters', () => {
     const containerSize = molecularDynamicsSchema.containerSize.default
-    const radius = molecularDynamicsSchema.particleRadius.default
+    const radius = 0.5 * molecularDynamicsSchema.sigma.default
     const bound = containerSize / 2 - radius
     const mode = createMolecularDynamicsMode()
     mode.init(ctx())

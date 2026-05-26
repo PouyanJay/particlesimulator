@@ -15,11 +15,11 @@ import type { Vec3 } from '../math/vec3'
  * modest counts the CPU path targets. Scaling is the GPU backend's job later.
  */
 export const elasticGasSchema = {
-  particleCount: { type: 'number', label: 'Particle Count', default: 200, min: 10, max: 20000, step: 10 },
-  particleRadius: { type: 'number', label: 'Particle Size', default: 0.08, min: 0.02, max: 0.2, step: 0.01 },
+  particleCount: { type: 'number', label: 'Particle Count', default: 200, min: 10, max: 20000, step: 10, group: 'scene' },
+  particleRadius: { type: 'number', label: 'Particle Size', default: 0.08, min: 0.02, max: 0.2, step: 0.01, group: 'scene' },
   initialVelocity: { type: 'number', label: 'Initial Velocity', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
   restitution: { type: 'number', label: 'Restitution', default: 1.0, min: 0.1, max: 1.0, step: 0.001 },
-  containerSize: { type: 'number', label: 'Container Size', default: 2.5, min: 1, max: 6, step: 0.5 },
+  containerSize: { type: 'number', label: 'Container Size', default: 2.5, min: 1, max: 6, step: 0.5, group: 'scene' },
   gravity: { type: 'boolean', label: 'Gravity', default: false },
 } as const
 
