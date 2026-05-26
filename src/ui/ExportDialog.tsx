@@ -91,10 +91,12 @@ function CapturePanel() {
       </div>
       {recording ? (
         <p className="export-hint" role="status">
-          Recording… the file downloads when you stop.
+          Recording… a “REC” badge shows on the canvas; the file downloads when you stop.
         </p>
       ) : (
-        <p className="export-hint">Records the live canvas frame-by-frame. Stop to save the file.</p>
+        <p className="export-hint">
+          Records the live canvas. MP4 falls back to WebM if your browser can’t encode it. Stop to save.
+        </p>
       )}
       {error ? (
         <p className="export-error" role="alert">
