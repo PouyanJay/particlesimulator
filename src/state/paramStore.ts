@@ -14,6 +14,23 @@ function defaultsFor(modeId: string): Record<string, ParamValue> {
   return defaultParamValues(simRegistry.create(modeId).paramSchema)
 }
 
+/**
+ * Reconcile persisted state with the freshly-initialised state on rehydration. A persisted
+ * `modeId` can name a mode that no longer exists (e.g. one removed between sessions); creating
+ * an unknown mode throws and blanks the entire app, so we fall back to the default mode and its
+ * params when the saved mode isn't in the registry. Other prefs (seed, substance) are preserved.
+ * Exported for direct unit testing of this resilience.
+ */
+export function mergePersistedState(persisted: unknown, current: ParamState): ParamState {
+  const saved = (persisted ?? {}) as Partial<ParamState>
+  const merged = { ...current, ...saved } // saved holds only the partialized data fields; keep current's actions
+  if (typeof merged.modeId !== 'string' || !simRegistry.has(merged.modeId)) {
+    merged.modeId = INITIAL_MODE_ID
+    merged.params = defaultsFor(INITIAL_MODE_ID)
+  }
+  return merged
+}
+
 interface ParamState {
   /** The active simulation mode id. */
   modeId: string
@@ -73,6 +90,8 @@ export const useParamStore = create<ParamState>()(
       storage: createJSONStorage(() => clientStorage),
       // Persist the scenario + the display unit system — not the transient playback flag.
       partialize: (s) => ({ modeId: s.modeId, seed: s.seed, params: s.params, substanceId: s.substanceId }),
+      // Drop a scenario whose mode no longer exists so a stale modeId can't crash the app.
+      merge: (persisted, current) => mergePersistedState(persisted, current as ParamState),
     },
   ),
 )
