@@ -1,11 +1,23 @@
 import { describe, it, expect } from 'vitest'
-import { RECORD_FORMATS, DEFAULT_RECORD_FORMAT, mimeCandidates, extensionForMime } from './recordFormats'
+import {
+  RECORD_FORMATS,
+  DEFAULT_RECORD_FORMAT,
+  mimeCandidates,
+  extensionForMime,
+  isFrameEncodedFormat,
+} from './recordFormats'
 
 describe('record formats', () => {
-  it('offers mp4 and webm with distinct extensions', () => {
-    expect(RECORD_FORMATS.map((f) => f.format)).toEqual(['mp4', 'webm'])
+  it('offers mp4, webm, and gif with distinct extensions', () => {
+    expect(RECORD_FORMATS.map((f) => f.format)).toEqual(['mp4', 'webm', 'gif'])
     const exts = RECORD_FORMATS.map((f) => f.extension)
     expect(new Set(exts).size).toBe(exts.length)
+  })
+
+  it('marks GIF as frame-encoded (not a MediaRecorder format)', () => {
+    expect(isFrameEncodedFormat('gif')).toBe(true)
+    expect(isFrameEncodedFormat('mp4')).toBe(false)
+    expect(isFrameEncodedFormat('webm')).toBe(false)
   })
 
   it('defaults to the most widely-supported container (webm)', () => {

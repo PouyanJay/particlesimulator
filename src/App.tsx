@@ -9,6 +9,7 @@ import { Toolbar } from './ui/Toolbar'
 import { LabActions } from './ui/LabActions'
 import { Overlays } from './ui/Overlays'
 import { StatusReadout } from './ui/StatusReadout'
+import { RecordingIndicator } from './ui/RecordingIndicator'
 import { Button } from './ui/controls/Button'
 import { ChartIcon } from './ui/icons'
 import { useGlobalShortcuts } from './ui/useGlobalShortcuts'
@@ -35,6 +36,9 @@ export default function App() {
       <div className="app app--embed">
         <main className="app__viewport">
           <SimulationCanvas />
+          <div className="app__rec-overlay">
+            <RecordingIndicator />
+          </div>
           <div className="app__status-overlay">
             <StatusReadout />
           </div>
@@ -71,6 +75,9 @@ export default function App() {
 
       <main className="app__viewport">
         <SimulationCanvas />
+        <div className="app__rec-overlay">
+          <RecordingIndicator />
+        </div>
         <div className="app__status-overlay">
           <StatusReadout />
         </div>
