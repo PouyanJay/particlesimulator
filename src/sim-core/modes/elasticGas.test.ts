@@ -77,7 +77,7 @@ describe('elasticGas mode', () => {
 
   it('conserves total kinetic energy with elastic walls and no gravity (restitution = 1)', () => {
     const mode = createElasticGasMode()
-    mode.init(ctx({ particleCount: 120, restitution: 1, gravity: false, initialVelocity: 2 }))
+    mode.init(ctx({ particleCount: 120, restitution: 1, gravity: 0, initialVelocity: 2 }))
     const e0 = totalKE(mode)
     expect(e0).toBeGreaterThan(0)
     let maxRelErr = 0
@@ -122,7 +122,7 @@ describe('elasticGas mode', () => {
 
   it('loses kinetic energy over time when restitution < 1', () => {
     const mode = createElasticGasMode()
-    mode.init(ctx({ particleCount: 120, restitution: 0.8, gravity: false, initialVelocity: 2 }))
+    mode.init(ctx({ particleCount: 120, restitution: 0.8, gravity: 0, initialVelocity: 2 }))
     const e0 = totalKE(mode)
     for (let i = 0; i < 1500; i++) mode.step(1 / 90)
     expect(totalKE(mode)).toBeLessThan(e0)
@@ -136,7 +136,7 @@ describe('elasticGas physics invariants', () => {
   it('thermalises toward the Maxwell–Boltzmann speed distribution', { timeout: 30000 }, () => {
     const mode = createElasticGasMode()
     mode.init(
-      ctx({ particleCount: 400, particleRadius: 0.09, containerSize: 2.5, initialVelocity: 1, restitution: 1, gravity: false }),
+      ctx({ particleCount: 400, particleRadius: 0.09, containerSize: 2.5, initialVelocity: 1, restitution: 1, gravity: 0 }),
     )
     // Initial speeds are a narrow band (ratio ≈ 0.96); collisions should redistribute
     // them toward Maxwell–Boltzmann (ratio ≈ 0.849). Thermalise, then time-average the
@@ -164,7 +164,7 @@ describe('elasticGas physics invariants', () => {
     const gMag = 9.81
     const bound = containerSize / 2 - radius
     const mode = createElasticGasMode()
-    mode.init(ctx({ particleCount: 80, containerSize, particleRadius: radius, initialVelocity: 1, restitution: 1, gravity: true }))
+    mode.init(ctx({ particleCount: 80, containerSize, particleRadius: radius, initialVelocity: 1, restitution: 1, gravity: 9.81 }))
 
     // Mechanical energy E = KE + PE, with PE = sum m*g*(y + bound) >= 0.
     const mechanicalEnergy = (): number => {
@@ -225,7 +225,7 @@ describe('elasticGas conserved-quantity telemetry', () => {
     expect(damped.getTelemetry().inelastic).toBe(true)
 
     const withGravity = createElasticGasMode()
-    withGravity.init(ctx({ gravity: true }))
+    withGravity.init(ctx({ gravity: 9.81 }))
     expect(withGravity.getTelemetry().inelastic).toBe(true)
   })
 
@@ -246,7 +246,7 @@ describe('elasticGas conserved-quantity telemetry', () => {
     const radius = 0.02
     const count = 400
     const mode = createElasticGasMode()
-    mode.init(ctx({ particleCount: count, particleRadius: radius, containerSize, initialVelocity: 2.5, restitution: 1, gravity: false }))
+    mode.init(ctx({ particleCount: count, particleRadius: radius, containerSize, initialVelocity: 2.5, restitution: 1, gravity: 0 }))
     mode.getTelemetry() // reset the pressure window so it averages only the run below
     for (let i = 0; i < 3000; i++) mode.step(1 / 90)
     const t = mode.getTelemetry()
