@@ -25,6 +25,8 @@ export function GasLawPanel() {
   const z = nkt !== 0 ? pv / nkt : 0
   const deviationPct = (z - 1) * 100
   const signedPct = `${deviationPct >= 0 ? '+' : ''}${deviationPct.toFixed(1)}%`
+  // Grade how far the gas is from ideal: >20% orange, >40% red (pastel).
+  const severity = severityFor(Math.abs(deviationPct))
 
   return (
     <section className="gaslaw" aria-label="Ideal-gas check">
@@ -33,21 +35,29 @@ export function GasLawPanel() {
         <Row label="P·V" value={pv.toFixed(2)} />
         <Row label="N·k·T" value={nkt.toFixed(2)} />
         <Row label="Z = P·V / N·k·T" value={z.toFixed(3)} accent />
-        <Row label="Deviation from ideal" value={signedPct} />
+        <Row label="Deviation from ideal" value={signedPct} severity={severity} />
       </dl>
-      <ZGauge z={z} />
+      <ZGauge z={z} severity={severity} />
     </section>
   )
 }
 
+type Severity = 'ideal' | 'warn' | 'danger'
+
+function severityFor(absDeviationPct: number): Severity {
+  if (absDeviationPct > 40) return 'danger'
+  if (absDeviationPct > 20) return 'warn'
+  return 'ideal'
+}
+
 /** Compact gauge: the Z = 1 ideal reference line and the live Z marker on a 0…2 track. */
-function ZGauge({ z }: { z: number }) {
+function ZGauge({ z, severity }: { z: number; severity: Severity }) {
   const idealX = (1 / Z_AXIS_MAX) * 100 // Z = 1 → centre
   const markerX = Math.max(2, Math.min(98, (z / Z_AXIS_MAX) * 100)) // clamp so it stays visible
   const barX = Math.min(idealX, markerX)
   const barW = Math.abs(markerX - idealX)
   return (
-    <div className="zgauge">
+    <div className={`zgauge zgauge--${severity}`}>
       <svg
         className="zgauge__plot"
         viewBox="0 0 100 16"
@@ -69,11 +79,24 @@ function ZGauge({ z }: { z: number }) {
   )
 }
 
-function Row({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function Row({
+  label,
+  value,
+  accent,
+  severity,
+}: {
+  label: string
+  value: string
+  accent?: boolean
+  severity?: Severity
+}) {
+  const classes = ['gaslaw__value']
+  if (accent) classes.push('gaslaw__value--accent')
+  if (severity && severity !== 'ideal') classes.push(`gaslaw__value--${severity}`)
   return (
     <div className="gaslaw__row">
       <dt className="gaslaw__label">{label}</dt>
-      <dd className={`gaslaw__value${accent ? ' gaslaw__value--accent' : ''}`}>{value}</dd>
+      <dd className={classes.join(' ')}>{value}</dd>
     </div>
   )
 }
