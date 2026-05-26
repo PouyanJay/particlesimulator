@@ -5,6 +5,7 @@ import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { ParticleField } from './ParticleField'
 import { PostFx } from './PostFx'
+import { SceneEnvironment } from './SceneEnvironment'
 import { useParamStore } from '../state/paramStore'
 import { theme } from '../ui/theme'
 import { defaultCameraPosition, zoomLimitsForContainer } from './cameraFraming'
@@ -60,6 +61,45 @@ function CameraRig({ controlsRef }: { controlsRef: RefObject<OrbitControlsRef | 
   return null
 }
 
+/**
+ * The shadow-casting key light. A single directional light grounds the bodies with a crisp
+ * shadow on the floor; its orthographic shadow camera is sized to the active container (plus
+ * the ground beneath it) so the shadow stays sharp and never clips as modes change box size.
+ * Resolution is modest (1024²) — the gated, low-count casters keep this cheap.
+ */
+function KeyLight({ containerSize }: { containerSize: number }) {
+  const lightRef = useRef<THREE.DirectionalLight>(null)
+
+  useEffect(() => {
+    const light = lightRef.current
+    if (!light) return
+    const cam = light.shadow.camera
+    // Cover the box plus margin for the floor contact; symmetric ortho frustum.
+    const half = containerSize * 1.1
+    cam.left = -half
+    cam.right = half
+    cam.top = half
+    cam.bottom = -half
+    cam.near = 0.1
+    cam.far = containerSize * 8
+    cam.updateProjectionMatrix()
+    // Pull shadows in slightly to avoid acne/peter-panning on the matte ground.
+    light.shadow.bias = -0.0008
+    light.shadow.normalBias = 0.02
+  }, [containerSize])
+
+  return (
+    <directionalLight
+      ref={lightRef}
+      position={[containerSize * 1.4, containerSize * 2, containerSize * 1.1]}
+      intensity={2.1}
+      castShadow
+      shadow-mapSize-width={1024}
+      shadow-mapSize-height={1024}
+    />
+  )
+}
+
 /** The 3D viewport: lighting, the container wireframe, orbit controls, and the particles. */
 export function SimulationCanvas() {
   const containerSize = useParamStore((s) =>
@@ -79,13 +119,28 @@ export function SimulationCanvas() {
           forceWebGL: FORCE_WEBGL,
         } as ConstructorParameters<typeof THREE.WebGPURenderer>[0])
         renderer.toneMapping = THREE.ACESFilmicToneMapping
+        // Slightly lift exposure so the IBL-lit, dark surfaces stay readable without washing
+        // out; ACES keeps highlights from clipping before bloom thresholds them.
+        renderer.toneMappingExposure = 1.1
+        // Real-time shadow maps. Works on both the WebGPU and WebGL2 backends; soft PCF edges
+        // suit the matte ground. Per-instance casting is gated by count in the renderers so
+        // only modest-count modes pay for it (see CpuParticles/RapierBodies).
+        renderer.shadowMap.enabled = true
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap
         await renderer.init()
         return renderer
       }}
     >
+      {/* Background stays the dark theme colour: the environment below is LIGHTING ONLY, never
+          the backdrop, so the wireframe + dark void are preserved and bloom thresholds only the
+          bright particles. */}
       <color attach="background" args={[theme.bgBase]} />
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[8, 10, 6]} intensity={1.1} />
+
+      {/* A low ambient fills shadowed sides; the IBL environment supplies the rest of the fill
+          and the reflections. Kept dim so the key light and bloom still dominate. */}
+      <ambientLight intensity={0.25} />
+      <KeyLight containerSize={containerSize} />
+      <SceneEnvironment containerSize={containerSize} />
 
       <ParticleField />
 

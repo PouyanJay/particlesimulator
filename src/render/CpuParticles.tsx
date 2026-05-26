@@ -6,7 +6,7 @@ import { simRegistry } from '../state/simRegistry'
 import { useParamStore } from '../state/paramStore'
 import { useTelemetryStore } from '../state/telemetryStore'
 import { speedToRgb, TYPE_PALETTE } from './colorRamp'
-import { SURFACE_METALNESS, SURFACE_ROUGHNESS } from './materialConstants'
+import { SHADOW_CASTER_MAX_COUNT, SURFACE_METALNESS, SURFACE_ROUGHNESS } from './materialConstants'
 import { theme } from '../ui/theme'
 
 // Fixed instance capacity (matches the CPU schemas' particleCount max). We render
@@ -151,6 +151,13 @@ export function CpuParticles() {
       mesh.count = n
       mesh.instanceMatrix.needsUpdate = true
       if (colored && mesh.instanceColor) mesh.instanceColor.needsUpdate = true
+      // Gate shadow casting on the live count: small structured scenes (spring/cloth networks,
+      // small particle counts) cast crisp shadows to ground them; high-count scenes (fluids,
+      // dense particle clouds up to MAX_INSTANCES) skip per-instance casting to hold fps and
+      // instead just receive IBL and sit on the shadow-catching ground. See SHADOW_CASTER_MAX_COUNT.
+      // (Deliberately cast-only — these single-sphere particles needn't catch each other's shadows,
+      // unlike the rigid-body stacks in RapierBodies which also receiveShadow.)
+      mesh.castShadow = n <= SHADOW_CASTER_MAX_COUNT
       // Ease the color-ramp ceiling toward this frame's max speed (mode-agnostic).
       if (velocities) {
         vMaxRef.current = Math.max(1e-6, vMaxRef.current * 0.9 + Math.sqrt(frameMaxSpeedSq) * 0.1)

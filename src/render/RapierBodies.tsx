@@ -9,7 +9,7 @@ import { useTelemetryStore } from '../state/telemetryStore'
 import { ensureRapierReady, isRapierReady } from '../sim-core/physics/rapierEngine'
 import { ShapeType } from '../sim-core/types'
 import { TYPE_PALETTE } from './colorRamp'
-import { SURFACE_METALNESS, SURFACE_ROUGHNESS } from './materialConstants'
+import { SHADOW_CASTER_MAX_COUNT, SURFACE_METALNESS, SURFACE_ROUGHNESS } from './materialConstants'
 
 // Per-shape instance capacity (matches the rigid-body schema's bodyCount max). We draw
 // `mesh.count` ≤ capacity each frame, so changing the count never reallocates the mesh.
@@ -142,6 +142,18 @@ export function RapierBodies() {
       sphereMesh.count = sphereN
       boxMesh.instanceMatrix.needsUpdate = true
       sphereMesh.instanceMatrix.needsUpdate = true
+
+      // Gate shadow casting on the live count so high-count scenes never pay for per-instance
+      // shadow-map renders (see SHADOW_CASTER_MAX_COUNT). Rigid bodies (≤ MAX_BODIES = 400)
+      // normally fall under the threshold and cast; if a future scene exceeds it, they stop
+      // casting but still receive IBL and rest on the shadow-catching ground.
+      const cast = n <= SHADOW_CASTER_MAX_COUNT
+      boxMesh.castShadow = cast
+      sphereMesh.castShadow = cast
+      // Let modest-count bodies also catch each other's shadows (stacked boxes/spheres read as
+      // solid). Tied to the same gate so dense scenes skip the extra shadow sampling too.
+      boxMesh.receiveShadow = cast
+      sphereMesh.receiveShadow = cast
     }
 
     const sample = driver.consumeTelemetry()

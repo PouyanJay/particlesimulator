@@ -18,6 +18,11 @@
   --text-muted: #7e8a9c;
   --text-on-accent: #0b0e14;
 
+  /* Canvas-only: the shadow-receiving ground plane under the simulation (mirrors theme.ts
+     `canvasGround`). Not used in the DOM; three.js can't read CSS vars, so the canvas reads
+     the mirror in src/ui/theme.ts — declared here to keep the two color sets in sync. */
+  --canvas-ground: #0e131c;
+
   /* Accent (used sparingly: primary action, active state, focus ring) */
   --accent: #6366f1;
   --accent-hover: #7c7ff2;
