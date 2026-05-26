@@ -11,6 +11,13 @@
 // panel (Leva), presets, and URL-encoded state from a single declaration.
 // ---------------------------------------------------------------------------
 
+/**
+ * Which section of the control panel a parameter belongs to. `scene` = universal setup
+ * shared across modes (count, container size, display size); `dynamics` (default) = the
+ * mode's own physics. Lets the panel group params consistently without per-mode UI code.
+ */
+export type ParamGroup = 'scene' | 'dynamics'
+
 export interface NumberParam {
   type: 'number'
   label: string
@@ -20,12 +27,16 @@ export interface NumberParam {
   step?: number
   /** Optional unit shown in the UI (e.g. "m/s"). */
   unit?: string
+  /** Control-panel section (defaults to 'dynamics'). */
+  group?: ParamGroup
 }
 
 export interface BooleanParam {
   type: 'boolean'
   label: string
   default: boolean
+  /** Control-panel section (defaults to 'dynamics'). */
+  group?: ParamGroup
 }
 
 export type ParamDef = NumberParam | BooleanParam
