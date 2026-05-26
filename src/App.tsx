@@ -4,6 +4,7 @@ import { SimulationCanvas } from './render/SimulationCanvas'
 import { ControlPanel } from './ui/ControlPanel'
 import { Measurements } from './ui/Measurements'
 import { ModeSelect } from './ui/ModeSelect'
+import { ViewToggle } from './ui/ViewToggle'
 import { Toolbar } from './ui/Toolbar'
 import { LabActions } from './ui/LabActions'
 import { Overlays } from './ui/Overlays'
@@ -64,6 +65,7 @@ export default function App() {
 
       <aside className="app__sidebar">
         <ModeSelect />
+        <ViewToggle />
         <ControlPanel />
       </aside>
 

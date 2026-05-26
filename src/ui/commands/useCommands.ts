@@ -65,5 +65,15 @@ export function useCommands(): Command[] {
       keywords: 'lesson tutorial teach',
       run: () => openOverlay('challenges'),
     },
+    {
+      id: 'toggle-view',
+      title: 'Toggle 2D / 3D view',
+      group: 'View',
+      keywords: 'projection orthographic perspective dimension',
+      run: () => {
+        const s = useParamStore.getState()
+        s.setView(s.view === '2d' ? '3d' : '2d')
+      },
+    },
   ]
 }
