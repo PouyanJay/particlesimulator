@@ -9,9 +9,17 @@ interface TelemetryState {
   current: Telemetry | null
   /** Rolling history of average speed for the live chart. */
   speedHistory: number[]
+  /** Rolling history of total kinetic energy for the live chart. */
+  energyHistory: number[]
   /** Record a sample (called at a throttled rate by the render layer, not every frame). */
   push: (sample: Telemetry) => void
   reset: () => void
+}
+
+/** Append to a rolling history, capped at TELEMETRY_HISTORY_LIMIT. */
+function appendCapped(history: number[], value: number): number[] {
+  const next = [...history, value]
+  return next.length > TELEMETRY_HISTORY_LIMIT ? next.slice(next.length - TELEMETRY_HISTORY_LIMIT) : next
 }
 
 /**
@@ -22,14 +30,12 @@ interface TelemetryState {
 export const useTelemetryStore = create<TelemetryState>((set) => ({
   current: null,
   speedHistory: [],
+  energyHistory: [],
   push: (sample) =>
-    set((s) => {
-      const appended = [...s.speedHistory, sample.averageSpeed]
-      const speedHistory =
-        appended.length > TELEMETRY_HISTORY_LIMIT
-          ? appended.slice(appended.length - TELEMETRY_HISTORY_LIMIT)
-          : appended
-      return { current: sample, speedHistory }
-    }),
-  reset: () => set({ current: null, speedHistory: [] }),
+    set((s) => ({
+      current: sample,
+      speedHistory: appendCapped(s.speedHistory, sample.averageSpeed),
+      energyHistory: appendCapped(s.energyHistory, sample.kineticEnergy),
+    })),
+  reset: () => set({ current: null, speedHistory: [], energyHistory: [] }),
 }))

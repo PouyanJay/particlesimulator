@@ -49,3 +49,23 @@ export function applyGravity(velocities: Float64Array, count: number, g: number,
   const dv = g * dt
   for (let i = 0; i < count; i++) velocities[i * 3 + 1] -= dv
 }
+
+/**
+ * Velocity-rescaling thermostat: scale every velocity so the kinetic temperature
+ * (T = m·⟨v²⟩ / 3, k_B = 1) equals `targetT`. This is the "hold temperature constant" lock —
+ * it pins T despite collisions, wall losses, or potential-energy exchange, letting a learner
+ * isolate cause and effect (e.g. change the volume and watch pressure respond at fixed T).
+ * No-op for an empty system, a non-positive target, or a system at rest.
+ */
+export function thermostatRescale(velocities: Float64Array, count: number, targetT: number, mass = 1): void {
+  if (count <= 0 || targetT <= 0) return
+  let sumSq = 0
+  for (let i = 0; i < count; i++) {
+    const o = i * 3
+    sumSq += velocities[o] ** 2 + velocities[o + 1] ** 2 + velocities[o + 2] ** 2
+  }
+  const currentT = (mass * (sumSq / count)) / 3
+  if (currentT <= 0) return
+  const scale = Math.sqrt(targetT / currentT)
+  for (let i = 0; i < count * 3; i++) velocities[i] *= scale
+}
