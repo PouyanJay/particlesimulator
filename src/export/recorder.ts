@@ -53,12 +53,23 @@ function startVideoRecording(canvas: HTMLCanvasElement, format: RecordFormat, fr
 }
 
 /**
- * Record an animated GIF by grabbing frames off the canvas (drawImage into a downscaled 2D
- * canvas — the same trick the screenshot uses, since WebGPU canvases don't preserve their
- * buffer) and quantizing each into the GIF palette with gifenc. MediaRecorder can't emit GIF,
- * hence this separate path.
+ * Record an animated GIF. A WebGPU canvas doesn't preserve its drawing buffer, so drawing the
+ * canvas directly yields black frames; instead we pipe the canvas's composited capture stream
+ * through a hidden <video> and grab frames from that (drawing a playing video to a 2D canvas is
+ * reliable), then palette-quantize each frame with gifenc. MediaRecorder can't emit GIF, hence
+ * this separate path. Downscaled + frame-capped to keep encoding cheap and file sizes sane.
  */
 function startGifRecording(canvas: HTMLCanvasElement): ActiveRecording {
+  const capture = canvas as HTMLCanvasElement & { captureStream?: (fps?: number) => MediaStream }
+  if (typeof capture.captureStream !== 'function') {
+    throw new Error('Recording is not supported in this browser')
+  }
+  const stream = capture.captureStream(GIF_FPS)
+  const video = document.createElement('video')
+  video.srcObject = stream
+  video.muted = true
+  void video.play().catch(() => {})
+
   const scale = Math.min(1, GIF_MAX_WIDTH / Math.max(1, canvas.width))
   const width = Math.max(1, Math.round(canvas.width * scale))
   const height = Math.max(1, Math.round(canvas.height * scale))
@@ -70,21 +81,27 @@ function startGifRecording(canvas: HTMLCanvasElement): ActiveRecording {
 
   const gif = GIFEncoder()
   const delay = Math.round(1000 / GIF_FPS)
+  let frames = 0
   const timer = setInterval(() => {
+    if (video.readyState < 2 || video.videoWidth === 0) return // wait for the first decoded frame
     try {
-      ctx.drawImage(canvas, 0, 0, width, height)
+      ctx.drawImage(video, 0, 0, width, height)
     } catch {
-      return // canvas not ready this tick — skip the frame
+      return
     }
     const { data } = ctx.getImageData(0, 0, width, height)
     const palette = quantize(data, 256)
     const index = applyPalette(data, palette)
     gif.writeFrame(index, width, height, { palette, delay })
+    frames++
   }, delay)
 
   return {
     async stop() {
       clearInterval(timer)
+      stream.getTracks().forEach((track) => track.stop())
+      video.srcObject = null
+      if (frames === 0) return // never captured a frame — nothing to save
       gif.finish()
       triggerDownload(timestampedFilename('particle-lab', 'gif'), new Blob([gif.bytes()], { type: 'image/gif' }))
     },
