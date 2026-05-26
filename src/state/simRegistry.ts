@@ -5,6 +5,7 @@ import { createNbodyMode } from '../sim-core/modes/nbody'
 import { createGpuNbodyMode } from '../sim-core/modes/gpuNbody'
 import { createBoidsMode } from '../sim-core/modes/boids'
 import { createMolecularDynamicsMode } from '../sim-core/modes/molecularDynamics'
+import { createElectrostaticsMode } from '../sim-core/modes/electrostatics'
 
 /**
  * The application's simulation registry. Modes register here once; the UI and render
@@ -18,3 +19,4 @@ simRegistry.register(createNbodyMode)
 simRegistry.register(createGpuNbodyMode)
 simRegistry.register(createBoidsMode)
 simRegistry.register(createMolecularDynamicsMode)
+simRegistry.register(createElectrostaticsMode)
