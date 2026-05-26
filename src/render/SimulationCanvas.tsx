@@ -1,7 +1,7 @@
 import './webgpu' // registers three/webgpu JSX elements; must load before <Canvas>
 import * as THREE from 'three/webgpu'
 import { useEffect, useRef, type ComponentRef, type RefObject } from 'react'
-import { Canvas, useThree } from '@react-three/fiber'
+import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { ParticleField } from './ParticleField'
 import { PostFx } from './PostFx'
@@ -9,6 +9,8 @@ import { useParamStore } from '../state/paramStore'
 import { theme } from '../ui/theme'
 import { defaultCameraPosition, zoomLimitsForContainer } from './cameraFraming'
 import { registerCamera, consumePendingCameraPose } from './cameraBridge'
+import { registerCanvas } from './canvasBridge'
+import { isRecording, stepRecording } from '../export/recordingController'
 import type { CameraPose } from '../sim-core/scenario'
 
 // Fallback when the active mode has no `containerSize` param. TODO(phase-1): expose
@@ -99,6 +101,14 @@ function CameraRig({ controlsRef }: { controlsRef: RefObject<OrbitControlsRef | 
   return null
 }
 
+/** Advances the active video recording once per rendered frame (no-op when not recording). */
+function RecorderStepper() {
+  useFrame(() => {
+    if (isRecording()) void stepRecording()
+  })
+  return null
+}
+
 /** The 3D viewport: lighting, the container wireframe, orbit controls, and the particles. */
 export function SimulationCanvas() {
   const containerSize = useParamStore((s) =>
@@ -121,6 +131,7 @@ export function SimulationCanvas() {
         await renderer.init()
         return renderer
       }}
+      onCreated={(state) => registerCanvas(state.gl.domElement)}
     >
       <color attach="background" args={[theme.bgBase]} />
       <ambientLight intensity={0.5} />
@@ -135,6 +146,7 @@ export function SimulationCanvas() {
 
       <OrbitControls ref={controlsRef} enablePan enableZoom enableRotate makeDefault />
       <CameraRig controlsRef={controlsRef} />
+      <RecorderStepper />
 
       {/* Must be last: takes over the render to present the post-processed (bloom) frame. */}
       <PostFx />

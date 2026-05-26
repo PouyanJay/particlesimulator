@@ -3,6 +3,8 @@ import {
   SCENARIO_VERSION,
   serializeScenario,
   deserializeScenario,
+  scenarioToJson,
+  scenarioFromJson,
   type Scenario,
 } from './scenario'
 
@@ -71,6 +73,19 @@ describe('scenario serialization', () => {
   it('rejects a future/unknown schema version', () => {
     const future = serializeScenarioRaw({ v: 999, modeId: 'x', seed: 1, params: {} })
     expect(deserializeScenario(future)).toBeNull()
+  })
+
+  it('round-trips through human-readable JSON (file export/import)', () => {
+    const full: Scenario = { ...base, substanceId: 'argon', view: '2d', camera: { position: [1, 2, 3], target: [0, 0, 0] } }
+    const json = scenarioToJson(full)
+    expect(json).toContain('\n') // pretty-printed
+    expect(scenarioFromJson(json)).toEqual(full)
+  })
+
+  it('scenarioFromJson rejects malformed or wrong-shaped JSON', () => {
+    expect(scenarioFromJson('not json')).toBeNull()
+    expect(scenarioFromJson('{"v":1,"seed":1,"params":{}}')).toBeNull() // missing modeId
+    expect(scenarioFromJson('{"v":999,"modeId":"x","seed":1,"params":{}}')).toBeNull() // wrong version
   })
 
   it('embeds the current version in the encoded payload', () => {

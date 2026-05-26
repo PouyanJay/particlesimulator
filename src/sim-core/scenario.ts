@@ -84,6 +84,31 @@ export function deserializeScenario(encoded: string): Scenario | null {
   return validate(parsed)
 }
 
+/** Pretty-printed JSON of a scenario, for file export/import (human-readable, not compressed). */
+export function scenarioToJson(scenario: Scenario): string {
+  const payload: EncodedScenario = {
+    v: SCENARIO_VERSION,
+    modeId: scenario.modeId,
+    seed: scenario.seed,
+    params: scenario.params,
+  }
+  if (scenario.substanceId !== undefined) payload.substanceId = scenario.substanceId
+  if (scenario.camera !== undefined) payload.camera = scenario.camera
+  if (scenario.view !== undefined) payload.view = scenario.view
+  return JSON.stringify(payload, null, 2)
+}
+
+/** Parse a scenario from exported JSON text; returns null for anything invalid (untrusted file). */
+export function scenarioFromJson(text: string): Scenario | null {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    return null
+  }
+  return validate(parsed)
+}
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }

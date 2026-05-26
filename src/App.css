@@ -23,6 +23,13 @@
     'sidebar viewport';
 }
 
+/* Embed mode: chrome stripped to just the viewport for clean iframes. */
+.app--embed {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  grid-template-areas: 'viewport';
+}
+
 /* Top bar */
 .app__topbar {
   grid-area: topbar;
@@ -45,6 +52,19 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+
+.app__topbar-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: var(--space-1) var(--space-1);
+  background: var(--border);
+}
+
+.lab-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 
 /* Measurements dock (right) */
@@ -968,6 +988,306 @@
   text-align: center;
   font-size: var(--text-sm);
   color: var(--text-muted);
+}
+
+/* Visually-hidden but accessible (screen-reader only) */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Preset manager */
+.preset-save {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.preset-save .textfield {
+  flex: 1;
+}
+
+.preset-empty {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.preset-error {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--danger);
+}
+
+.preset-list {
+  list-style: none;
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.preset-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+}
+
+.preset-row:hover {
+  background: var(--bg-surface);
+}
+
+.preset-row__load {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2);
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.preset-row__load:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--accent-subtle);
+}
+
+.preset-row__name {
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.preset-row__mode {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.preset-row__edit {
+  flex: 1;
+  height: var(--control-height);
+  padding: 0 var(--space-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+}
+
+.preset-row__actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.preset-io {
+  display: flex;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+/* Share dialog */
+.share-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.share-field:last-child {
+  margin-bottom: 0;
+}
+
+.share-field__label {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.share-field__row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.share-field__input {
+  flex: 1;
+  min-width: 0;
+  height: var(--control-height);
+  padding: 0 var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+}
+
+.share-field__input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--accent-subtle);
+}
+
+/* Export / record dialog */
+.export-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.export-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.export-row__label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.export-hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.export-error {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--danger);
+}
+
+/* Curated scenarios + challenges lists */
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-3);
+  text-align: left;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    border-color var(--motion-fast) var(--ease),
+    background var(--motion-fast) var(--ease);
+}
+
+.card:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-elevated);
+}
+
+.card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--accent-subtle);
+}
+
+.card__title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.card__summary {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.card__meta {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* Challenge runner */
+.challenge {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.challenge__progress {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.challenge__prompt {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.challenge__hint {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.challenge__check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+}
+
+.challenge__check.is-met {
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 40%, var(--border));
+}
+
+.challenge__check-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.challenge__check.is-met .challenge__check-dot {
+  background: var(--success);
+}
+
+.challenge__nav {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
 }
 
 /* Narrow screens: stack the sidebar above the viewport. */
