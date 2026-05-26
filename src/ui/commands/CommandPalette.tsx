@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { SearchIcon } from '../icons'
 import { filterCommands, type Command } from './commandModel'
@@ -19,6 +19,8 @@ export function CommandPalette({ open, onClose, commands }: CommandPaletteProps)
   const [active, setActive] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
+  const baseId = useId()
+  const optionId = (index: number) => `${baseId}-opt-${index}`
 
   const results = useMemo(() => filterCommands(commands, query), [commands, query])
 
@@ -34,6 +36,13 @@ export function CommandPalette({ open, onClose, commands }: CommandPaletteProps)
   useEffect(() => {
     setActive((i) => Math.min(i, Math.max(0, results.length - 1)))
   }, [results.length])
+
+  // Keep the highlighted option visible as the user arrows through a long list.
+  useEffect(() => {
+    const el = listRef.current?.querySelector('[aria-selected="true"]')
+    // `scrollIntoView` is unimplemented in jsdom; guard so it's a no-op there.
+    if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest' })
+  }, [active])
 
   if (!open) return null
 
@@ -78,7 +87,10 @@ export function CommandPalette({ open, onClose, commands }: CommandPaletteProps)
             type="text"
             placeholder="Type a command…"
             aria-label="Search commands"
+            role="combobox"
+            aria-expanded
             aria-controls="command-palette-list"
+            aria-activedescendant={results.length > 0 ? optionId(active) : undefined}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -88,9 +100,10 @@ export function CommandPalette({ open, onClose, commands }: CommandPaletteProps)
             <li className="palette__empty">No matching commands</li>
           ) : (
             results.map((command, index) => (
-              <li key={command.id} role="option" aria-selected={index === active}>
+              <li key={command.id} id={optionId(index)} role="option" aria-selected={index === active}>
                 <button
                   type="button"
+                  tabIndex={-1}
                   className={`palette__item${index === active ? ' is-active' : ''}`}
                   disabled={command.disabled}
                   onMouseMove={() => setActive(index)}

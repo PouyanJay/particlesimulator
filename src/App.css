@@ -9,6 +9,7 @@
     'topbar topbar topbar'
     'sidebar viewport dock';
   height: 100vh;
+  height: 100dvh; /* avoid mobile browser-chrome clipping the layout */
   background: var(--bg-base);
   color: var(--text-primary);
   font-family: var(--font-ui);
@@ -1368,5 +1369,27 @@
     max-height: 45vh;
     border-left: none;
     border-top: 1px solid var(--border);
+  }
+
+  /* Topbar actions can outgrow a phone's width — let them wrap onto a second row. */
+  .app__topbar {
+    flex-wrap: wrap;
+  }
+
+  .app__topbar-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+/* Phones: dialogs and the palette go near-full-width; touch scrolling stays smooth. */
+@media (max-width: 480px) {
+  .dialog,
+  .palette {
+    max-width: 100%;
+  }
+
+  .dialog__backdrop--top {
+    padding-top: var(--space-8);
   }
 }
