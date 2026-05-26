@@ -22,14 +22,18 @@ import type { ParamValues, ParticleBuffers, SimContext, SimMode, Telemetry } fro
  * small MD timestep — the integrator never sees the raw frame dt.
  */
 export const molecularDynamicsSchema = {
-  particleCount: { type: 'number', label: 'Atom Count', default: 216, min: 8, max: 4000, step: 1 },
+  particleCount: { type: 'number', label: 'Atom Count', default: 216, min: 8, max: 4000, step: 1, group: 'scene' },
   temperature: { type: 'number', label: 'Temperature', default: 1.2, min: 0.1, max: 5, step: 0.1 },
   epsilon: { type: 'number', label: 'Well Depth (ε)', default: 1.0, min: 0.1, max: 5, step: 0.1 },
   sigma: { type: 'number', label: 'Atom Diameter (σ)', default: 1.0, min: 0.5, max: 2, step: 0.1 },
   cutoff: { type: 'number', label: 'Cutoff', default: 2.5, min: 1.5, max: 4, step: 0.1 },
-  containerSize: { type: 'number', label: 'Box Size', default: 14, min: 6, max: 30, step: 1 },
-  particleRadius: { type: 'number', label: 'Atom Size', default: 0.4, min: 0.1, max: 1, step: 0.05 },
+  containerSize: { type: 'number', label: 'Box Size', default: 14, min: 6, max: 30, step: 1, group: 'scene' },
 } as const
+
+// Atoms are drawn at radius σ/2 (rendered diameter = the physical LJ diameter σ). There is no
+// separate "size" knob: the on-screen size *is* σ, which maps to real nm when a substance is
+// chosen (Argon σ ≈ 0.34 nm). See substances / the law of corresponding states.
+const RENDER_RADIUS_PER_SIGMA = 0.5
 
 type Params = ParamValues<typeof molecularDynamicsSchema>
 
@@ -71,7 +75,7 @@ export function createMolecularDynamicsMode(): SimMode<typeof molecularDynamicsS
   function init(ctx: SimContext<typeof molecularDynamicsSchema>): void {
     const p: Params = ctx.params
     count = p.particleCount
-    radius = p.particleRadius
+    radius = RENDER_RADIUS_PER_SIGMA * p.sigma // render size derives from the physical diameter σ
     halfBound = p.containerSize / 2 - radius
     wallArea = 6 * (2 * halfBound) * (2 * halfBound) // 6 faces of the reflecting box.
     wallImpulse = 0

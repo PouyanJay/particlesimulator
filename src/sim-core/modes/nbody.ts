@@ -14,12 +14,12 @@ import type { ParamValues, ParticleBuffers, SimContext, SimMode, Telemetry } fro
  * GPU come later. Colored by speed (no per-particle type).
  */
 export const nbodySchema = {
-  particleCount: { type: 'number', label: 'Bodies', default: 600, min: 50, max: 3000, step: 10 },
+  particleCount: { type: 'number', label: 'Body Count', default: 600, min: 50, max: 3000, step: 10, group: 'scene' },
   gravity: { type: 'number', label: 'Gravity Strength', default: 0.02, min: 0.001, max: 0.2, step: 0.001 },
   softening: { type: 'number', label: 'Softening', default: 0.15, min: 0.02, max: 1, step: 0.01 },
   rotation: { type: 'number', label: 'Initial Spin', default: 0.6, min: 0, max: 2, step: 0.1 },
-  containerSize: { type: 'number', label: 'Bounds', default: 8, min: 4, max: 16, step: 1 },
-  particleRadius: { type: 'number', label: 'Body Size', default: 0.04, min: 0.02, max: 0.12, step: 0.01 },
+  containerSize: { type: 'number', label: 'Bounds', default: 8, min: 4, max: 16, step: 1, group: 'scene' },
+  particleRadius: { type: 'number', label: 'Body Size', default: 0.04, min: 0.02, max: 0.12, step: 0.01, group: 'scene' },
 } as const
 
 type Params = ParamValues<typeof nbodySchema>
