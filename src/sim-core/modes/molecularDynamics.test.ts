@@ -286,4 +286,18 @@ describe('molecularDynamics conserved-quantity telemetry', () => {
     for (let i = 0; i < 400; i++) mode.step(1 / 60)
     expect(mode.getTelemetry().pressure!).toBeGreaterThan(0)
   })
+
+  it('under gravity the atoms settle downward (sedimentation) and the run is flagged inelastic', () => {
+    const meanY = (b: { count: number; positions: Float32Array }) => {
+      let sum = 0
+      for (let i = 0; i < b.count; i++) sum += b.positions[i * 3 + 1]
+      return sum / b.count
+    }
+    const mode = createMolecularDynamicsMode()
+    mode.init(ctx({ particleCount: 125, temperature: 0.3, gravity: 5, containerSize: 12 }))
+    const before = meanY(mode.getBuffers())
+    for (let i = 0; i < 600; i++) mode.step(1 / 60)
+    expect(meanY(mode.getBuffers())).toBeLessThan(before - 0.5) // gas sinks under gravity
+    expect(mode.getTelemetry().inelastic).toBe(true)
+  })
 })

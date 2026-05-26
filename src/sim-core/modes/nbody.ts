@@ -1,5 +1,7 @@
 import { computeGravityAccelerations } from '../physics/gravity'
 import { velocityVerlet, type AccelFn, type Integrator } from '../integrators/integrators'
+import { reflectInBox } from '../physics/environment'
+import { countParam, containerParam, displaySizeParam } from '../params/common'
 import { seedNbodyDisk } from './nbodySeed'
 import { totalMomentum } from '../measure/conservedQuantities'
 import type { ParamValues, ParticleBuffers, SimContext, SimMode, Telemetry } from '../types'
@@ -14,12 +16,13 @@ import type { ParamValues, ParticleBuffers, SimContext, SimMode, Telemetry } fro
  * GPU come later. Colored by speed (no per-particle type).
  */
 export const nbodySchema = {
-  particleCount: { type: 'number', label: 'Body Count', default: 600, min: 50, max: 3000, step: 10, group: 'scene' },
+  particleCount: countParam({ label: 'Body Count', default: 600, min: 50, max: 3000 }),
+  // N-body's own inter-particle gravity (a dynamics force), distinct from external field gravity.
   gravity: { type: 'number', label: 'Gravity Strength', default: 0.02, min: 0.001, max: 0.2, step: 0.001 },
   softening: { type: 'number', label: 'Softening', default: 0.15, min: 0.02, max: 1, step: 0.01 },
   rotation: { type: 'number', label: 'Initial Spin', default: 0.6, min: 0, max: 2, step: 0.1 },
-  containerSize: { type: 'number', label: 'Bounds', default: 8, min: 4, max: 16, step: 1, group: 'scene' },
-  particleRadius: { type: 'number', label: 'Body Size', default: 0.04, min: 0.02, max: 0.12, step: 0.01, group: 'scene' },
+  containerSize: containerParam({ label: 'Bounds', default: 8, min: 4, max: 16, step: 1 }),
+  particleRadius: displaySizeParam({ label: 'Body Size', default: 0.04, min: 0.02, max: 0.12 }),
 } as const
 
 type Params = ParamValues<typeof nbodySchema>
@@ -60,19 +63,8 @@ export function createNbodyMode(): SimMode<typeof nbodySchema> {
   function step(dt: number): void {
     if (!integrator) return
     integrator.step(positions, velocities, accel, dt)
-    // Reflect off the container walls so the cluster stays framed.
-    for (let i = 0; i < count; i++) {
-      for (let axis = 0; axis < 3; axis++) {
-        const k = i * 3 + axis
-        if (positions[k] > halfBound && velocities[k] > 0) {
-          positions[k] = halfBound
-          velocities[k] = -velocities[k]
-        } else if (positions[k] < -halfBound && velocities[k] < 0) {
-          positions[k] = -halfBound
-          velocities[k] = -velocities[k]
-        }
-      }
-    }
+    // Reflect off the container walls so the cluster stays framed (shared helper).
+    reflectInBox(positions, velocities, count, halfBound)
   }
 
   function getBuffers(): ParticleBuffers {
