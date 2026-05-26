@@ -226,6 +226,24 @@ export const TrashIcon = ({ className }: IconProps) =>
     className,
   )
 
+export const GraduationIcon = ({ className }: IconProps) =>
+  stroked(
+    <>
+      <path d="M22 9 12 5 2 9l10 4 10-4z" />
+      <path d="M6 11v5c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-5" />
+    </>,
+    className,
+  )
+
+export const EditIcon = ({ className }: IconProps) =>
+  stroked(
+    <>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+    </>,
+    className,
+  )
+
 export const CommandIcon = ({ className }: IconProps) =>
   stroked(
     <path d="M9 6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3z" />,

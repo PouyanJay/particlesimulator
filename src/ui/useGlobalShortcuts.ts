@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useParamStore } from '../state/paramStore'
+import { useUiStore } from '../state/uiStore'
 
 /**
  * Returns true when a keyboard event originates from a control that owns the key itself
@@ -24,6 +25,11 @@ export function useGlobalShortcuts(): void {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent): void {
       const mod = e.metaKey || e.ctrlKey
+      if (mod && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault()
+        useUiStore.getState().toggleOverlay('palette')
+        return
+      }
       if (mod && (e.key === 'z' || e.key === 'Z')) {
         e.preventDefault()
         const temporal = useParamStore.temporal.getState()
