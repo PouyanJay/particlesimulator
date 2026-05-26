@@ -4,8 +4,12 @@ import type * as THREE from 'three/webgpu'
 import { createNbodyGpu, type NbodyGpu } from './nbodyCompute'
 import { seedNbodyDisk } from '../../sim-core/modes/nbodySeed'
 import { useParamStore } from '../../state/paramStore'
+import { useTelemetryStore } from '../../state/telemetryStore'
 
 const FIXED_DT = 1 / 90
+// How often (simulated seconds) to read the GPU velocity buffer back for the readouts —
+// matches the CPU driver's telemetry cadence. Read-back is a GPU→CPU copy, so it's throttled.
+const TELEMETRY_INTERVAL = 0.5
 const num = (v: unknown, fallback: number) => (typeof v === 'number' ? v : fallback)
 
 /**
@@ -38,6 +42,8 @@ export function GpuNbody() {
     seedNbodyDisk(seed, count, containerSize, rotation, positions, velocities)
     const built = createNbodyGpu(count, positions, velocities, radius)
     setGpu(built)
+    // Clear the panel of any previous (CPU-mode) readings; GPU read-back repopulates it.
+    useTelemetryStore.getState().reset()
     return () => {
       built.dispose()
       setGpu(null)
@@ -45,6 +51,8 @@ export function GpuNbody() {
   }, [seed, params])
 
   const accumulatorRef = useRef(0)
+  const telemetryAccumRef = useRef(0)
+  const readingBackRef = useRef(false)
   useFrame((_, delta) => {
     if (!gpu) return
 
@@ -65,7 +73,64 @@ export function GpuNbody() {
       gl.compute(gpu.computePosition)
       accumulatorRef.current -= FIXED_DT
     }
+
+    // Periodically read the velocity buffer back to the CPU and publish the same conserved
+    // quantities the CPU modes report. Throttled, and skipped while a read-back is in flight
+    // (getArrayBufferAsync is async), so it never stalls the render loop.
+    telemetryAccumRef.current += Math.min(delta, 0.1)
+    if (telemetryAccumRef.current >= TELEMETRY_INTERVAL && !readingBackRef.current) {
+      telemetryAccumRef.current = 0
+      readingBackRef.current = true
+      void publishTelemetry(gl, gpu.velocityAttribute, count).finally(() => {
+        readingBackRef.current = false
+      })
+    }
   })
 
   return gpu ? <primitive object={gpu.sprite} /> : null
+}
+
+/**
+ * Read the GPU velocity buffer back and push kinetic energy, average speed, and total
+ * momentum to the telemetry store. The buffer is xyz-interleaved; we derive the per-element
+ * stride from the returned length so it's correct whether the backend packs vec3 tightly
+ * (stride 3) or pads to 16 bytes (stride 4).
+ */
+async function publishTelemetry(
+  gl: THREE.WebGPURenderer,
+  velocityAttribute: THREE.BufferAttribute,
+  count: number,
+): Promise<void> {
+  const buffer = await gl.getArrayBufferAsync(velocityAttribute)
+  const v = new Float32Array(buffer)
+  if (count <= 0 || v.length < count * 3) return
+  const stride = Math.floor(v.length / count)
+
+  let speedSum = 0
+  let keSum = 0
+  let px = 0
+  let py = 0
+  let pz = 0
+  const speedSamples = new Float32Array(count)
+  for (let i = 0; i < count; i++) {
+    const o = i * stride
+    const x = v[o]
+    const y = v[o + 1]
+    const z = v[o + 2]
+    const speedSq = x * x + y * y + z * z
+    const speed = Math.sqrt(speedSq)
+    speedSamples[i] = speed
+    speedSum += speed
+    keSum += speedSq
+    px += x
+    py += y
+    pz += z
+  }
+  useTelemetryStore.getState().push({
+    particleCount: count,
+    averageSpeed: speedSum / count,
+    kineticEnergy: 0.5 * keSum, // unit mass
+    speedSamples,
+    momentum: [px, py, pz],
+  })
 }

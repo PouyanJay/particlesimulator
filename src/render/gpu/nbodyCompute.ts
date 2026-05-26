@@ -32,6 +32,8 @@ export interface NbodyGpu {
   computeVelocity: ReturnType<typeof compute>
   computePosition: ReturnType<typeof compute>
   sprite: THREE.Sprite
+  /** The velocity storage buffer (xyz per body), for CPU read-back of telemetry. */
+  velocityAttribute: THREE.BufferAttribute
   uniforms: {
     g: ReturnType<typeof uniform>
     softeningSq: ReturnType<typeof uniform>
@@ -112,6 +114,8 @@ export function createNbodyGpu(
     computeVelocity,
     computePosition,
     sprite,
+    // The storage node's underlying buffer attribute — read back on the CPU for telemetry.
+    velocityAttribute: velocityStorage.value as unknown as THREE.BufferAttribute,
     uniforms: { g, softeningSq, dt, halfBound, vMax },
     dispose() {
       material.dispose()

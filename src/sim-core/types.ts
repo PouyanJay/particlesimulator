@@ -78,6 +78,29 @@ export interface Telemetry {
    * Modes with a meaningful speed distribution populate it; others leave it undefined.
    */
   speedSamples?: Float32Array
+  /**
+   * Total momentum vector p = Σ m·v (xyz). Reported by the physical modes (gases, N-body)
+   * as a bulk readout; left undefined where momentum isn't meaningful (e.g. damped/steered
+   * modes). Note: a walled box is not momentum-conserving — the walls impart impulse.
+   */
+  momentum?: [number, number, number]
+  /**
+   * Kinetic-theory temperature T = m·⟨v²⟩ / 3 (equipartition, k_B = 1). Thermalised gases only.
+   */
+  temperature?: number
+  /**
+   * Pressure = wall impulse per unit area, time-averaged over the interval since the last
+   * sample (reduced units). Walled gases only. For an ideal gas this satisfies P·V = N·k_B·T.
+   */
+  pressure?: number
+  /**
+   * True when total kinetic energy is not conserved this run (inelastic restitution, or an
+   * external force such as gravity) — flags that conservation readouts will drift.
+   *
+   * All telemetry values are in **dimensionless reduced units** (k_B = 1, unit particle mass);
+   * the lab models no specific substance, so quantities are pure numbers (see the UI note).
+   */
+  inelastic?: boolean
 }
 
 export type SimBackend = 'cpu' | 'rapier' | 'webgpu-compute'

@@ -1,6 +1,7 @@
 import { createRng, type Rng } from '../rng'
 import { createLennardJonesField, type LennardJonesField } from '../physics/lennardJonesField'
 import { velocityVerlet, type AccelFn, type Integrator } from '../integrators/integrators'
+import { totalMomentum, temperature } from '../measure/conservedQuantities'
 import type { ParamValues, ParticleBuffers, SimContext, SimMode, Telemetry } from '../types'
 
 /**
@@ -22,12 +23,12 @@ import type { ParamValues, ParticleBuffers, SimContext, SimMode, Telemetry } fro
  */
 export const molecularDynamicsSchema = {
   particleCount: { type: 'number', label: 'Atom Count', default: 216, min: 8, max: 4000, step: 1 },
-  temperature: { type: 'number', label: 'Temperature', default: 1.2, min: 0.1, max: 5, step: 0.1, unit: 'ε/k_B' },
-  epsilon: { type: 'number', label: 'Well Depth (ε)', default: 1.0, min: 0.1, max: 5, step: 0.1, unit: 'ε' },
-  sigma: { type: 'number', label: 'Atom Diameter (σ)', default: 1.0, min: 0.5, max: 2, step: 0.1, unit: 'σ' },
-  cutoff: { type: 'number', label: 'Cutoff', default: 2.5, min: 1.5, max: 4, step: 0.1, unit: 'σ' },
-  containerSize: { type: 'number', label: 'Box Size', default: 14, min: 6, max: 30, step: 1, unit: 'σ' },
-  particleRadius: { type: 'number', label: 'Atom Size', default: 0.4, min: 0.1, max: 1, step: 0.05, unit: 'σ' },
+  temperature: { type: 'number', label: 'Temperature', default: 1.2, min: 0.1, max: 5, step: 0.1 },
+  epsilon: { type: 'number', label: 'Well Depth (ε)', default: 1.0, min: 0.1, max: 5, step: 0.1 },
+  sigma: { type: 'number', label: 'Atom Diameter (σ)', default: 1.0, min: 0.5, max: 2, step: 0.1 },
+  cutoff: { type: 'number', label: 'Cutoff', default: 2.5, min: 1.5, max: 4, step: 0.1 },
+  containerSize: { type: 'number', label: 'Box Size', default: 14, min: 6, max: 30, step: 1 },
+  particleRadius: { type: 'number', label: 'Atom Size', default: 0.4, min: 0.1, max: 1, step: 0.05 },
 } as const
 
 type Params = ParamValues<typeof molecularDynamicsSchema>
@@ -58,6 +59,12 @@ export function createMolecularDynamicsMode(): SimMode<typeof molecularDynamicsS
   let field: LennardJonesField | null = null
   let integrator: Integrator | null = null
 
+  // Pressure measurement: impulse delivered to the walls and simulated time elapsed, both
+  // since the last telemetry read; pressure = impulse / (area · time). Walls are elastic.
+  let wallArea = 0
+  let wallImpulse = 0
+  let simTimeAccum = 0
+
   // Acceleration field for the integrator (delegates to the grid-accelerated LJ kernel).
   const accel: AccelFn = (pos, out) => field?.computeAccelerations(pos, count, out)
 
@@ -66,6 +73,9 @@ export function createMolecularDynamicsMode(): SimMode<typeof molecularDynamicsS
     count = p.particleCount
     radius = p.particleRadius
     halfBound = p.containerSize / 2 - radius
+    wallArea = 6 * (2 * halfBound) * (2 * halfBound) // 6 faces of the reflecting box.
+    wallImpulse = 0
+    simTimeAccum = 0
     const cutoff = p.cutoff * p.sigma // cutoff in absolute length units.
 
     positions = new Float64Array(count * 3)
@@ -141,6 +151,7 @@ export function createMolecularDynamicsMode(): SimMode<typeof molecularDynamicsS
 
   function step(dt: number): void {
     if (!integrator || dt <= 0) return
+    simTimeAccum += dt
     // Substep at the fixed MD timestep: velocity Verlet is only stable for the stiff LJ
     // force at small dt, and substepping keeps energy drift bounded regardless of the
     // (coarse, render-rate) frame dt the driver supplies.
@@ -159,9 +170,12 @@ export function createMolecularDynamicsMode(): SimMode<typeof molecularDynamicsS
       for (let axis = 0; axis < 3; axis++) {
         const k = o + axis
         if (positions[k] > halfBound && velocities[k] > 0) {
+          // Elastic wall (v_out = −v_in): impulse on the wall = 2·m·|v_in|.
+          wallImpulse += 2 * PARTICLE_MASS * velocities[k]
           positions[k] = halfBound
           velocities[k] = -velocities[k]
         } else if (positions[k] < -halfBound && velocities[k] < 0) {
+          wallImpulse += 2 * PARTICLE_MASS * -velocities[k]
           positions[k] = -halfBound
           velocities[k] = -velocities[k]
         }
@@ -189,11 +203,19 @@ export function createMolecularDynamicsMode(): SimMode<typeof molecularDynamicsS
       speedSum += speed
       keSum += speedSq
     }
+    // Time-averaged wall pressure over the interval since the last read, then reset the
+    // window (getTelemetry is sampled on an interval by the driver — see simDriver).
+    const pressure = simTimeAccum > 0 && wallArea > 0 ? wallImpulse / (wallArea * simTimeAccum) : 0
+    wallImpulse = 0
+    simTimeAccum = 0
     return {
       particleCount: count,
       averageSpeed: count > 0 ? speedSum / count : 0,
       kineticEnergy: 0.5 * PARTICLE_MASS * keSum,
       speedSamples,
+      momentum: totalMomentum(velocities, count, PARTICLE_MASS),
+      temperature: temperature(velocities, count, PARTICLE_MASS),
+      pressure,
     }
   }
 
@@ -205,6 +227,8 @@ export function createMolecularDynamicsMode(): SimMode<typeof molecularDynamicsS
     field = null
     integrator = null
     count = 0
+    wallImpulse = 0
+    simTimeAccum = 0
   }
 
   return {
