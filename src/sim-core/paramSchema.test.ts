@@ -18,6 +18,7 @@ describe('defaultParamValues', () => {
       particleRadius: 0.08,
       initialVelocity: 1.0,
       restitution: 1.0,
+      holdTemperature: false,
       containerSize: 2.5,
       gravity: 0, // external gravity strength (0 = off); was a boolean toggle before the kit
     })

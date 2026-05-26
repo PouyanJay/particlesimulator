@@ -300,4 +300,14 @@ describe('molecularDynamics conserved-quantity telemetry', () => {
     expect(meanY(mode.getBuffers())).toBeLessThan(before - 0.5) // gas sinks under gravity
     expect(mode.getTelemetry().inelastic).toBe(true)
   })
+
+  it('holds the kinetic temperature at the target when the lock is on', () => {
+    const target = 1.5
+    const mode = createMolecularDynamicsMode()
+    mode.init(ctx({ particleCount: 125, temperature: target, holdTemperature: true }))
+    // LJ exchanges KE with potential energy, which would pull the kinetic temperature off
+    // target; the thermostat lock pins it back each frame.
+    for (let i = 0; i < 300; i++) mode.step(1 / 60)
+    expect(mode.getTelemetry().temperature!).toBeCloseTo(target, 2)
+  })
 })

@@ -10,6 +10,7 @@ function ctx(overrides: Partial<GasParams> = {}, seed = 1): SimContext<typeof el
     particleRadius: elasticGasSchema.particleRadius.default,
     initialVelocity: elasticGasSchema.initialVelocity.default,
     restitution: elasticGasSchema.restitution.default,
+    holdTemperature: elasticGasSchema.holdTemperature.default,
     containerSize: elasticGasSchema.containerSize.default,
     gravity: elasticGasSchema.gravity.default,
     ...overrides,
