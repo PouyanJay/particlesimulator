@@ -9,9 +9,9 @@
 | Phase | Status | Notes |
 |---|---|---|
 | 0 — Foundation & de-risking | ✅ Done (2026-05-25) | Decoupled sim-core/state/render/ui, SimMode plugin, Zustand, TDD (73 tests). **three.js→r17x/R3F9/WebGPU upgrade deferred to Phase 1** — not needed for the decoupling; done with browser verification where GPU compute requires it. |
-| 1 — Rendering leap & visual wow | ⬜ Not started | **Starts with the deferred renderer upgrade** (three r17x+, R3F 9, WebGPURenderer + WebGL2 fallback) as its first task. |
-| 2 — Simulation engine & first GPU modes | ⬜ Not started | |
-| 3 — Educational lab core | ⬜ Not started | |
+| 1 — Rendering leap & visual wow | ✅ Done (2026-05-25) | three r184/R3F 9/WebGPURenderer + WebGL2 fallback; buffer-driven instanced rendering, HDR bloom, color-by-speed, scaled counts. |
+| 2 — Simulation engine & first GPU modes | ✅ Done (2026-05-25) | Shared sim-core infra (spatial grid, integrators, fixed-step); Particle-Life, N-Body (CPU + GPU/TSL compute) behind the mode selector. |
+| 3 — Educational lab core | ✅ Done (2026-05-25) | uPlot telemetry (speed, energy-over-time) + Maxwell–Boltzmann histogram; conserved-quantity readouts (momentum/energy/temperature/pressure, PV=N k_B T verified); dimensionless reduced units + real-substance (Argon/Ne/Kr/Xe) mapping; pedagogy layer (live equation panel, hold-temperature lock); modes MD/Lennard-Jones, Boids, Electrostatics. Shared param kit + behavior helpers. ~258 tests. |
 | 4 — Advanced simulations | ⬜ Not started | |
 | 5 — Lab platform | ⬜ Not started | |
 | 6 — Polish & launch | ⬜ Not started | |
