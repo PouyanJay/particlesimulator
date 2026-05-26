@@ -1,13 +1,11 @@
 import { createFixedTimestep } from '../sim-core/time/fixedTimestep'
 import type { SimModeRegistry } from '../sim-core/registry'
-import type { ParamValue, ParticleBuffers, SimMode, Telemetry } from '../sim-core/types'
+import type { ParticleBuffers, SimMode, Telemetry } from '../sim-core/types'
+import type { Scenario } from '../sim-core/scenario'
 
-/** A fully-specified, reproducible simulation setup. */
-export interface Scenario {
-  modeId: string
-  seed: number
-  params: Record<string, ParamValue>
-}
+// The driver consumes the reproducible parts of a Scenario (mode + seed + params);
+// the camera/view/substance fields are view concerns handled by the render/UI layers.
+export type { Scenario }
 
 export interface SimDriverOptions {
   registry: SimModeRegistry

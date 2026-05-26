@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { defaultParamValues } from '../sim-core/paramSchema'
 import type { ParamValue } from '../sim-core/types'
+import type { CameraPose, Scenario, SimView } from '../sim-core/scenario'
 import { simRegistry } from './simRegistry'
 import { clientStorage } from './clientStorage'
 
@@ -46,6 +47,8 @@ interface ParamState {
    * simulation parameter — it never affects the dynamics, only how values are labelled.
    */
   substanceId: string
+  /** Render projection: '3d' orbit view (default) or the orthographic high-count 2D tier. */
+  view: SimView
 
   setParam: (key: string, value: ParamValue) => void
   selectMode: (modeId: string) => void
@@ -55,6 +58,29 @@ interface ParamState {
   setPlaying: (isPlaying: boolean) => void
   togglePlaying: () => void
   setSubstance: (substanceId: string) => void
+  setView: (view: SimView) => void
+  /**
+   * Replace the whole scenario at once (mode + params + seed + substance + view) without
+   * resetting params to the mode's defaults — used to restore a shared URL, a saved preset,
+   * or a curated scenario. Camera is handled separately by the render layer (see cameraBridge).
+   */
+  loadScenario: (scenario: Scenario) => void
+}
+
+/**
+ * Build a serializable Scenario from the current store state, optionally pinning the camera.
+ * Pure (takes state in) so it's trivially testable and reusable for share/preset/export.
+ */
+export function scenarioFromState(state: ParamState, camera?: CameraPose): Scenario {
+  const scenario: Scenario = {
+    modeId: state.modeId,
+    seed: state.seed,
+    params: state.params,
+    substanceId: state.substanceId,
+    view: state.view,
+  }
+  if (camera) scenario.camera = camera
+  return scenario
 }
 
 /**
@@ -71,6 +97,7 @@ export const useParamStore = create<ParamState>()(
       isPlaying: true,
       params: defaultsFor(INITIAL_MODE_ID),
       substanceId: 'reduced',
+      view: '3d',
 
       setParam: (key, value) => set((s) => ({ params: { ...s.params, [key]: value } })),
       selectMode: (modeId) => set({ modeId, params: defaultsFor(modeId) }),
@@ -80,16 +107,32 @@ export const useParamStore = create<ParamState>()(
       setPlaying: (isPlaying) => set({ isPlaying }),
       togglePlaying: () => set((s) => ({ isPlaying: !s.isPlaying })),
       setSubstance: (substanceId) => set({ substanceId }),
+      setView: (view) => set({ view }),
+      loadScenario: (scenario) =>
+        set({
+          modeId: scenario.modeId,
+          seed: scenario.seed,
+          params: { ...scenario.params },
+          substanceId: scenario.substanceId ?? 'reduced',
+          view: scenario.view ?? '3d',
+        }),
     }),
     {
       name: 'particle-lab:params',
       // Bump when the mode set or schemas change so incompatible persisted state is
       // discarded (rather than rehydrating stale params for a since-changed schema).
       // v2: elastic-gas gravity became a strength slider (was a boolean toggle).
-      version: 2,
+      // v3: added the `view` (2D/3D) projection to the persisted scenario.
+      version: 3,
       storage: createJSONStorage(() => clientStorage),
       // Persist the scenario + the display unit system — not the transient playback flag.
-      partialize: (s) => ({ modeId: s.modeId, seed: s.seed, params: s.params, substanceId: s.substanceId }),
+      partialize: (s) => ({
+        modeId: s.modeId,
+        seed: s.seed,
+        params: s.params,
+        substanceId: s.substanceId,
+        view: s.view,
+      }),
       // Drop a scenario whose mode no longer exists so a stale modeId can't crash the app.
       merge: (persisted, current) => mergePersistedState(persisted, current as ParamState),
     },
