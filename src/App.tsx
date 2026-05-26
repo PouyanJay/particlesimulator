@@ -8,6 +8,7 @@ import { Toolbar } from './ui/Toolbar'
 import { StatusReadout } from './ui/StatusReadout'
 import { Button } from './ui/controls/Button'
 import { ChartIcon } from './ui/icons'
+import { useGlobalShortcuts } from './ui/useGlobalShortcuts'
 
 /**
  * Application shell. Pure composition — no simulation state lives here. The left instrument
@@ -17,6 +18,7 @@ import { ChartIcon } from './ui/icons'
  */
 export default function App() {
   const [dockOpen, setDockOpen] = useState(true)
+  useGlobalShortcuts()
 
   return (
     <div className={`app${dockOpen ? '' : ' app--dock-collapsed'}`}>

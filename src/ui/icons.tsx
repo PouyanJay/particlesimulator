@@ -67,6 +67,46 @@ export function CheckIcon({ className }: IconProps) {
   )
 }
 
+export function UndoIcon({ className }: IconProps) {
+  return (
+    <svg
+      className={className}
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 7v6h6" />
+      <path d="M3.5 13a9 9 0 1 0 2.3-9.3L3 7" />
+    </svg>
+  )
+}
+
+export function RedoIcon({ className }: IconProps) {
+  return (
+    <svg
+      className={className}
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 7v6h-6" />
+      <path d="M20.5 13a9 9 0 1 0-2.3-9.3L21 7" />
+    </svg>
+  )
+}
+
 export function ChevronDownIcon({ className }: IconProps) {
   return (
     <svg
