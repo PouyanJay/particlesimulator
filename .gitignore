@@ -25,3 +25,6 @@ dist-ssr
 
 # Reference materials and local development resources
 ref/
+
+# Agent worktrees (transient, never commit)
+.claude/worktrees/

@@ -105,6 +105,11 @@ export interface Telemetry {
    */
   pressure?: number
   /**
+   * Volume of the reflecting box (side³), reported alongside pressure so the equation panel
+   * can show P·V = N·k_B·T live from telemetry alone. Same box the pressure is measured on.
+   */
+  volume?: number
+  /**
    * True when total kinetic energy is not conserved this run (inelastic restitution, or an
    * external force such as gravity) — flags that conservation readouts will drift.
    *

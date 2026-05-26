@@ -1,7 +1,7 @@
 import { createRng, type Rng } from '../rng'
 import { createLennardJonesField, type LennardJonesField } from '../physics/lennardJonesField'
 import { velocityVerlet, type AccelFn, type Integrator } from '../integrators/integrators'
-import { reflectInBox } from '../physics/environment'
+import { reflectInBox, thermostatRescale } from '../physics/environment'
 import { countParam, containerParam, gravityParam } from '../params/common'
 import { totalMomentum, temperature } from '../measure/conservedQuantities'
 import type { ParamValues, ParticleBuffers, SimContext, SimMode, Telemetry } from '../types'
@@ -26,6 +26,7 @@ import type { ParamValues, ParticleBuffers, SimContext, SimMode, Telemetry } fro
 export const molecularDynamicsSchema = {
   particleCount: countParam({ label: 'Atom Count', default: 216, min: 8, max: 4000 }),
   temperature: { type: 'number', label: 'Temperature', default: 1.2, min: 0.1, max: 5, step: 0.1 },
+  holdTemperature: { type: 'boolean', label: 'Hold Temperature', default: false },
   epsilon: { type: 'number', label: 'Well Depth (ε)', default: 1.0, min: 0.1, max: 5, step: 0.1 },
   sigma: { type: 'number', label: 'Atom Diameter (σ)', default: 1.0, min: 0.5, max: 2, step: 0.1 },
   cutoff: { type: 'number', label: 'Cutoff', default: 2.5, min: 1.5, max: 4, step: 0.1 },
@@ -66,6 +67,8 @@ export function createMolecularDynamicsMode(): SimMode<typeof molecularDynamicsS
   let field: LennardJonesField | null = null
   let integrator: Integrator | null = null
   let gravity = 0 // external downward field strength (0 = off).
+  let holdTemperature = false // thermostat lock: pin the kinetic temperature to `targetTemperature`.
+  let targetTemperature = 1
 
   // Pressure measurement: impulse delivered to the walls and simulated time elapsed, both
   // since the last telemetry read; pressure = impulse / (area · time). Walls are elastic.
@@ -84,6 +87,8 @@ export function createMolecularDynamicsMode(): SimMode<typeof molecularDynamicsS
     const p: Params = ctx.params
     count = p.particleCount
     gravity = p.gravity
+    holdTemperature = p.holdTemperature
+    targetTemperature = p.temperature
     radius = RENDER_RADIUS_PER_SIGMA * p.sigma // render size derives from the physical diameter σ
     halfBound = p.containerSize / 2 - radius
     wallArea = 6 * (2 * halfBound) * (2 * halfBound) // 6 faces of the reflecting box.
@@ -175,6 +180,8 @@ export function createMolecularDynamicsMode(): SimMode<typeof molecularDynamicsS
       // Shared elastic wall reflection; accumulate the returned impulse for pressure.
       wallImpulse += reflectInBox(positions, velocities, count, halfBound, 1, PARTICLE_MASS)
     }
+    // Hold-temperature lock: pin the kinetic temperature once per frame (gentle thermostat).
+    if (holdTemperature) thermostatRescale(velocities, count, targetTemperature, PARTICLE_MASS)
   }
 
   function getBuffers(): ParticleBuffers {
@@ -210,6 +217,7 @@ export function createMolecularDynamicsMode(): SimMode<typeof molecularDynamicsS
       momentum: totalMomentum(velocities, count, PARTICLE_MASS),
       temperature: temperature(velocities, count, PARTICLE_MASS),
       pressure,
+      volume: (2 * halfBound) ** 3, // the reflecting box the pressure is measured on
       // Under gravity the hard wall clamp dissipates energy (kinetic energy not conserved).
       inelastic: gravity > 0,
     }
