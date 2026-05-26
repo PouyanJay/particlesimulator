@@ -253,6 +253,15 @@
   color: var(--accent);
 }
 
+/* Graded deviation-from-ideal: pastel orange > 20%, pastel red > 40%. */
+.gaslaw__value--warn {
+  color: var(--pastel-orange);
+}
+
+.gaslaw__value--danger {
+  color: var(--pastel-red);
+}
+
 /* Z gauge: ideal (Z=1) reference line + live Z marker on a 0…2 track */
 .zgauge {
   margin-top: var(--space-3);
@@ -282,6 +291,23 @@
 .zgauge__marker {
   stroke: var(--accent);
   stroke-width: 2;
+}
+
+/* Marker + deviation shading track the severity grading. */
+.zgauge--warn .zgauge__marker {
+  stroke: var(--pastel-orange);
+}
+
+.zgauge--warn .zgauge__deviation {
+  fill: color-mix(in srgb, var(--pastel-orange) 28%, transparent);
+}
+
+.zgauge--danger .zgauge__marker {
+  stroke: var(--pastel-red);
+}
+
+.zgauge--danger .zgauge__deviation {
+  fill: color-mix(in srgb, var(--pastel-red) 28%, transparent);
 }
 
 .zgauge__scale {

@@ -33,10 +33,33 @@ describe('GasLawPanel', () => {
     expect(screen.getByText('+0.0%')).toBeInTheDocument() // deviation
   })
 
-  it('reports Z < 1 and a negative deviation when P·V is below N·k_B·T', () => {
+  it('reports Z < 1 and a negative deviation when P·V is below N·k·T', () => {
     pushGas(1, 75, 100, 1.5) // P·V = 75 vs 150 ⇒ Z = 0.500, −50%
     render(<GasLawPanel />)
     expect(screen.getByText('0.500')).toBeInTheDocument() // Z
     expect(screen.getByText('-50.0%')).toBeInTheDocument()
+  })
+
+  it('grades the deviation colour: neutral < 20%, orange > 20%, red > 40%', () => {
+    const deviationClass = () => screen.getByText(/%$/).className
+
+    // ~10% deviation (P·V = 165 vs 150) → no severity modifier.
+    pushGas(2.2, 75, 100, 1.5)
+    const neutral = render(<GasLawPanel />)
+    expect(deviationClass()).not.toMatch(/gaslaw__value--(warn|danger)/)
+    neutral.unmount()
+
+    // ~30% deviation (P·V = 195 vs 150) → orange (warn).
+    useTelemetryStore.getState().reset()
+    pushGas(2.6, 75, 100, 1.5)
+    const warn = render(<GasLawPanel />)
+    expect(deviationClass()).toMatch(/gaslaw__value--warn/)
+    warn.unmount()
+
+    // 50% deviation → red (danger).
+    useTelemetryStore.getState().reset()
+    pushGas(1, 75, 100, 1.5)
+    render(<GasLawPanel />)
+    expect(deviationClass()).toMatch(/gaslaw__value--danger/)
   })
 })
