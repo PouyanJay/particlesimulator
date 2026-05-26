@@ -24,18 +24,29 @@ export function CommandPalette({ open, onClose, commands }: CommandPaletteProps)
 
   const results = useMemo(() => filterCommands(commands, query), [commands, query])
 
-  // Reset query/selection and focus the input each time the palette opens.
+  // Move the highlight to the next/previous *enabled* command, wrapping; disabled commands
+  // (e.g. Undo with empty history) are skipped so the highlight never lands on a dead row.
+  function step(from: number, dir: 1 | -1): number {
+    const len = results.length
+    for (let k = 1; k <= len; k++) {
+      const i = (((from + dir * k) % len) + len) % len
+      if (!results[i]?.disabled) return i
+    }
+    return from
+  }
+
+  // Reset query and focus the input on open.
   useEffect(() => {
     if (!open) return
     setQuery('')
-    setActive(0)
     inputRef.current?.focus()
   }, [open])
 
-  // Keep the active index in range as the result set shrinks.
+  // When the result set changes (typing), re-anchor to the first enabled match.
   useEffect(() => {
-    setActive((i) => Math.min(i, Math.max(0, results.length - 1)))
-  }, [results.length])
+    const first = results.findIndex((c) => !c.disabled)
+    setActive(first < 0 ? 0 : first)
+  }, [results])
 
   // Keep the highlighted option visible as the user arrows through a long list.
   useEffect(() => {
@@ -59,13 +70,16 @@ export function CommandPalette({ open, onClose, commands }: CommandPaletteProps)
       onClose()
     } else if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setActive((i) => Math.min(i + 1, results.length - 1))
+      setActive((i) => step(i, 1))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      setActive((i) => Math.max(i - 1, 0))
+      setActive((i) => step(i, -1))
     } else if (e.key === 'Enter') {
       e.preventDefault()
       runAt(active)
+    } else if (e.key === 'Tab') {
+      // The input is the only focusable element; keep focus inside the modal palette.
+      e.preventDefault()
     }
   }
 
@@ -100,18 +114,19 @@ export function CommandPalette({ open, onClose, commands }: CommandPaletteProps)
             <li className="palette__empty">No matching commands</li>
           ) : (
             results.map((command, index) => (
-              <li key={command.id} id={optionId(index)} role="option" aria-selected={index === active}>
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  className={`palette__item${index === active ? ' is-active' : ''}`}
-                  disabled={command.disabled}
-                  onMouseMove={() => setActive(index)}
-                  onClick={() => runAt(index)}
-                >
-                  <span className="palette__item-title">{command.title}</span>
-                  {command.group ? <span className="palette__item-group">{command.group}</span> : null}
-                </button>
+              <li
+                key={command.id}
+                id={optionId(index)}
+                role="option"
+                aria-selected={index === active}
+                aria-disabled={command.disabled || undefined}
+                className={`palette__item${index === active ? ' is-active' : ''}${command.disabled ? ' is-disabled' : ''}`}
+                onMouseMove={() => !command.disabled && setActive(index)}
+                onMouseDown={(e) => e.preventDefault() /* keep focus in the input */}
+                onClick={() => runAt(index)}
+              >
+                <span className="palette__item-title">{command.title}</span>
+                {command.group ? <span className="palette__item-group">{command.group}</span> : null}
               </li>
             ))
           )}
