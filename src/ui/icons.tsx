@@ -12,6 +12,14 @@ export function PlayIcon({ className }: IconProps) {
   )
 }
 
+export function ChartIcon({ className }: IconProps) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d="M2 2h1.5v11.5H14V15H2V2zm3 7h1.5v3H5V9zm3-4h1.5v7H8V5zm3 2h1.5v5H11V7z" />
+    </svg>
+  )
+}
+
 export function PauseIcon({ className }: IconProps) {
   return (
     <svg className={className} width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">

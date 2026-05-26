@@ -16,6 +16,15 @@ describe('ControlPanel', () => {
     expect(screen.getByRole('switch', { name: 'Gravity' })).toBeInTheDocument()
   })
 
+  it('groups parameters into Scene and Dynamics sections', () => {
+    render(<ControlPanel />)
+    expect(screen.getByRole('heading', { name: 'Scene' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Dynamics' })).toBeInTheDocument()
+    // Universal setup (Particle Count) is scene; the physics (Restitution) is dynamics.
+    expect(screen.getByLabelText('Particle Count')).toBeInTheDocument()
+    expect(screen.getByLabelText('Restitution')).toBeInTheDocument()
+  })
+
   it('writes slider changes to the param store', () => {
     render(<ControlPanel />)
     const slider = screen.getByLabelText('Particle Count')
