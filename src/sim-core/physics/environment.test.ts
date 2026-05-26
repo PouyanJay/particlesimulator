@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { reflectInBox, applyGravity } from './environment'
+import { reflectInBox, applyGravity, thermostatRescale } from './environment'
 
 describe('reflectInBox', () => {
   it('reflects a particle moving outward and clamps it inside', () => {
@@ -53,5 +53,34 @@ describe('applyGravity', () => {
     const vel = new Float64Array([1, 1, 1])
     applyGravity(vel, 1, 0, 0.1)
     expect(Array.from(vel)).toEqual([1, 1, 1])
+  })
+})
+
+describe('thermostatRescale', () => {
+  const temperatureOf = (v: Float64Array, n: number, m = 1) => {
+    let sumSq = 0
+    for (let i = 0; i < n; i++) sumSq += v[i * 3] ** 2 + v[i * 3 + 1] ** 2 + v[i * 3 + 2] ** 2
+    return (m * (sumSq / n)) / 3
+  }
+
+  it('rescales velocities so the kinetic temperature equals the target', () => {
+    const v = new Float64Array([1, 2, 3, -2, 1, 0]) // arbitrary
+    thermostatRescale(v, 2, 1.5)
+    expect(temperatureOf(v, 2)).toBeCloseTo(1.5, 10)
+  })
+
+  it('preserves direction (pure scaling, no reordering)', () => {
+    const v = new Float64Array([3, 0, 0])
+    thermostatRescale(v, 1, 3) // T from [3,0,0] is 3 ⇒ scale 1
+    expect(Array.from(v)).toEqual([3, 0, 0])
+  })
+
+  it('is a no-op for an empty system, a non-positive target, or a system at rest', () => {
+    const atRest = new Float64Array([0, 0, 0])
+    thermostatRescale(atRest, 1, 2)
+    expect(Array.from(atRest)).toEqual([0, 0, 0])
+    const v = new Float64Array([1, 1, 1])
+    thermostatRescale(v, 1, 0)
+    expect(Array.from(v)).toEqual([1, 1, 1])
   })
 })

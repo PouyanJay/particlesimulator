@@ -1,7 +1,7 @@
 import { createRng, randomInRange, type Rng } from '../rng'
 import { resolveElasticCollision } from '../physics/elasticCollision'
 import { createSpatialGrid, type SpatialGrid } from '../physics/spatialGrid'
-import { reflectInBox, applyGravity } from '../physics/environment'
+import { reflectInBox, applyGravity, thermostatRescale } from '../physics/environment'
 import { countParam, containerParam, displaySizeParam, gravityParam } from '../params/common'
 import { totalMomentum, temperature } from '../measure/conservedQuantities'
 import type { ParamValues, ParticleBuffers, SimContext, SimMode, Telemetry } from '../types'
@@ -21,6 +21,7 @@ export const elasticGasSchema = {
   particleRadius: displaySizeParam({ label: 'Particle Size', default: 0.08, min: 0.02, max: 0.2 }),
   initialVelocity: { type: 'number', label: 'Initial Velocity', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
   restitution: { type: 'number', label: 'Restitution', default: 1.0, min: 0.1, max: 1.0, step: 0.001 },
+  holdTemperature: { type: 'boolean', label: 'Hold Temperature', default: false },
   containerSize: containerParam({ label: 'Container Size', default: 2.5, min: 1, max: 6 }),
   gravity: gravityParam(),
 } as const
@@ -36,6 +37,8 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
   let restitution = 1
   let halfBound = 0 // half container size minus radius — the clamp for particle centres.
   let gravity = 0 // external downward field strength (0 = off).
+  let holdTemperature = false // thermostat lock to the initial temperature.
+  let targetTemperature = 1
   let positions = new Float64Array(0)
   let velocities = new Float64Array(0)
   let renderPositions = new Float32Array(0)
@@ -59,6 +62,7 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
     radius = params.particleRadius
     restitution = params.restitution
     gravity = params.gravity
+    holdTemperature = params.holdTemperature
     halfBound = params.containerSize / 2 - radius
     // The reflecting box has side 2·halfBound; its 6 faces are the area pressure acts on.
     wallArea = 6 * (2 * halfBound) * (2 * halfBound)
@@ -83,6 +87,8 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
       velocities[o + 1] = vy
       velocities[o + 2] = vz
     }
+    // The hold-temperature lock pins the gas to the temperature it starts at.
+    targetTemperature = temperature(velocities, count, PARTICLE_MASS)
   }
 
   function step(dt: number): void {
@@ -97,6 +103,8 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
     // Shared wall reflection; accumulate the returned impulse for the pressure readout.
     wallImpulse += reflectInBox(positions, velocities, count, halfBound, restitution, PARTICLE_MASS)
     resolveCollisions()
+    // Hold-temperature lock: pin the kinetic temperature to its initial value.
+    if (holdTemperature) thermostatRescale(velocities, count, targetTemperature, PARTICLE_MASS)
   }
 
   /**
@@ -179,6 +187,7 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
       momentum: totalMomentum(velocities, count, PARTICLE_MASS),
       temperature: temperature(velocities, count, PARTICLE_MASS),
       pressure,
+      volume: (2 * halfBound) ** 3, // the reflecting box the pressure is measured on
       // Elastic walls + elastic collisions conserve KE; restitution < 1 or gravity break it.
       inelastic: restitution < 1 || gravity > 0,
     }
