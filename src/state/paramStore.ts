@@ -1,13 +1,49 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
+import { temporal } from 'zundo'
 import { defaultParamValues } from '../sim-core/paramSchema'
 import type { ParamValue } from '../sim-core/types'
+import type { CameraPose, Scenario, SimView } from '../sim-core/scenario'
 import { simRegistry } from './simRegistry'
 import { clientStorage } from './clientStorage'
 
 export type { ParamValue }
 
 const INITIAL_MODE_ID = 'elastic-gas'
+
+/** Cap on retained undo history. */
+export const HISTORY_LIMIT = 100
+
+/** The scenario-defining slice tracked for undo/redo (excludes transient playback + actions). */
+export type TrackedScenario = Pick<ParamState, 'modeId' | 'seed' | 'params' | 'substanceId' | 'view'>
+
+/** Extract the tracked slice from full state (matches the temporal `partialize`). */
+export function trackedSlice(state: ParamState): TrackedScenario {
+  return {
+    modeId: state.modeId,
+    seed: state.seed,
+    params: state.params,
+    substanceId: state.substanceId,
+    view: state.view,
+  }
+}
+
+function shallowParamsEqual(a: Record<string, ParamValue>, b: Record<string, ParamValue>): boolean {
+  const keys = Object.keys(a)
+  if (keys.length !== Object.keys(b).length) return false
+  return keys.every((k) => a[k] === b[k])
+}
+
+/** True when two tracked slices are equivalent (used to skip no-op history entries). */
+export function trackedEqual(a: TrackedScenario, b: TrackedScenario): boolean {
+  return (
+    a.modeId === b.modeId &&
+    a.seed === b.seed &&
+    a.substanceId === b.substanceId &&
+    a.view === b.view &&
+    shallowParamsEqual(a.params, b.params)
+  )
+}
 
 /** Default parameter values for a mode, derived from its schema. */
 function defaultsFor(modeId: string): Record<string, ParamValue> {
@@ -46,6 +82,8 @@ interface ParamState {
    * simulation parameter — it never affects the dynamics, only how values are labelled.
    */
   substanceId: string
+  /** Render projection: '3d' orbit view (default) or the orthographic high-count 2D tier. */
+  view: SimView
 
   setParam: (key: string, value: ParamValue) => void
   selectMode: (modeId: string) => void
@@ -55,6 +93,29 @@ interface ParamState {
   setPlaying: (isPlaying: boolean) => void
   togglePlaying: () => void
   setSubstance: (substanceId: string) => void
+  setView: (view: SimView) => void
+  /**
+   * Replace the whole scenario at once (mode + params + seed + substance + view) without
+   * resetting params to the mode's defaults — used to restore a shared URL, a saved preset,
+   * or a curated scenario. Camera is handled separately by the render layer (see cameraBridge).
+   */
+  loadScenario: (scenario: Scenario) => void
+}
+
+/**
+ * Build a serializable Scenario from the current store state, optionally pinning the camera.
+ * Pure (takes state in) so it's trivially testable and reusable for share/preset/export.
+ */
+export function scenarioFromState(state: ParamState, camera?: CameraPose): Scenario {
+  const scenario: Scenario = {
+    modeId: state.modeId,
+    seed: state.seed,
+    params: state.params,
+    substanceId: state.substanceId,
+    view: state.view,
+  }
+  if (camera) scenario.camera = camera
+  return scenario
 }
 
 /**
@@ -64,34 +125,65 @@ interface ParamState {
  * pollutes this persisted, scenario-defining state. See CLAUDE.md.
  */
 export const useParamStore = create<ParamState>()(
-  persist(
-    (set) => ({
-      modeId: INITIAL_MODE_ID,
-      seed: 1,
-      isPlaying: true,
-      params: defaultsFor(INITIAL_MODE_ID),
-      substanceId: 'reduced',
+  temporal(
+    persist(
+      (set) => ({
+        modeId: INITIAL_MODE_ID,
+        seed: 1,
+        isPlaying: true,
+        params: defaultsFor(INITIAL_MODE_ID),
+        substanceId: 'reduced',
+        view: '3d' as SimView,
 
-      setParam: (key, value) => set((s) => ({ params: { ...s.params, [key]: value } })),
-      selectMode: (modeId) => set({ modeId, params: defaultsFor(modeId) }),
-      resetParams: () => set((s) => ({ params: defaultsFor(s.modeId) })),
-      setSeed: (seed) => set({ seed }),
-      randomizeSeed: () => set({ seed: Math.floor(Math.random() * 0xffffffff) }),
-      setPlaying: (isPlaying) => set({ isPlaying }),
-      togglePlaying: () => set((s) => ({ isPlaying: !s.isPlaying })),
-      setSubstance: (substanceId) => set({ substanceId }),
-    }),
+        setParam: (key, value) => set((s) => ({ params: { ...s.params, [key]: value } })),
+        selectMode: (modeId) => set({ modeId, params: defaultsFor(modeId) }),
+        resetParams: () => set((s) => ({ params: defaultsFor(s.modeId) })),
+        setSeed: (seed) => set({ seed }),
+        randomizeSeed: () => set({ seed: Math.floor(Math.random() * 0xffffffff) }),
+        setPlaying: (isPlaying) => set({ isPlaying }),
+        togglePlaying: () => set((s) => ({ isPlaying: !s.isPlaying })),
+        setSubstance: (substanceId) => set({ substanceId }),
+        setView: (view) => set({ view }),
+        // Restoring a shared link / preset / curated scenario is one tracked change, so it is
+        // intentionally a single undo step — undo returns you to the pre-load setup.
+        loadScenario: (scenario) =>
+          set({
+            modeId: scenario.modeId,
+            seed: scenario.seed,
+            params: { ...scenario.params },
+            substanceId: scenario.substanceId ?? 'reduced',
+            view: scenario.view ?? '3d',
+          }),
+      }),
+      {
+        name: 'particle-lab:params',
+        // Bump when the mode set or schemas change so incompatible persisted state is
+        // discarded (rather than rehydrating stale params for a since-changed schema).
+        // v2: elastic-gas gravity became a strength slider (was a boolean toggle).
+        // v3: added the `view` (2D/3D) projection to the persisted scenario.
+        version: 3,
+        storage: createJSONStorage(() => clientStorage),
+        // Persist the scenario + the display unit system — not the transient playback flag.
+        partialize: (s) => ({
+          modeId: s.modeId,
+          seed: s.seed,
+          params: s.params,
+          substanceId: s.substanceId,
+          view: s.view,
+        }),
+        // Drop a scenario whose mode no longer exists so a stale modeId can't crash the app.
+        merge: (persisted, current) => mergePersistedState(persisted, current as ParamState),
+      },
+    ),
     {
-      name: 'particle-lab:params',
-      // Bump when the mode set or schemas change so incompatible persisted state is
-      // discarded (rather than rehydrating stale params for a since-changed schema).
-      // v2: elastic-gas gravity became a strength slider (was a boolean toggle).
-      version: 2,
-      storage: createJSONStorage(() => clientStorage),
-      // Persist the scenario + the display unit system — not the transient playback flag.
-      partialize: (s) => ({ modeId: s.modeId, seed: s.seed, params: s.params, substanceId: s.substanceId }),
-      // Drop a scenario whose mode no longer exists so a stale modeId can't crash the app.
-      merge: (persisted, current) => mergePersistedState(persisted, current as ParamState),
+      // Undo/redo tracks only the scenario-defining slice — never the transient `isPlaying`
+      // flag (so pause/play isn't undoable) and never the action functions.
+      partialize: trackedSlice,
+      limit: HISTORY_LIMIT,
+      // Skip recording when the tracked slice is unchanged (e.g. a play/pause toggle). Slider
+      // drags are coalesced into one entry by the history-group helper (see paramHistoryGroup),
+      // not by time-throttling here — keeping recording deterministic and test-friendly.
+      equality: trackedEqual,
     },
   ),
 )

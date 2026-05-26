@@ -12,8 +12,8 @@
 | 1 — Rendering leap & visual wow | ✅ Done (2026-05-25) | three r184/R3F 9/WebGPURenderer + WebGL2 fallback; buffer-driven instanced rendering, HDR bloom, color-by-speed, scaled counts. |
 | 2 — Simulation engine & first GPU modes | ✅ Done (2026-05-25) | Shared sim-core infra (spatial grid, integrators, fixed-step); Particle-Life, N-Body (CPU + GPU/TSL compute) behind the mode selector. |
 | 3 — Educational lab core | ✅ Done (2026-05-25) | uPlot telemetry (speed, energy-over-time) + Maxwell–Boltzmann histogram; conserved-quantity readouts (momentum/energy/temperature/pressure, PV=N k_B T verified); dimensionless reduced units + real-substance (Argon/Ne/Kr/Xe) mapping; pedagogy layer (live equation panel, hold-temperature lock); modes MD/Lennard-Jones, Boids, Electrostatics. Shared param kit + behavior helpers. ~258 tests. |
-| 4 — Advanced simulations | ⬜ Not started | |
-| 5 — Lab platform | ⬜ Not started | |
+| 4 — Advanced simulations | ⬜ Not started | (Phase 4 was attempted then removed — judged unrealistic; see memory.) |
+| 5 — Lab platform | 🟡 Implemented, browser-verify pending (2026-05-26) | Full stack on `feat/phase5-lab-platform`: scenario model + lz-string share URLs + `/embed`; zundo undo/redo; XState lifecycle; presets; Leva-free token UI primitives (Dialog/Tabs/CommandPalette/Tooltip/TextField); canvas-record recording + screenshot + CSV/JSON export; curated scenarios; guided challenges; 2D ortho view; PWA; opt-in physics worker. 400 tests, lint/build green. |
 | 6 — Polish & launch | ⬜ Not started | |
 
 Legend: ⬜ not started · 🟡 in progress · ✅ done
@@ -330,16 +330,25 @@ curriculum* — turning a powerful tool into something people actually share and
 
 **Goal:** harden, document, and ship.
 
-### Workstreams
+### Workstreams (in order)
 - **Performance hardening:** meet per-tier budgets; profile with `r3f-perf`/`stats-gl`/Spector.js; LOD,
   frustum culling, count caps; verify WebGL2 fallback and mobile tiers.
 - **Content:** scenario gallery, onboarding tour, per-mode explainer copy, the live demo & README refresh.
-- **Docs:** architecture doc, "how to add a SimMode" guide, contribution notes.
+- **Code structure review & polish:** a whole-codebase pass against best practices *before* docs are
+  written (so the docs describe the final shape). Audit the layer boundaries and folder structure,
+  de-duplicate (extract the shared primitives the reviewers flagged — `SegmentedControl`/roving-tabindex,
+  `ButtonGroup`; compose `TextField` in the share/rename inputs), tokenize stragglers (dialog/palette
+  widths, backdrop blur), prune dead code, and run `simplify` + the reviewer agents. **Scrub the
+  commit history of AI-authorship footprints** (the `Co-Authored-By: Claude …` trailers and any
+  `🤖 Generated with…` lines) so the shipped history reads as the author's own.
+- **Docs:** clean up and update all docs to the final code — architecture doc, "how to add a SimMode"
+  guide, contribution notes, and refresh the plan/README so they match what actually shipped.
 - **QA:** cross-browser (Chrome/Safari/Firefox), mobile, reduced-motion, keyboard nav.
 - **Deploy:** keep GitHub Pages CI; ensure WebGPU works under the Pages base path; add analytics if desired.
 
 ### Success criteria
-- Smooth on target hardware tiers; graceful on fallback; documented; deployed; demo-ready.
+- Smooth on target hardware tiers; graceful on fallback; clean, well-structured code; commit history free
+  of AI-authorship trailers; documented; deployed; demo-ready.
 
 ---
 

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -q -m ' *)",
+      "Bash(gh auth *)",
+      "Bash(git --no-pager log --oneline main..HEAD)",
+      "Bash(git --no-pager diff .claude/settings.json)",
+      "Bash(npm run *)",
+      "Bash(npx vitest *)"
+    ]
+  }
+}
