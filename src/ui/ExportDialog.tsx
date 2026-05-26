@@ -12,6 +12,7 @@ import { captureCanvasPng } from '../export/screenshot'
 import { beginRecording, endRecording } from '../export/recordingController'
 import { RECORD_FORMATS, DEFAULT_RECORD_FORMAT, type RecordFormat } from '../export/recordFormats'
 import { scenarioToJson } from '../sim-core/scenario'
+import { useElapsedSeconds, formatElapsed } from './useElapsedSeconds'
 import { Dialog } from './controls/Dialog'
 import { Tabs } from './controls/Tabs'
 import { Button } from './controls/Button'
@@ -45,6 +46,7 @@ export function ExportDialog() {
 function CapturePanel() {
   const phase = useLifecyclePhase()
   const recording = phase === 'recording'
+  const elapsed = useElapsedSeconds(recording)
   const [format, setFormat] = useState<RecordFormat>(DEFAULT_RECORD_FORMAT)
   const [error, setError] = useState<string | null>(null)
 
@@ -90,12 +92,14 @@ function CapturePanel() {
         </Button>
       </div>
       {recording ? (
-        <p className="export-hint" role="status">
-          Recording… a “REC” badge shows on the canvas; the file downloads when you stop.
-        </p>
+        <div className="export-recording" role="status" aria-live="polite">
+          <span className="rec-indicator__dot" aria-hidden="true" />
+          <span className="export-recording__label">Recording</span>
+          <span className="rec-indicator__time">{formatElapsed(elapsed)}</span>
+        </div>
       ) : (
         <p className="export-hint">
-          Records the live canvas. MP4 falls back to WebM if your browser can’t encode it. Stop to save.
+          Records the live canvas. MP4 falls back to WebM if your browser can’t encode it.
         </p>
       )}
       {error ? (

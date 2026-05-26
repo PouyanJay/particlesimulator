@@ -1,11 +1,5 @@
-import { useEffect, useState } from 'react'
 import { useLifecyclePhase } from '../state/lifecycle'
-
-function formatElapsed(totalSeconds: number): string {
-  const m = Math.floor(totalSeconds / 60)
-  const s = totalSeconds % 60
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
+import { useElapsedSeconds, formatElapsed } from './useElapsedSeconds'
 
 /**
  * A persistent "REC" badge shown over the canvas whenever a recording is in progress — so it's
@@ -13,19 +7,8 @@ function formatElapsed(totalSeconds: number): string {
  * Reads the lifecycle phase (the single source of truth for recording state).
  */
 export function RecordingIndicator() {
-  const phase = useLifecyclePhase()
-  const recording = phase === 'recording'
-  const [elapsed, setElapsed] = useState(0)
-
-  useEffect(() => {
-    if (!recording) {
-      setElapsed(0)
-      return
-    }
-    const start = Date.now()
-    const id = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 250)
-    return () => clearInterval(id)
-  }, [recording])
+  const recording = useLifecyclePhase() === 'recording'
+  const elapsed = useElapsedSeconds(recording)
 
   if (!recording) return null
 
