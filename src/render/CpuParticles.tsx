@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three/webgpu'
-import { createSimDriver, type SimDriver } from './simDriver'
-import { simRegistry } from '../state/simRegistry'
+import { type SimDriver } from './simDriver'
+import { createCpuDriver } from './worker/createCpuDriver'
 import { useParamStore } from '../state/paramStore'
 import { useTelemetryStore } from '../state/telemetryStore'
 import { speedToRgb, TYPE_PALETTE } from './colorRamp'
@@ -61,7 +61,7 @@ export function CpuParticles() {
   const [resources, setResources] = useState<CpuResources | null>(null)
   useEffect(() => {
     const built: CpuResources = {
-      driver: createSimDriver({ registry: simRegistry }),
+      driver: createCpuDriver(),
       geometry: new THREE.SphereGeometry(1, 16, 16),
       // Node material (TSL): compiles to WGSL on WebGPU and GLSL on the WebGL2 fallback.
       // Base color is white so the per-instance speed tint (instanceColor, applied
