@@ -60,6 +60,15 @@ describe('scenario serialization', () => {
     expect(deserializeScenario(wrong)).toBeNull()
   })
 
+  it('rejects params containing non-finite numbers (NaN / Infinity) from untrusted input', () => {
+    const nan = serializeScenarioRaw({ v: SCENARIO_VERSION, modeId: 'x', seed: 1, params: { a: Number.NaN } })
+    const inf = serializeScenarioRaw({ v: SCENARIO_VERSION, modeId: 'x', seed: 1, params: { a: Infinity } })
+    // JSON serializes NaN/Infinity to null, so also assert null params are rejected.
+    expect(deserializeScenario(nan)).toBeNull()
+    expect(deserializeScenario(inf)).toBeNull()
+    expect(scenarioFromJson('{"v":1,"modeId":"x","seed":1,"params":{"a":null}}')).toBeNull()
+  })
+
   it('rejects params containing non-primitive values', () => {
     const wrong = serializeScenarioRaw({
       v: SCENARIO_VERSION,

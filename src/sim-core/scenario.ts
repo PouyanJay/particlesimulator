@@ -115,7 +115,11 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 function isParamRecord(value: unknown): value is Record<string, ParamValue> {
   if (!isPlainObject(value)) return false
-  return Object.values(value).every((v) => typeof v === 'number' || typeof v === 'boolean')
+  // Reject non-finite numbers (NaN/±Infinity) from an untrusted URL/file — they would feed
+  // straight into mode.init and corrupt the sim. Booleans pass as-is.
+  return Object.values(value).every(
+    (v) => (typeof v === 'number' && Number.isFinite(v)) || typeof v === 'boolean',
+  )
 }
 
 function isVec3(value: unknown): value is [number, number, number] {

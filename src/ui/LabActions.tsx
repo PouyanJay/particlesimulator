@@ -2,6 +2,7 @@ import { useUiStore } from '../state/uiStore'
 import { Button } from './controls/Button'
 import { Tooltip } from './controls/Tooltip'
 import { SaveIcon, ShareIcon, DownloadIcon, BookIcon, CommandIcon, GraduationIcon } from './icons'
+import { MOD } from './platform'
 
 /**
  * Topbar lab actions: open the preset manager, share dialog, export/record, curated
@@ -38,7 +39,7 @@ export function LabActions() {
           <ShareIcon />
         </Button>
       </Tooltip>
-      <Tooltip label="Commands (⌘K)">
+      <Tooltip label={`Commands (${MOD}K)`}>
         <Button icon aria-label="Open command palette" onClick={() => open('palette')}>
           <CommandIcon />
         </Button>

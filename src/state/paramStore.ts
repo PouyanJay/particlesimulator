@@ -144,6 +144,8 @@ export const useParamStore = create<ParamState>()(
         togglePlaying: () => set((s) => ({ isPlaying: !s.isPlaying })),
         setSubstance: (substanceId) => set({ substanceId }),
         setView: (view) => set({ view }),
+        // Restoring a shared link / preset / curated scenario is one tracked change, so it is
+        // intentionally a single undo step — undo returns you to the pre-load setup.
         loadScenario: (scenario) =>
           set({
             modeId: scenario.modeId,

@@ -2,6 +2,7 @@ import { useParamStore } from '../state/paramStore'
 import { useParamHistory } from '../state/useParamHistory'
 import { Button } from './controls/Button'
 import { PlayIcon, PauseIcon, ResetIcon, UndoIcon, RedoIcon } from './icons'
+import { MOD, SHIFT_MOD } from './platform'
 
 /**
  * Global run controls: undo/redo, play/pause, and reset. Reset assigns a new seed, which
@@ -16,22 +17,10 @@ export function Toolbar() {
 
   return (
     <div className="toolbar" role="group" aria-label="Simulation controls">
-      <Button
-        icon
-        onClick={() => undo()}
-        disabled={!canUndo}
-        aria-label="Undo"
-        title="Undo (⌘Z)"
-      >
+      <Button icon onClick={() => undo()} disabled={!canUndo} aria-label="Undo" title={`Undo (${MOD}Z)`}>
         <UndoIcon />
       </Button>
-      <Button
-        icon
-        onClick={() => redo()}
-        disabled={!canRedo}
-        aria-label="Redo"
-        title="Redo (⇧⌘Z)"
-      >
+      <Button icon onClick={() => redo()} disabled={!canRedo} aria-label="Redo" title={`Redo (${SHIFT_MOD}Z)`}>
         <RedoIcon />
       </Button>
       <Button

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { useUiStore } from '../state/uiStore'
 import { useTelemetryStore } from '../state/telemetryStore'
 import { useLifecyclePhase } from '../state/lifecycle'
@@ -105,7 +106,9 @@ function CapturePanel() {
 }
 
 function DataPanel() {
-  const series = useTelemetryStore((s) => ({ speedHistory: s.speedHistory, energyHistory: s.energyHistory }))
+  const series = useTelemetryStore(
+    useShallow((s) => ({ speedHistory: s.speedHistory, energyHistory: s.energyHistory })),
+  )
   const current = useTelemetryStore((s) => s.current)
   const hasData = series.speedHistory.length > 0 || series.energyHistory.length > 0
 
