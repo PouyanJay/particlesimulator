@@ -3,7 +3,7 @@ import { SpeedChart } from './charts/SpeedChart'
 import { EnergyChart } from './charts/EnergyChart'
 import { SpeedDistribution } from './charts/SpeedDistribution'
 import { MeasurementReadouts } from './MeasurementReadouts'
-import { EquationPanel } from './EquationPanel'
+import { GasLawPanel } from './GasLawPanel'
 import { UnitsSelect } from './UnitsSelect'
 
 /**
@@ -21,7 +21,7 @@ export function Measurements() {
       <h2 className="panel__title">Measurements</h2>
       {isLennardJones && <UnitsSelect />}
       <MeasurementReadouts />
-      <EquationPanel />
+      <GasLawPanel />
       <div className="measurements__group">
         <div className="measurements__chart">
           <span className="measurements__label">Average speed</span>
