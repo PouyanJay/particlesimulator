@@ -12,8 +12,8 @@
 | 1 — Rendering leap & visual wow | ✅ Done (2026-05-25) | three r184/R3F 9/WebGPURenderer + WebGL2 fallback; buffer-driven instanced rendering, HDR bloom, color-by-speed, scaled counts. |
 | 2 — Simulation engine & first GPU modes | ✅ Done (2026-05-25) | Shared sim-core infra (spatial grid, integrators, fixed-step); Particle-Life, N-Body (CPU + GPU/TSL compute) behind the mode selector. |
 | 3 — Educational lab core | ✅ Done (2026-05-25) | uPlot telemetry (speed, energy-over-time) + Maxwell–Boltzmann histogram; conserved-quantity readouts (momentum/energy/temperature/pressure, PV=N k_B T verified); dimensionless reduced units + real-substance (Argon/Ne/Kr/Xe) mapping; pedagogy layer (live equation panel, hold-temperature lock); modes MD/Lennard-Jones, Boids, Electrostatics. Shared param kit + behavior helpers. ~258 tests. |
-| 4 — Advanced simulations | ⬜ Not started | |
-| 5 — Lab platform | ⬜ Not started | |
+| 4 — Advanced simulations | ⬜ Not started | (Phase 4 was attempted then removed — judged unrealistic; see memory.) |
+| 5 — Lab platform | 🟡 Implemented, browser-verify pending (2026-05-26) | Full stack on `feat/phase5-lab-platform`: scenario model + lz-string share URLs + `/embed`; zundo undo/redo; XState lifecycle; presets; Leva-free token UI primitives (Dialog/Tabs/CommandPalette/Tooltip/TextField); canvas-record recording + screenshot + CSV/JSON export; curated scenarios; guided challenges; 2D ortho view; PWA; opt-in physics worker. 400 tests, lint/build green. |
 | 6 — Polish & launch | ⬜ Not started | |
 
 Legend: ⬜ not started · 🟡 in progress · ✅ done
