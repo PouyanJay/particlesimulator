@@ -8,6 +8,8 @@ import { PostFx } from './PostFx'
 import { useParamStore } from '../state/paramStore'
 import { theme } from '../ui/theme'
 import { defaultCameraPosition, zoomLimitsForContainer } from './cameraFraming'
+import { registerCamera, consumePendingCameraPose } from './cameraBridge'
+import type { CameraPose } from '../sim-core/scenario'
 
 // Fallback when the active mode has no `containerSize` param. TODO(phase-1): expose
 // container bounds via mode metadata / ParticleBuffers rather than reading a param by
@@ -39,12 +41,49 @@ function currentContainerSize(): number {
 function CameraRig({ controlsRef }: { controlsRef: RefObject<OrbitControlsRef | null> }) {
   const camera = useThree((s) => s.camera)
   const modeId = useParamStore((s) => s.modeId)
+  const view = useParamStore((s) => s.view)
 
+  // Expose the live camera to the UI/state layers (scenario save/share/restore) without
+  // prop-drilling refs. Registered once the controls exist; deregistered on unmount.
   useEffect(() => {
+    const controls = controlsRef.current
+    if (!controls) return
+    registerCamera({
+      getPose(): CameraPose {
+        return {
+          position: [camera.position.x, camera.position.y, camera.position.z],
+          target: [controls.target.x, controls.target.y, controls.target.z],
+        }
+      },
+      setPose(pose) {
+        camera.position.set(...pose.position)
+        controls.target.set(...pose.target)
+        controls.update()
+      },
+    })
+    return () => registerCamera(null)
+  }, [camera, controlsRef])
+
+  // Frame the scene on mount and whenever the mode or projection changes. A scenario load
+  // can queue a specific pose (shared URL / preset); when present it overrides the default
+  // framing so the restored viewpoint wins.
+  useEffect(() => {
+    const controls = controlsRef.current
+    const pending = consumePendingCameraPose()
+    if (pending) {
+      camera.position.set(...pending.position)
+      if (controls) {
+        controls.target.set(...pending.target)
+        controls.update()
+      } else {
+        camera.lookAt(...pending.target)
+      }
+      return
+    }
+
     const size = currentContainerSize()
     const [x, y, z] = defaultCameraPosition(size, CAMERA_FOV)
     camera.position.set(x, y, z)
-    const controls = controlsRef.current
     if (controls) {
       const { min, max } = zoomLimitsForContainer(size, CAMERA_FOV)
       controls.minDistance = min
@@ -54,8 +93,8 @@ function CameraRig({ controlsRef }: { controlsRef: RefObject<OrbitControlsRef | 
     } else {
       camera.lookAt(0, 0, 0)
     }
-    // `modeId` is the reset trigger; camera and the ref object are stable.
-  }, [modeId, camera, controlsRef])
+    // `modeId`/`view` are the reset triggers; camera and the ref object are stable.
+  }, [modeId, view, camera, controlsRef])
 
   return null
 }
