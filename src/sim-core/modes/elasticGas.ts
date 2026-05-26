@@ -1,6 +1,8 @@
 import { createRng, randomInRange, type Rng } from '../rng'
 import { resolveElasticCollision } from '../physics/elasticCollision'
 import { createSpatialGrid, type SpatialGrid } from '../physics/spatialGrid'
+import { reflectInBox, applyGravity } from '../physics/environment'
+import { countParam, containerParam, displaySizeParam, gravityParam } from '../params/common'
 import { totalMomentum, temperature } from '../measure/conservedQuantities'
 import type { ParamValues, ParticleBuffers, SimContext, SimMode, Telemetry } from '../types'
 import type { Vec3 } from '../math/vec3'
@@ -15,17 +17,16 @@ import type { Vec3 } from '../math/vec3'
  * modest counts the CPU path targets. Scaling is the GPU backend's job later.
  */
 export const elasticGasSchema = {
-  particleCount: { type: 'number', label: 'Particle Count', default: 200, min: 10, max: 20000, step: 10, group: 'scene' },
-  particleRadius: { type: 'number', label: 'Particle Size', default: 0.08, min: 0.02, max: 0.2, step: 0.01, group: 'scene' },
+  particleCount: countParam({ label: 'Particle Count', default: 200, min: 10, max: 20000, step: 10 }),
+  particleRadius: displaySizeParam({ label: 'Particle Size', default: 0.08, min: 0.02, max: 0.2 }),
   initialVelocity: { type: 'number', label: 'Initial Velocity', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
   restitution: { type: 'number', label: 'Restitution', default: 1.0, min: 0.1, max: 1.0, step: 0.001 },
-  containerSize: { type: 'number', label: 'Container Size', default: 2.5, min: 1, max: 6, step: 0.5, group: 'scene' },
-  gravity: { type: 'boolean', label: 'Gravity', default: false },
+  containerSize: containerParam({ label: 'Container Size', default: 2.5, min: 1, max: 6 }),
+  gravity: gravityParam(),
 } as const
 
 type GasParams = ParamValues<typeof elasticGasSchema>
 
-const GRAVITY = -9.81 // applied on the Y axis when enabled (reduced units).
 const PARTICLE_MASS = 1 // equal mass for all particles.
 
 export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
@@ -34,7 +35,7 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
   let radius = 0
   let restitution = 1
   let halfBound = 0 // half container size minus radius — the clamp for particle centres.
-  let gravityOn = false
+  let gravity = 0 // external downward field strength (0 = off).
   let positions = new Float64Array(0)
   let velocities = new Float64Array(0)
   let renderPositions = new Float32Array(0)
@@ -57,7 +58,7 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
     count = params.particleCount
     radius = params.particleRadius
     restitution = params.restitution
-    gravityOn = params.gravity
+    gravity = params.gravity
     halfBound = params.containerSize / 2 - radius
     // The reflecting box has side 2·halfBound; its 6 faces are the area pressure acts on.
     wallArea = 6 * (2 * halfBound) * (2 * halfBound)
@@ -86,37 +87,16 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
 
   function step(dt: number): void {
     simTimeAccum += dt
-    if (gravityOn) {
-      for (let i = 0; i < count; i++) velocities[i * 3 + 1] += GRAVITY * dt
-    }
-    // Note: with gravity on, the hard wall clamp in reflectOffWalls() truncates a
-    // sub-step's penetration depth, so total mechanical energy dissipates at O(dt).
-    // This is an accepted symplectic-Euler + hard-clamp artifact (energy never grows);
-    // a position-reflection scheme would recover it if tighter conservation is needed.
+    // External gravity as a semi-implicit-Euler velocity kick (no-op when off).
+    // Note: with gravity on, the hard wall clamp truncates a sub-step's penetration depth, so
+    // total mechanical energy dissipates at O(dt) — an accepted symplectic-Euler + hard-clamp
+    // artifact (energy never grows); a position-reflection scheme would recover it if needed.
+    applyGravity(velocities, count, gravity, dt)
     // Semi-implicit Euler integration (velocity already updated above).
     for (let i = 0; i < positions.length; i++) positions[i] += velocities[i] * dt
-    reflectOffWalls()
+    // Shared wall reflection; accumulate the returned impulse for the pressure readout.
+    wallImpulse += reflectInBox(positions, velocities, count, halfBound, restitution, PARTICLE_MASS)
     resolveCollisions()
-  }
-
-  /** Clamp centres to the container and flip the outward velocity component (× restitution). */
-  function reflectOffWalls(): void {
-    for (let i = 0; i < count; i++) {
-      const o = i * 3
-      for (let axis = 0; axis < 3; axis++) {
-        const k = o + axis
-        if (positions[k] > halfBound && velocities[k] > 0) {
-          // Impulse on the wall = m·Δv = m·|v_in|·(1 + restitution) (v_out = −e·v_in).
-          wallImpulse += PARTICLE_MASS * velocities[k] * (1 + restitution)
-          positions[k] = halfBound
-          velocities[k] = -velocities[k] * restitution
-        } else if (positions[k] < -halfBound && velocities[k] < 0) {
-          wallImpulse += PARTICLE_MASS * -velocities[k] * (1 + restitution)
-          positions[k] = -halfBound
-          velocities[k] = -velocities[k] * restitution
-        }
-      }
-    }
   }
 
   /**
@@ -200,7 +180,7 @@ export function createElasticGasMode(): SimMode<typeof elasticGasSchema> {
       temperature: temperature(velocities, count, PARTICLE_MASS),
       pressure,
       // Elastic walls + elastic collisions conserve KE; restitution < 1 or gravity break it.
-      inelastic: restitution < 1 || gravityOn,
+      inelastic: restitution < 1 || gravity > 0,
     }
   }
 

@@ -1,6 +1,7 @@
 import { createRng, randomInRange } from '../rng'
 import { particleLifeForce } from '../physics/particleLifeForce'
 import { createSpatialGrid, type SpatialGrid } from '../physics/spatialGrid'
+import { countParam, containerParam, displaySizeParam } from '../params/common'
 import type { ParamValues, ParticleBuffers, SimContext, SimMode } from '../types'
 
 /**
@@ -14,14 +15,14 @@ import type { ParamValues, ParticleBuffers, SimContext, SimMode } from '../types
  * is fully reproducible; "reset" (a new seed) draws a fresh matrix and layout.
  */
 export const particleLifeSchema = {
-  particleCount: { type: 'number', label: 'Particle Count', default: 800, min: 50, max: 20000, step: 10, group: 'scene' },
+  particleCount: countParam({ label: 'Particle Count', default: 800, min: 50, max: 20000 }),
   numTypes: { type: 'number', label: 'Types', default: 4, min: 2, max: 6, step: 1 },
   forceRadius: { type: 'number', label: 'Force Radius', default: 0.5, min: 0.1, max: 1.5, step: 0.05 },
   repulsion: { type: 'number', label: 'Repulsion Zone', default: 0.3, min: 0.1, max: 0.6, step: 0.05 },
   forceStrength: { type: 'number', label: 'Force Strength', default: 1.0, min: 0.1, max: 5, step: 0.1 },
   damping: { type: 'number', label: 'Damping', default: 1.5, min: 0.1, max: 5, step: 0.1 },
-  containerSize: { type: 'number', label: 'Container Size', default: 4, min: 2, max: 10, step: 0.5, group: 'scene' },
-  particleRadius: { type: 'number', label: 'Particle Size', default: 0.05, min: 0.02, max: 0.15, step: 0.01, group: 'scene' },
+  containerSize: containerParam({ label: 'Container Size', default: 4, min: 2, max: 10 }),
+  particleRadius: displaySizeParam({ label: 'Particle Size', default: 0.05, min: 0.02, max: 0.15 }),
 } as const
 
 type Params = ParamValues<typeof particleLifeSchema>

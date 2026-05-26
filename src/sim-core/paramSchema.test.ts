@@ -19,7 +19,7 @@ describe('defaultParamValues', () => {
       initialVelocity: 1.0,
       restitution: 1.0,
       containerSize: 2.5,
-      gravity: false,
+      gravity: 0, // external gravity strength (0 = off); was a boolean toggle before the kit
     })
   })
 

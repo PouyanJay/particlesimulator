@@ -1,6 +1,8 @@
 import { createRng, type Rng } from '../rng'
 import { createLennardJonesField, type LennardJonesField } from '../physics/lennardJonesField'
 import { velocityVerlet, type AccelFn, type Integrator } from '../integrators/integrators'
+import { reflectInBox } from '../physics/environment'
+import { countParam, containerParam, gravityParam } from '../params/common'
 import { totalMomentum, temperature } from '../measure/conservedQuantities'
 import type { ParamValues, ParticleBuffers, SimContext, SimMode, Telemetry } from '../types'
 
@@ -22,12 +24,13 @@ import type { ParamValues, ParticleBuffers, SimContext, SimMode, Telemetry } fro
  * small MD timestep — the integrator never sees the raw frame dt.
  */
 export const molecularDynamicsSchema = {
-  particleCount: { type: 'number', label: 'Atom Count', default: 216, min: 8, max: 4000, step: 1, group: 'scene' },
+  particleCount: countParam({ label: 'Atom Count', default: 216, min: 8, max: 4000 }),
   temperature: { type: 'number', label: 'Temperature', default: 1.2, min: 0.1, max: 5, step: 0.1 },
   epsilon: { type: 'number', label: 'Well Depth (ε)', default: 1.0, min: 0.1, max: 5, step: 0.1 },
   sigma: { type: 'number', label: 'Atom Diameter (σ)', default: 1.0, min: 0.5, max: 2, step: 0.1 },
   cutoff: { type: 'number', label: 'Cutoff', default: 2.5, min: 1.5, max: 4, step: 0.1 },
-  containerSize: { type: 'number', label: 'Box Size', default: 14, min: 6, max: 30, step: 1, group: 'scene' },
+  containerSize: containerParam({ label: 'Box Size', default: 14, min: 6, max: 30, step: 1 }),
+  gravity: gravityParam({ max: 5, step: 0.1 }),
 } as const
 
 // Atoms are drawn at radius σ/2 (rendered diameter = the physical LJ diameter σ). There is no
@@ -62,6 +65,7 @@ export function createMolecularDynamicsMode(): SimMode<typeof molecularDynamicsS
 
   let field: LennardJonesField | null = null
   let integrator: Integrator | null = null
+  let gravity = 0 // external downward field strength (0 = off).
 
   // Pressure measurement: impulse delivered to the walls and simulated time elapsed, both
   // since the last telemetry read; pressure = impulse / (area · time). Walls are elastic.
@@ -69,12 +73,17 @@ export function createMolecularDynamicsMode(): SimMode<typeof molecularDynamicsS
   let wallImpulse = 0
   let simTimeAccum = 0
 
-  // Acceleration field for the integrator (delegates to the grid-accelerated LJ kernel).
-  const accel: AccelFn = (pos, out) => field?.computeAccelerations(pos, count, out)
+  // Acceleration field for the integrator: the grid-accelerated LJ kernel, plus an external
+  // uniform gravity folded into −Y (the symplectic, Verlet-correct way to add a constant force).
+  const accel: AccelFn = (pos, out) => {
+    field?.computeAccelerations(pos, count, out)
+    if (gravity !== 0) for (let i = 0; i < count; i++) out[i * 3 + 1] -= gravity
+  }
 
   function init(ctx: SimContext<typeof molecularDynamicsSchema>): void {
     const p: Params = ctx.params
     count = p.particleCount
+    gravity = p.gravity
     radius = RENDER_RADIUS_PER_SIGMA * p.sigma // render size derives from the physical diameter σ
     halfBound = p.containerSize / 2 - radius
     wallArea = 6 * (2 * halfBound) * (2 * halfBound) // 6 faces of the reflecting box.
@@ -163,27 +172,8 @@ export function createMolecularDynamicsMode(): SimMode<typeof molecularDynamicsS
     const subDt = dt / subSteps
     for (let s = 0; s < subSteps; s++) {
       integrator.step(positions, velocities, accel, subDt)
-      reflectOffWalls()
-    }
-  }
-
-  /** Clamp centres to the box and flip the outward velocity component (energy-neutral). */
-  function reflectOffWalls(): void {
-    for (let i = 0; i < count; i++) {
-      const o = i * 3
-      for (let axis = 0; axis < 3; axis++) {
-        const k = o + axis
-        if (positions[k] > halfBound && velocities[k] > 0) {
-          // Elastic wall (v_out = −v_in): impulse on the wall = 2·m·|v_in|.
-          wallImpulse += 2 * PARTICLE_MASS * velocities[k]
-          positions[k] = halfBound
-          velocities[k] = -velocities[k]
-        } else if (positions[k] < -halfBound && velocities[k] < 0) {
-          wallImpulse += 2 * PARTICLE_MASS * -velocities[k]
-          positions[k] = -halfBound
-          velocities[k] = -velocities[k]
-        }
-      }
+      // Shared elastic wall reflection; accumulate the returned impulse for pressure.
+      wallImpulse += reflectInBox(positions, velocities, count, halfBound, 1, PARTICLE_MASS)
     }
   }
 
@@ -220,6 +210,8 @@ export function createMolecularDynamicsMode(): SimMode<typeof molecularDynamicsS
       momentum: totalMomentum(velocities, count, PARTICLE_MASS),
       temperature: temperature(velocities, count, PARTICLE_MASS),
       pressure,
+      // Under gravity the hard wall clamp dissipates energy (kinetic energy not conserved).
+      inelastic: gravity > 0,
     }
   }
 
