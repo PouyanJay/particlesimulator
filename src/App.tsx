@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import { SimulationCanvas } from './render/SimulationCanvas'
 import { ControlPanel } from './ui/ControlPanel'
@@ -9,6 +9,7 @@ import { StatusReadout } from './ui/StatusReadout'
 import { Button } from './ui/controls/Button'
 import { ChartIcon } from './ui/icons'
 import { useGlobalShortcuts } from './ui/useGlobalShortcuts'
+import { initLifecycleSync } from './state/lifecycle'
 
 /**
  * Application shell. Pure composition — no simulation state lives here. The left instrument
@@ -19,6 +20,7 @@ import { useGlobalShortcuts } from './ui/useGlobalShortcuts'
 export default function App() {
   const [dockOpen, setDockOpen] = useState(true)
   useGlobalShortcuts()
+  useEffect(() => initLifecycleSync(), [])
 
   return (
     <div className={`app${dockOpen ? '' : ' app--dock-collapsed'}`}>
