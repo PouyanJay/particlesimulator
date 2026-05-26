@@ -27,6 +27,15 @@ export function containerParam(options: NumberParamOptions): NumberParam {
   return { type: 'number', group: 'scene', step: 0.5, ...options }
 }
 
+/**
+ * A mode-specific scene-setup knob that isn't one of the universal concepts above (e.g. a
+ * spring lattice's node spacing). Use the dedicated factories when one fits; reach for this
+ * only for genuinely mode-specific setup so the `scene` grouping still lives in one place.
+ */
+export function sceneNumberParam(options: NumberParamOptions): NumberParam {
+  return { type: 'number', group: 'scene', ...options }
+}
+
 /** Rendered particle size (visual, unless a mode also uses it physically, e.g. the elastic gas). */
 export function displaySizeParam(options: NumberParamOptions): NumberParam {
   return { type: 'number', group: 'scene', step: 0.01, ...options }

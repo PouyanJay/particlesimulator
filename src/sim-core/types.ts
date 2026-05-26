@@ -75,6 +75,12 @@ export interface ParticleBuffers {
   types?: Uint8Array
   /** Optional rgb colors, xyz-interleaved, length 3 * count. */
   colors?: Float32Array
+  /**
+   * Optional spring/connection edges as node-index pairs (i, j), length 2 * edgeCount.
+   * Modes with a connected structure (spring-mass, cloth, lattice) populate it so the render
+   * layer can draw line segments between particles; particle-only modes leave it undefined.
+   */
+  edges?: Uint32Array
   /** Particle render radius in world units (uniform for now). */
   radius: number
 }

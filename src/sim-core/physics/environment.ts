@@ -10,6 +10,11 @@
  * Clamps each centre back inside and flips the *outward* velocity component (× `restitution`).
  * Returns the total impulse delivered to the walls — Σ m·|v_in|·(1 + restitution) over the
  * reflections this call — which the gas modes integrate over time to measure pressure.
+ *
+ * Note: snapping the centre to the wall discards the sub-step overshoot, so even at
+ * `restitution = 1` the reflection is not exactly energy-neutral (a small, dt-bounded artifact).
+ * Fine for these dissipative/statistical modes; a strictly energy-conserving elastic box would
+ * need to reflect the overshoot rather than clamp it.
  */
 export function reflectInBox(
   positions: Float64Array,

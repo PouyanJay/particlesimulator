@@ -8,4 +8,5 @@ export const theme = {
   border: '#232a37',
   accent: '#6366f1',
   textPrimary: '#e6eaf2',
+  textMuted: '#7e8a9c',
 } as const
