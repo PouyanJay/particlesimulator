@@ -88,7 +88,7 @@ function ChallengeRunner({ challenge, onExit }: { challenge: Challenge; onExit: 
         </div>
       ) : null}
 
-      <div className="challenge__nav">
+      <ButtonGroup justify="between">
         <Button onClick={onExit}>All challenges</Button>
         <ButtonGroup>
           <Button onClick={() => setStepIndex((i) => Math.max(0, i - 1))} disabled={stepIndex === 0}>
@@ -104,7 +104,7 @@ function ChallengeRunner({ challenge, onExit }: { challenge: Challenge; onExit: 
             </Button>
           )}
         </ButtonGroup>
-      </div>
+      </ButtonGroup>
     </div>
   )
 }

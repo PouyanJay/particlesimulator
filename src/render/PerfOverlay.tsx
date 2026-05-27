@@ -16,6 +16,8 @@ export function PerfOverlay() {
     let mounted = true
     const stats = new Stats({ trackGPU: true })
     const dom = stats.dom
+    // Positioning a third-party debug widget's raw DOM node — intentionally outside the design
+    // token system (this overlay is dev-only and never ships to production).
     dom.style.cssText += ';position:fixed;top:8px;right:8px;left:auto;z-index:1000;'
     document.body.appendChild(dom)
     // init patches the (WebGPU/WebGL) renderer for GPU timing; it's async and may no-op.

@@ -2,6 +2,7 @@ import { useUiStore } from '../state/uiStore'
 import { useOnboardingStore } from '../state/onboardingStore'
 import { Dialog } from './controls/Dialog'
 import { Button } from './controls/Button'
+import { Kbd } from './controls/Kbd'
 import { MOD } from './platform'
 
 /**
@@ -48,7 +49,7 @@ export function WelcomeDialog() {
           <strong>Save, share, and record</strong> — presets, a shareable link, and video/GIF/PNG capture.
         </li>
         <li>
-          Press <kbd>{MOD}K</kbd> any time for the command palette; <kbd>Space</kbd> plays/pauses.
+          Press <Kbd>{MOD}K</Kbd> any time for the command palette; <Kbd>Space</Kbd> plays/pauses.
         </li>
       </ul>
     </Dialog>
