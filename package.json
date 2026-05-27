@@ -1,8 +1,31 @@
 {
-  "name": "simplephysics",
+  "name": "particle-lab",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "description": "A browser-based, GPU-accelerated educational physics lab for particle simulations (React + Three.js WebGPU).",
+  "license": "MIT",
+  "author": "Pouyan Jahangiri",
+  "homepage": "https://pouyanjay.github.io/particlesimulator",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PouyanJay/particlesimulator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/PouyanJay/particlesimulator/issues"
+  },
+  "keywords": [
+    "particle-simulation",
+    "physics",
+    "webgpu",
+    "three.js",
+    "react-three-fiber",
+    "simulation",
+    "education"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
