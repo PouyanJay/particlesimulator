@@ -146,20 +146,23 @@ the app falls back to WebGL2 automatically.
 ```bash
 git clone https://github.com/PouyanJay/particlesimulator.git
 cd particlesimulator
-npm install
-npm run dev          # → http://localhost:5173
+make run          # installs deps if needed, then opens the dev server → http://localhost:5173
 ```
 
-| Script | Description |
-|---|---|
-| `npm run dev` | Start the Vite dev server |
-| `npm run build` | Type-check and build for production (`tsc -b && vite build`) |
-| `npm run preview` | Serve the production build locally |
-| `npm test` | Run the test suite (Vitest) |
-| `npm run lint` | Lint with ESLint |
-| `npm run typecheck` | Type-check all projects |
+Common tasks are wrapped in a `Makefile` (each just calls the matching npm script; run `make help` to
+list every target). Use whichever you prefer:
 
-> A `Makefile` provides shortcuts too — `make run` is zero-to-running (installs if needed, then launches).
+| Task | Make | npm |
+|---|---|---|
+| Run (install + dev, opens browser) | `make run` | — |
+| Dev server | `make dev` | `npm run dev` |
+| Production build | `make build` | `npm run build` |
+| Preview the build | `make preview` | `npm run preview` |
+| Tests | `make test` | `npm test` |
+| Lint | `make lint` | `npm run lint` |
+| Type-check | `make typecheck` | `npm run typecheck` |
+| Pre-commit gate — type-check + lint + test | `make check` | — |
+| Full gate — `check` + production build | `make verify` | — |
 
 ## Configuration & URL flags
 
@@ -193,9 +196,9 @@ The physics core is verified by **invariants, not snapshots** — conservation l
 store logic are covered with Vitest + React Testing Library. GPU and visual paths are verified in-browser.
 
 ```bash
-npm test                 # run once
-npm run test:watch       # watch mode
-npm run test:coverage    # coverage report
+make test            # run once     (npm test)
+make test-watch      # watch mode   (npm run test:watch)
+make coverage        # coverage     (npm run test:coverage)
 ```
 
 ## Deployment
