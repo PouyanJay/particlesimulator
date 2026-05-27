@@ -1,4 +1,4 @@
-import { CommandPaletteHost } from './commands/CommandPaletteHost'
+import { CommandPaletteHost } from '../commands/CommandPaletteHost'
 import { PresetManager } from './PresetManager'
 import { ShareDialog } from './ShareDialog'
 import { ExportDialog } from './ExportDialog'

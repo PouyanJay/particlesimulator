@@ -1,5 +1,5 @@
-import { useLifecyclePhase } from '../state/lifecycle'
-import { useElapsedSeconds, formatElapsed } from './useElapsedSeconds'
+import { useLifecyclePhase } from '../../state/lifecycle'
+import { useElapsedSeconds, formatElapsed } from '../hooks/useElapsedSeconds'
 
 /**
  * A persistent "REC" badge shown over the canvas whenever a recording is in progress — so it's

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ModeSelect } from './ModeSelect'
-import { useParamStore } from '../state/paramStore'
+import { useParamStore } from '../../state/paramStore'
 
 beforeEach(() => useParamStore.getState().selectMode('elastic-gas'))
 

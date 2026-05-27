@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { GasLawPanel } from './GasLawPanel'
-import { useParamStore } from '../state/paramStore'
-import { useTelemetryStore } from '../state/telemetryStore'
+import { useParamStore } from '../../state/paramStore'
+import { useTelemetryStore } from '../../state/telemetryStore'
 
 beforeEach(() => {
   useTelemetryStore.getState().reset()

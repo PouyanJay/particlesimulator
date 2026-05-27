@@ -1,9 +1,9 @@
-import { useUiStore } from '../state/uiStore'
-import { useOnboardingStore } from '../state/onboardingStore'
-import { Dialog } from './controls/Dialog'
-import { Button } from './controls/Button'
-import { Kbd } from './controls/Kbd'
-import { MOD } from './platform'
+import { useUiStore } from '../../state/uiStore'
+import { useOnboardingStore } from '../../state/onboardingStore'
+import { Dialog } from '../controls/Dialog'
+import { Button } from '../controls/Button'
+import { Kbd } from '../controls/Kbd'
+import { MOD } from '../platform'
 
 /**
  * First-visit onboarding. Explains what the lab is and points to the key entry points; opens

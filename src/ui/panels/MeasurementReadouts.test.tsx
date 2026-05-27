@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MeasurementReadouts } from './MeasurementReadouts'
-import { useTelemetryStore } from '../state/telemetryStore'
-import { useParamStore } from '../state/paramStore'
+import { useTelemetryStore } from '../../state/telemetryStore'
+import { useParamStore } from '../../state/paramStore'
 
 beforeEach(() => {
   useTelemetryStore.getState().reset()

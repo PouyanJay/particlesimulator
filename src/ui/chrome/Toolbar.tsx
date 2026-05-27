@@ -1,8 +1,8 @@
-import { useParamStore } from '../state/paramStore'
-import { useParamHistory } from '../state/useParamHistory'
-import { Button } from './controls/Button'
-import { PlayIcon, PauseIcon, ResetIcon, UndoIcon, RedoIcon } from './icons'
-import { MOD, SHIFT_MOD } from './platform'
+import { useParamStore } from '../../state/paramStore'
+import { useParamHistory } from '../../state/useParamHistory'
+import { Button } from '../controls/Button'
+import { PlayIcon, PauseIcon, ResetIcon, UndoIcon, RedoIcon } from '../icons'
+import { MOD, SHIFT_MOD } from '../platform'
 
 /**
  * Global run controls: undo/redo, play/pause, and reset. Reset assigns a new seed, which

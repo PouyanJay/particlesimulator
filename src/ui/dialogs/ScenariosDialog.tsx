@@ -1,8 +1,8 @@
-import { useUiStore } from '../state/uiStore'
-import { simRegistry } from '../state/simRegistry'
-import { applyScenario } from '../render/applyScenario'
-import { allCuratedScenarios } from '../sim-core/scenarios/curated'
-import { Dialog } from './controls/Dialog'
+import { useUiStore } from '../../state/uiStore'
+import { simRegistry } from '../../state/simRegistry'
+import { applyScenario } from '../../render/applyScenario'
+import { allCuratedScenarios } from '../../sim-core/scenarios/curated'
+import { Dialog } from '../controls/Dialog'
 
 /** Mode label for a mode id (falls back to the id if somehow unregistered). */
 function modeLabel(modeId: string): string {

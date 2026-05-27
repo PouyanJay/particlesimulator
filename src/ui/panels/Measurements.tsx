@@ -1,10 +1,10 @@
-import { useParamStore } from '../state/paramStore'
-import { SpeedChart } from './charts/SpeedChart'
-import { EnergyChart } from './charts/EnergyChart'
-import { SpeedDistribution } from './charts/SpeedDistribution'
+import { useParamStore } from '../../state/paramStore'
+import { SpeedChart } from '../charts/SpeedChart'
+import { EnergyChart } from '../charts/EnergyChart'
+import { SpeedDistribution } from '../charts/SpeedDistribution'
 import { MeasurementReadouts } from './MeasurementReadouts'
 import { GasLawPanel } from './GasLawPanel'
-import { UnitsSelect } from './UnitsSelect'
+import { UnitsSelect } from '../chrome/UnitsSelect'
 
 /**
  * Live measurement panel — turns the simulation into a lab. Shows the conserved/derived

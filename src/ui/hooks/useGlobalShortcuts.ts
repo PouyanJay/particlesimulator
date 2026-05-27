@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { useParamStore } from '../state/paramStore'
-import { useUiStore } from '../state/uiStore'
+import { useParamStore } from '../../state/paramStore'
+import { useUiStore } from '../../state/uiStore'
 
 /**
  * Returns true when a keyboard event originates from a control that owns the key itself

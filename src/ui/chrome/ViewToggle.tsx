@@ -1,6 +1,6 @@
-import { useParamStore } from '../state/paramStore'
-import { nextRovingIndex } from './controls/roving'
-import type { SimView } from '../sim-core/scenario'
+import { useParamStore } from '../../state/paramStore'
+import { nextRovingIndex } from '../controls/roving'
+import type { SimView } from '../../sim-core/scenario'
 
 const OPTIONS: { value: SimView; label: string }[] = [
   { value: '3d', label: '3D' },
