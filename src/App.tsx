@@ -15,6 +15,8 @@ import { ChartIcon } from './ui/icons'
 import { useGlobalShortcuts } from './ui/useGlobalShortcuts'
 import { initLifecycleSync } from './state/lifecycle'
 import { isEmbedRoute } from './state/shareLink'
+import { useUiStore } from './state/uiStore'
+import { useOnboardingStore } from './state/onboardingStore'
 
 // Embed mode (iframe target) is decided once from the URL: it hides all chrome and shows only
 // the canvas, so a shared `?embed` link drops straight into the simulation.
@@ -30,6 +32,12 @@ export default function App() {
   const [dockOpen, setDockOpen] = useState(true)
   useGlobalShortcuts()
   useEffect(() => initLifecycleSync(), [])
+
+  // Show the onboarding welcome once, on the first visit (never in embed mode).
+  useEffect(() => {
+    if (EMBED) return
+    if (!useOnboardingStore.getState().seen) useUiStore.getState().openOverlay('welcome')
+  }, [])
 
   if (EMBED) {
     return (

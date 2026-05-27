@@ -1,7 +1,15 @@
 import { create } from 'zustand'
 
 /** Which modal/overlay is currently open. Only one at a time. Transient (never persisted). */
-export type Overlay = 'none' | 'palette' | 'presets' | 'share' | 'export' | 'scenarios' | 'challenges'
+export type Overlay =
+  | 'none'
+  | 'palette'
+  | 'presets'
+  | 'share'
+  | 'export'
+  | 'scenarios'
+  | 'challenges'
+  | 'welcome'
 
 interface UiState {
   overlay: Overlay
