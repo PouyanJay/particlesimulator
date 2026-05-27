@@ -228,6 +228,16 @@ export const TrashIcon = ({ className }: IconProps) =>
     className,
   )
 
+export const HelpIcon = ({ className }: IconProps) =>
+  stroked(
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 .9-1 1.7" />
+      <path d="M12 17h.01" />
+    </>,
+    className,
+  )
+
 export const GraduationIcon = ({ className }: IconProps) =>
   stroked(
     <>
