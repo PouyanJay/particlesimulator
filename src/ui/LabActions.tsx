@@ -1,7 +1,7 @@
 import { useUiStore } from '../state/uiStore'
 import { Button } from './controls/Button'
 import { Tooltip } from './controls/Tooltip'
-import { SaveIcon, ShareIcon, DownloadIcon, BookIcon, CommandIcon, GraduationIcon } from './icons'
+import { SaveIcon, ShareIcon, DownloadIcon, BookIcon, CommandIcon, GraduationIcon, HelpIcon } from './icons'
 import { MOD } from './platform'
 
 /**
@@ -42,6 +42,11 @@ export function LabActions() {
       <Tooltip label={`Commands (${MOD}K)`}>
         <Button icon aria-label="Open command palette" onClick={() => open('palette')}>
           <CommandIcon />
+        </Button>
+      </Tooltip>
+      <Tooltip label="Help & welcome">
+        <Button icon aria-label="Help and welcome" onClick={() => open('welcome')}>
+          <HelpIcon />
         </Button>
       </Tooltip>
     </div>

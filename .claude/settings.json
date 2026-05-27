@@ -7,7 +7,12 @@
       "Bash(git --no-pager log --oneline main..HEAD)",
       "Bash(git --no-pager diff .claude/settings.json)",
       "Bash(npm run *)",
-      "Bash(npx vitest *)"
+      "Bash(npx vitest *)",
+      "Bash(node -e \"const d={...require\\('./package.json'\\).dependencies,...require\\('./package.json'\\).devDependencies}; console.log\\('r3f-perf:',d['r3f-perf']||'-','stats-gl:',d['stats-gl']||'-'\\)\")",
+      "Bash(git checkout *)",
+      "Bash(npm install *)",
+      "Bash(node -e \"const d=require\\('./package.json'\\).devDependencies; console.log\\('r3f-perf:',d['r3f-perf'],'stats-gl:',d['stats-gl']\\)\")",
+      "Bash(git -C /Users/pouyan/Developer/personal/particlesimulator check-ignore dist)"
     ]
   }
 }

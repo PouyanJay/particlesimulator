@@ -57,6 +57,12 @@
   /* Stacking: popovers/menus above the canvas. */
   --z-popover: 50;
 
+  /* Overlay sizing + backdrop blur (dialogs / command palette / floating readouts) */
+  --width-dialog: 520px;
+  --width-palette: 560px;
+  --blur-backdrop: 3px;
+  --blur-overlay: 6px;
+
   /* Elevation */
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.35);

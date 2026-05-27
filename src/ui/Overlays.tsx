@@ -4,6 +4,7 @@ import { ShareDialog } from './ShareDialog'
 import { ExportDialog } from './ExportDialog'
 import { ScenariosDialog } from './ScenariosDialog'
 import { ChallengesDialog } from './ChallengesDialog'
+import { WelcomeDialog } from './WelcomeDialog'
 
 /**
  * All app overlays (command palette + dialogs), mounted once at the root. Each reads the UI
@@ -19,6 +20,7 @@ export function Overlays() {
       <ExportDialog />
       <ScenariosDialog />
       <ChallengesDialog />
+      <WelcomeDialog />
     </>
   )
 }

@@ -117,14 +117,14 @@
   border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--border));
   border-radius: var(--radius-full);
   background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(var(--blur-overlay));
   font-size: var(--text-xs);
   color: var(--text-primary);
 }
 
 .rec-indicator__dot {
-  width: 8px;
-  height: 8px;
+  width: var(--space-2);
+  height: var(--space-2);
   border-radius: var(--radius-full);
   background: var(--danger);
   animation: rec-pulse 1.4s var(--ease) infinite;
@@ -651,6 +651,13 @@
   color: var(--text-muted);
 }
 
+.mode-select__about {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
 /* View (2D/3D) toggle */
 .view-toggle {
   display: flex;
@@ -816,7 +823,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(var(--blur-overlay));
   font-size: var(--text-xs);
 }
 
@@ -864,7 +871,7 @@
   justify-content: center;
   padding: var(--space-4);
   background: color-mix(in srgb, var(--bg-base) 70%, transparent);
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(var(--blur-backdrop));
 }
 
 /* Command palette sits high on the screen, like a spotlight. */
@@ -875,7 +882,7 @@
 
 .dialog {
   width: 100%;
-  max-width: 520px;
+  max-width: var(--width-dialog);
   max-height: 85vh;
   display: flex;
   flex-direction: column;
@@ -1018,7 +1025,7 @@
 /* Command palette */
 .palette {
   width: 100%;
-  max-width: 560px;
+  max-width: var(--width-palette);
   display: flex;
   flex-direction: column;
   max-height: 60vh;
@@ -1100,6 +1107,33 @@
   text-align: center;
   font-size: var(--text-sm);
   color: var(--text-muted);
+}
+
+/* Welcome / onboarding */
+.welcome-list {
+  margin: 0;
+  padding-left: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.welcome-list strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.kbd {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
 }
 
 /* Visually-hidden but accessible (screen-reader only) */
@@ -1279,10 +1313,19 @@
   color: var(--text-secondary);
 }
 
-.export-actions {
+/* Shared row of related action buttons. */
+.button-group {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+
+.button-group--end {
+  justify-content: flex-end;
+}
+
+.button-group--between {
+  justify-content: space-between;
 }
 
 /* Give the format dropdown a fixed width so its menu fits the longest label ("MP4 (H.264)")
@@ -1428,11 +1471,6 @@
   background: var(--success);
 }
 
-.challenge__nav {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-2);
-}
 
 /* Narrow screens: stack the sidebar above the viewport. */
 @media (max-width: 768px) {

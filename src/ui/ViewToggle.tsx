@@ -1,4 +1,5 @@
 import { useParamStore } from '../state/paramStore'
+import { nextRovingIndex } from './controls/roving'
 import type { SimView } from '../sim-core/scenario'
 
 const OPTIONS: { value: SimView; label: string }[] = [
@@ -18,11 +19,8 @@ export function ViewToggle() {
   const activeIndex = OPTIONS.findIndex((o) => o.value === view)
 
   function onKeyDown(e: React.KeyboardEvent): void {
-    let next = activeIndex
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (activeIndex + 1) % OPTIONS.length
-    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp')
-      next = (activeIndex - 1 + OPTIONS.length) % OPTIONS.length
-    else return
+    const next = nextRovingIndex(e.key, activeIndex, OPTIONS.length, 'both')
+    if (next === null) return
     e.preventDefault()
     setView(OPTIONS[next].value)
   }
