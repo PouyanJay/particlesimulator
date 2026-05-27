@@ -140,17 +140,22 @@ scenario save/restore flow) is in **[docs/architecture.md](./docs/architecture.m
 
 ## Getting started
 
-**Prerequisites:** Node.js ≥ 20 and npm. A WebGPU-capable browser is recommended (Chrome/Edge/Safari 26+);
-the app falls back to WebGL2 automatically.
+**Prerequisites:** Node.js ≥ 20. A WebGPU-capable browser is recommended (Chrome/Edge/Safari 26+); the app
+falls back to WebGL2 automatically.
 
 ```bash
 git clone https://github.com/PouyanJay/particlesimulator.git
 cd particlesimulator
-make run          # installs deps if needed, then opens the dev server → http://localhost:5173
+make run
 ```
 
-Common tasks are wrapped in a `Makefile` (each just calls the matching npm script; run `make help` to
-list every target). Use whichever you prefer:
+> [!TIP]
+> **`make run` is the only command you need.** It installs dependencies if they're missing, starts the
+> dev server, and opens the app in your browser — zero-to-running on a fresh clone. Everything below is
+> optional.
+
+The rest of the common tasks are wrapped in the `Makefile` (each just calls the matching npm script; run
+`make help` to list every target). Use whichever you prefer:
 
 | Task | Make | npm |
 |---|---|---|
