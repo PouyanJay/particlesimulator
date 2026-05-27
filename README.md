@@ -1,77 +1,205 @@
+<div align="center">
+
 # Particle Lab
 
-A browser-based, GPU-accelerated educational **physics lab** for particle simulations — built with
-React, Three.js (WebGPU + WebGL2 fallback), and React Three Fiber. Pick a model, tune it live, measure
-what's happening, and share or record the result.
+**A browser-based, GPU-accelerated educational physics lab for particle simulations.**
 
-## Screenshot
+Pick a model, tune it live, measure what's happening, then share or record the result.
 
-![Particle Lab Screenshot](./public/screenshot.png)
+[![Deploy](https://github.com/PouyanJay/particlesimulator/actions/workflows/deploy.yml/badge.svg)](https://github.com/PouyanJay/particlesimulator/actions/workflows/deploy.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![Three.js](https://img.shields.io/badge/Three.js-WebGPU-000000?logo=threedotjs&logoColor=white)
+![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8?logo=pwa&logoColor=white)
 
-## Live demo
+[**Live demo →**](https://pouyanjay.github.io/particlesimulator)
 
-<https://pouyanjay.github.io/particlesimulator>
+![Particle Lab](./public/screenshot.png)
 
-## What's inside
+</div>
 
-**Simulation modes** (each a self-contained plugin):
+---
 
-- **Elastic gas** — equal-mass spheres bouncing elastically; converges to Maxwell–Boltzmann, verifies P·V = N·k·T.
-- **Molecular dynamics** — a Lennard-Jones gas (velocity Verlet); ideal-gas behaviour, phase changes, optional real-substance units (Argon/Ne/Kr/Xe).
-- **N-body gravity** (CPU) and **GPU N-body** (WebGPU compute, tens of thousands of bodies).
-- **Particle Life** — asymmetric attraction/repulsion between types; emergent lifelike structure.
-- **Boids** — flocking from separation/alignment/cohesion.
-- **Electrostatics** — charged particles under Coulomb's law.
+## Table of contents
 
-**The lab around them:**
+- [Overview](#overview)
+- [Features](#features)
+- [Simulation modes](#simulation-modes)
+- [Architecture](#architecture)
+- [Tech stack](#tech-stack)
+- [Getting started](#getting-started)
+- [Configuration & URL flags](#configuration--url-flags)
+- [Project structure](#project-structure)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [Documentation](#documentation)
+- [License](#license)
 
-- **Measurement** — live temperature, pressure, energy, momentum readouts; a Maxwell–Boltzmann speed
-  histogram; energy/speed charts; an ideal-gas (PV = NkT) check.
-- **Pedagogy** — per-mode explainers, **guided challenges** (predict-then-observe, auto-graded against
-  telemetry), and a **curated scenario gallery**.
-- **Save & share** — named presets, JSON import/export, and shareable links that encode the whole
-  scenario in the URL; an `?embed` mode for clean iframes.
-- **Undo/redo**, a **command palette** (⌘K), 2D/3D views, and a first-visit tour.
-- **Record & export** — capture the canvas to MP4/WebM/GIF, grab PNG screenshots, and export telemetry
-  to CSV/JSON.
-- **Reach** — installable, offline-capable **PWA**; mobile/touch support; keyboard-operable and
-  WCAG-AA-minded; an optional physics-in-worker path (`?worker`).
+## Overview
+
+Particle Lab turns particle physics into something you can *play with and measure*. It runs several
+simulation models — gases, gravity, flocking, particle life, electrostatics — entirely in the browser,
+on the GPU where it helps, and wraps them in a real instrument: live readouts, charts, a Maxwell–Boltzmann
+histogram, conserved-quantity checks, guided challenges, and a curated scenario gallery.
+
+It is engineered as a **proper application, not a demo**: a strictly layered architecture, a pure and
+deterministic physics core covered by ~400 tests, a token-based design system, and a shareable/recordable
+output pipeline. It renders through Three.js's **WebGPU** path with an automatic **WebGL2 fallback**.
+
+## Features
+
+**Simulation & rendering**
+- Seven simulation modes behind a uniform plugin contract (see [below](#simulation-modes)).
+- WebGPU compute for the heavy modes; instanced rendering with HDR bloom; 2D and 3D projections.
+- Deterministic, fixed-timestep physics — same seed + parameters produce the same run.
+
+**Measurement & pedagogy**
+- Live temperature, pressure, energy, and momentum readouts; speed/energy charts (uPlot).
+- A **Maxwell–Boltzmann** speed histogram and an ideal-gas **PV = N·k·T** check.
+- Per-mode explainers, a **curated scenario gallery**, and **guided challenges** that auto-grade your
+  predictions against live telemetry.
+
+**Workflow**
+- **Save & share** — named presets, JSON import/export, and links that encode the entire scenario in the
+  URL hash; an `?embed` view for clean iframes.
+- **Record & export** — capture the canvas to MP4 / WebM / GIF, take PNG screenshots, and export telemetry
+  to CSV / JSON.
+- **Undo/redo**, a **command palette** (`⌘K`), a first-visit tour, and full keyboard operability.
+
+**Reach & quality**
+- Installable, **offline-capable PWA**; responsive and touch-friendly; WCAG-2.2-AA-minded.
+- Optional **physics-in-worker** path to keep the UI at 60 fps under load.
+- Strict TypeScript, ~400 unit/component tests, and a design-token system (no magic numbers).
+
+## Simulation modes
+
+| Mode | What it demonstrates | Backend |
+|---|---|---|
+| **Elastic gas** | Elastic collisions → Maxwell–Boltzmann distribution; verifies PV = N·k·T | CPU |
+| **Molecular dynamics** | Lennard-Jones gas (velocity Verlet); ideal-gas law, phase changes, real-substance units | CPU |
+| **N-body gravity** | All-pairs gravity; spiral discs and gravitational collapse | CPU |
+| **GPU N-body** | The same model on the GPU — tens of thousands of bodies in real time | WebGPU compute |
+| **Particle Life** | Asymmetric attraction/repulsion between types; emergent lifelike structure | CPU |
+| **Boids** | Flocking from separation / alignment / cohesion | CPU |
+| **Electrostatics** | Charged particles under Coulomb's law | CPU |
+
+## Architecture
+
+Four strictly-separated layers. The physics core (`sim-core`) is **pure TypeScript** — no React, no
+three.js — so it's deterministic and unit-testable in isolation. Everything depends *inward* toward it.
+
+```mermaid
+flowchart TD
+    UI["ui/ · React components, design system"]
+    RENDER["render/ · React Three Fiber, WebGPU"]
+    EXPORT["export/ · record · screenshot · CSV/JSON"]
+    STATE["state/ · Zustand stores + XState lifecycle"]
+    SIMCORE["sim-core/ · pure-TS physics (deterministic)"]
+
+    UI --> STATE
+    UI --> RENDER
+    EXPORT --> STATE
+    EXPORT --> RENDER
+    RENDER --> STATE
+    RENDER --> SIMCORE
+    STATE --> SIMCORE
+
+    classDef core fill:#1f2937,stroke:#6366f1,stroke-width:2px,color:#e6eaf2;
+    class SIMCORE core;
+```
+
+A new simulation is a single registered `SimMode` plugin — adding one needs **zero** changes to the app
+shell or render layer. The full picture (per-frame data flow, the session lifecycle machine, and the
+scenario save/restore flow) is in **[docs/architecture.md](./docs/architecture.md)**.
 
 ## Tech stack
 
-React 19 · Vite 6 · TypeScript (strict) · `@react-three/fiber` 9 · `three` 0.184 `WebGPURenderer` (TSL
-compute) with WebGL2 fallback · Zustand (+ zundo) · XState · uPlot · `vite-plugin-pwa`. Physics lives in
-a pure-TS `sim-core` with no React/three dependencies. See [docs/architecture.md](./docs/architecture.md).
+| Area | Choice |
+|---|---|
+| Language | TypeScript (strict) |
+| UI | React 19 |
+| Rendering | Three.js `0.184` `WebGPURenderer` (TSL compute) + WebGL2 fallback, via `@react-three/fiber` 9 |
+| State | Zustand (+ `zundo` undo/redo), XState (session lifecycle) |
+| Charts | uPlot |
+| Build / tooling | Vite 6, Vitest, ESLint, `vite-plugin-pwa` |
+| Rigid-body physics | Rapier (where used) |
 
-## Development
+## Getting started
 
-Prerequisites: Node.js 18+ and npm.
+**Prerequisites:** Node.js ≥ 20 and npm. A WebGPU-capable browser is recommended (Chrome/Edge/Safari 26+);
+the app falls back to WebGL2 automatically.
 
 ```bash
-npm install      # install dependencies
-npm run dev      # Vite dev server (http://localhost:5173)
-npm test         # Vitest unit + component tests
-npm run lint     # ESLint
-npm run build    # tsc -b && vite build → dist/
+git clone https://github.com/PouyanJay/particlesimulator.git
+cd particlesimulator
+npm install
+npm run dev          # → http://localhost:5173
 ```
 
-Useful URL flags: `?forceWebGL` (force the WebGL2 backend), `?stats` (dev-only profiling overlay),
-`?worker` (run CPU-mode physics in a Web Worker), `?embed` (chrome-less embed view), and a share link's
-`#s=…` hash (restore a scenario).
+| Script | Description |
+|---|---|
+| `npm run dev` | Start the Vite dev server |
+| `npm run build` | Type-check and build for production (`tsc -b && vite build`) |
+| `npm run preview` | Serve the production build locally |
+| `npm test` | Run the test suite (Vitest) |
+| `npm run lint` | Lint with ESLint |
+| `npm run typecheck` | Type-check all projects |
 
-## Documentation
+> A `Makefile` provides shortcuts too — `make run` is zero-to-running (installs if needed, then launches).
 
-- [docs/architecture.md](./docs/architecture.md) — the layered architecture and data flow.
-- [docs/adding-a-sim-mode.md](./docs/adding-a-sim-mode.md) — how to add a new simulation mode.
-- [docs/qa-checklist.md](./docs/qa-checklist.md) — launch QA: verified items + manual cross-browser matrix.
+## Configuration & URL flags
+
+The app reads a few flags from the URL — handy for debugging and embedding:
+
+| Flag | Effect |
+|---|---|
+| `?forceWebGL` | Force the WebGL2 backend (verify fallback parity) |
+| `?stats` | Show the dev-only profiling overlay (FPS / GPU / draw calls) |
+| `?worker` | Run CPU-mode physics in a Web Worker |
+| `?embed` | Chrome-less view for iframes (also `/embed`) |
+| `#s=…` | Restore a shared scenario (set automatically by share links) |
+
+## Project structure
+
+```
+src/
+  sim-core/   Pure-TS physics: modes, force kernels, integrators, measurement, scenarios, challenges
+  render/     React Three Fiber: canvas, sim driver, CPU/GPU renderers, post-FX, worker
+  state/      Zustand stores (+ zundo) and the XState session lifecycle
+  export/     Recording, screenshots, and CSV/JSON serialization
+  ui/         React components — controls/ chrome/ panels/ dialogs/ commands/ charts/ hooks/
+  styles/     Design tokens (tokens.css) + canvas color mirror (theme.ts)
+docs/         Architecture, "add a SimMode" guide, QA checklist
+```
+
+## Testing
+
+The physics core is verified by **invariants, not snapshots** — conservation laws, analytic convergence
+(e.g. the speed distribution approaching Maxwell–Boltzmann), integrator stability, and determinism. UI and
+store logic are covered with Vitest + React Testing Library. GPU and visual paths are verified in-browser.
+
+```bash
+npm test                 # run once
+npm run test:watch       # watch mode
+npm run test:coverage    # coverage report
+```
 
 ## Deployment
 
-Automatic deployment to GitHub Pages via GitHub Actions (`.github/workflows/deploy.yml`): the workflow
-builds and publishes `dist/` on every push to `main`. Enable Pages → Source: "GitHub Actions" in the
-repository settings. The build derives its base path from the repository name, so WebGPU and the PWA
-work under the Pages sub-path.
+Continuous deployment to **GitHub Pages** via GitHub Actions
+([`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml)): every push to `main` builds and
+publishes `dist/`. The base path is derived from the repository name, so WebGPU and the PWA work correctly
+under the Pages sub-path. To enable: repository **Settings → Pages → Source: GitHub Actions**.
+
+## Documentation
+
+| Document | Contents |
+|---|---|
+| [docs/architecture.md](./docs/architecture.md) | Layered architecture, per-frame data flow, lifecycle, and scenario flow (with diagrams) |
+| [docs/adding-a-sim-mode.md](./docs/adding-a-sim-mode.md) | A TDD-first walkthrough of adding a new simulation mode |
+| [docs/qa-checklist.md](./docs/qa-checklist.md) | Launch QA: verified items and the manual cross-browser matrix |
 
 ## License
 
-MIT.
+[MIT](./LICENSE) © Pouyan Jahangiri
