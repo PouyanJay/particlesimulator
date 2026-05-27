@@ -13,11 +13,7 @@ Pick a model, tune it live, measure what's happening, then share or record the r
 ![Three.js](https://img.shields.io/badge/Three.js-WebGPU-000000?logo=threedotjs&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8?logo=pwa&logoColor=white)
 
-[**Live demo →**](https://pouyanjay.github.io/particlesimulator)
-
-<video src="https://github.com/PouyanJay/particlesimulator/raw/main/public/demo.mp4" controls muted loop playsinline width="100%">
-  <a href="https://pouyanjay.github.io/particlesimulator">▶ Watch the live demo</a>
-</video>
+[**▶ Live demo**](https://pouyanjay.github.io/particlesimulator) · [Watch a recording](https://github.com/PouyanJay/particlesimulator/raw/main/public/demo.mp4)
 
 </div>
 
