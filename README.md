@@ -25,7 +25,7 @@ Pick a model, tune it live, measure what's happening, then share or record the r
     </td>
   </tr>
   <tr>
-    <td align="center"><sub><b>GPU N-body</b> — tens of thousands of bodies</sub></td>
+    <td align="center"><sub><b>GPU N-body</b> — 20K+ bodies</sub></td>
     <td align="center"><sub><b>The full lab</b> — parameters · canvas · live measurements</sub></td>
   </tr>
 </table>
