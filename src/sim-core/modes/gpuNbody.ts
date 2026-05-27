@@ -6,7 +6,7 @@ import type { ParticleBuffers, SimMode } from '../types'
  * body cap, since the simulation runs in WebGPU compute shaders.
  */
 export const gpuNbodySchema = {
-  particleCount: countParam({ label: 'Body Count', default: 20000, min: 1000, max: 100000, step: 1000 }),
+  particleCount: countParam({ label: 'Body Count', default: 10000, min: 1000, max: 100000, step: 1000 }),
   // Mean-field strength (≈ G·total-mass): the kernel divides by body count, so this is
   // count-independent. ~10 gives the CPU mode's feel at any N.
   gravity: { type: 'number', label: 'Gravity Strength', default: 10, min: 1, max: 100, step: 1 },
