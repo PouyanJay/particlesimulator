@@ -15,7 +15,20 @@ Pick a model, tune it live, measure what's happening, then share or record the r
 
 [**▶ Live demo**](https://pouyanjay.github.io/particlesimulator) · [Watch a recording](https://github.com/PouyanJay/particlesimulator/raw/main/public/demo.mp4)
 
-![Particle Lab](./public/demo-1.png)
+<table>
+  <tr>
+    <td align="center" valign="middle">
+      <a href="./public/demo-1.png"><img src="./public/demo-1.png" alt="GPU N-body — two galaxies of particles in the box" height="210" /></a>
+    </td>
+    <td align="center" valign="middle">
+      <a href="./public/demo-2.png"><img src="./public/demo-2.png" alt="The full Particle Lab interface — parameters, canvas, and live measurements" height="210" /></a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>GPU N-body</b> — tens of thousands of bodies</sub></td>
+    <td align="center"><sub><b>The full lab</b> — parameters · canvas · live measurements</sub></td>
+  </tr>
+</table>
 
 </div>
 
