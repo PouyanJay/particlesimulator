@@ -58,9 +58,18 @@
 }
 
 .app__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   font-size: var(--text-md);
   font-weight: 600;
   letter-spacing: 0.01em;
+}
+
+/* Brand spiral mark — the one place the accent leads (a sparing, identity use). */
+.app__brand-mark {
+  flex: none;
+  color: var(--accent);
 }
 
 /* Compact top bar: brand + Reset + More, kept to a single row, clearing the device's top
@@ -744,6 +753,21 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+
+/* One-tap record/stop. The glyph is danger-red (matching the canvas REC indicator); while
+ * recording the button takes an "armed" danger-tinted fill so its active state is unmistakable. */
+.toolbar__record {
+  color: var(--danger);
+}
+
+.toolbar__record[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--danger) 18%, var(--bg-elevated));
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border-strong));
+}
+
+.toolbar__record[aria-pressed='true']:hover {
+  background: color-mix(in srgb, var(--danger) 26%, var(--bg-elevated));
 }
 
 /* Mode selector — top of the instrument sidebar, above the parameters it governs. */

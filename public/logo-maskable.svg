@@ -1,0 +1,11 @@
+<!-- Particle Lab brand mark — PWA "maskable" icon: full-bleed square bg with the mark inside
+     the ~80% safe zone (adaptive masks crop the edges). Colors mirror the design tokens.
+     Stroke width is hand-tuned for this size; the favicon variant differs on purpose. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" fill="#0B0E14"/>
+  <g fill="none" stroke="#6366F1" stroke-width="3.6" stroke-linecap="round">
+    <path d="M17.45 19.79A 19.00 19.00 0 1 1 13.00 32.00"/>
+    <path d="M35.73 32.83A 11.40 11.40 0 1 1 33.90 22.46"/>
+    <circle cx="29.35" cy="28.61" r="6.84"/>
+  </g>
+</svg>
