@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from 'react'
+import { nextRovingIndex } from './roving'
 
 export interface TabItem {
   id: string
@@ -26,12 +27,8 @@ export function Tabs({ tabs, value, onChange, ariaLabel }: TabsProps) {
   const activeIndex = Math.max(0, tabs.findIndex((t) => t.id === value))
 
   function onKeyDown(e: React.KeyboardEvent): void {
-    let next = activeIndex
-    if (e.key === 'ArrowRight') next = (activeIndex + 1) % tabs.length
-    else if (e.key === 'ArrowLeft') next = (activeIndex - 1 + tabs.length) % tabs.length
-    else if (e.key === 'Home') next = 0
-    else if (e.key === 'End') next = tabs.length - 1
-    else return
+    const next = nextRovingIndex(e.key, activeIndex, tabs.length, 'horizontal')
+    if (next === null) return
     e.preventDefault()
     onChange(tabs[next].id)
   }

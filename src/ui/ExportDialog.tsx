@@ -16,6 +16,7 @@ import { useElapsedSeconds, formatElapsed } from './useElapsedSeconds'
 import { Dialog } from './controls/Dialog'
 import { Tabs } from './controls/Tabs'
 import { Button } from './controls/Button'
+import { ButtonGroup } from './controls/ButtonGroup'
 import { Select } from './controls/Select'
 
 /**
@@ -83,14 +84,14 @@ function CapturePanel() {
           onChange={(v) => setFormat(v as RecordFormat)}
         />
       </div>
-      <div className="export-actions">
+      <ButtonGroup>
         <Button variant={recording ? 'ghost' : 'primary'} onClick={() => void toggleRecording()}>
           {recording ? 'Stop recording' : 'Start recording'}
         </Button>
         <Button onClick={() => void screenshot()} disabled={recording}>
           Screenshot (PNG)
         </Button>
-      </div>
+      </ButtonGroup>
       {recording ? (
         <div className="export-recording" role="status" aria-live="polite">
           <span className="rec-indicator__dot" aria-hidden="true" />
@@ -120,7 +121,7 @@ function DataPanel() {
 
   return (
     <div className="export-panel">
-      <div className="export-actions">
+      <ButtonGroup>
         <Button
           disabled={!hasData}
           onClick={() => downloadText(timestampedFilename('telemetry', 'csv'), telemetryToCsv(series), 'text/csv;charset=utf-8')}
@@ -142,7 +143,7 @@ function DataPanel() {
         >
           Scenario JSON
         </Button>
-      </div>
+      </ButtonGroup>
       {!hasData ? <p className="export-hint">Run the simulation to collect telemetry to export.</p> : null}
     </div>
   )
