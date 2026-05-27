@@ -12,6 +12,12 @@ interface DialogProps {
   children: ReactNode
   /** Optional footer region for primary/secondary actions. */
   footer?: ReactNode
+  /**
+   * Visual form. `'modal'` (default) is a centred dialog; `'sheet'` is a bottom sheet that
+   * slides up from the edge of the screen — used for the touch/compact layout where panels
+   * overlay a full-bleed canvas. Both share the same focus-trap, Escape, and portal behaviour.
+   */
+  variant?: 'modal' | 'sheet'
 }
 
 const FOCUSABLE =
@@ -22,7 +28,15 @@ const FOCUSABLE =
  * title, closes on Escape or backdrop click, traps Tab focus, and restores focus to the
  * previously-focused element on close. Reused for the preset manager, export, and challenges.
  */
-export function Dialog({ open, onClose, title, description, children, footer }: DialogProps) {
+export function Dialog({
+  open,
+  onClose,
+  title,
+  description,
+  children,
+  footer,
+  variant = 'modal',
+}: DialogProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const titleId = useId()
   const descId = useId()
@@ -68,11 +82,16 @@ export function Dialog({ open, onClose, title, description, children, footer }: 
 
   if (!open) return null
 
+  const sheet = variant === 'sheet'
+
   return createPortal(
-    <div className="dialog__backdrop" onMouseDown={onClose}>
+    <div
+      className={`dialog__backdrop${sheet ? ' dialog__backdrop--sheet' : ''}`}
+      onMouseDown={onClose}
+    >
       <div
         ref={panelRef}
-        className="dialog"
+        className={`dialog${sheet ? ' dialog--sheet' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -81,6 +100,7 @@ export function Dialog({ open, onClose, title, description, children, footer }: 
         // Stop backdrop close when interacting inside the panel.
         onMouseDown={(e) => e.stopPropagation()}
       >
+        {sheet ? <div className="dialog__handle" aria-hidden="true" /> : null}
         <header className="dialog__header">
           <div>
             <h2 id={titleId} className="dialog__title">

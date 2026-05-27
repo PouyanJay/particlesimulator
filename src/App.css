@@ -3,7 +3,9 @@
 
 .app {
   display: grid;
-  grid-template-columns: 320px 1fr 340px;
+  /* minmax lets the side columns yield to the canvas on narrow desktops so the viewport
+   * never collapses; below the compact breakpoint the layout switches entirely (.app--compact). */
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr) minmax(300px, 340px);
   grid-template-rows: auto 1fr;
   grid-template-areas:
     'topbar topbar topbar'
@@ -18,10 +20,22 @@
 
 /* Measurements dock collapsed: reclaim its column for the viewport. */
 .app--dock-collapsed {
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
   grid-template-areas:
     'topbar topbar'
     'sidebar viewport';
+}
+
+/* Compact (touch / narrow) layout: a full-bleed canvas framed by a slim top bar and a bottom
+ * action bar. The sidebar and dock are not rendered here — their content opens as bottom
+ * sheets instead (see .dialog--sheet). Drives the same breakpoint as useIsCompact. */
+.app--compact {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    'topbar'
+    'viewport'
+    'tabbar';
 }
 
 /* Embed mode: chrome stripped to just the viewport for clean iframes. */
@@ -47,6 +61,22 @@
   font-size: var(--text-md);
   font-weight: 600;
   letter-spacing: 0.01em;
+}
+
+/* Compact top bar: brand + Reset + More, kept to a single row, clearing the device's top
+ * safe area (notch / status bar) since the canvas runs edge-to-edge (viewport-fit=cover). */
+.app__topbar--compact {
+  justify-content: space-between;
+  padding-top: max(var(--space-3), env(safe-area-inset-top));
+  padding-left: max(var(--space-4), env(safe-area-inset-left));
+  padding-right: max(var(--space-4), env(safe-area-inset-right));
+}
+
+/* Touch layout: enlarge the top-bar icon buttons (Reset, More) to a >= 44px tap target.
+ * Scoped to the compact bar so the dense desktop toolbar keeps its 32px controls. */
+.app__topbar--compact .btn--icon {
+  width: var(--space-12);
+  height: var(--space-12);
 }
 
 .app__topbar-actions {
@@ -99,6 +129,19 @@
   left: var(--space-4);
   bottom: var(--space-4);
   pointer-events: none;
+}
+
+/* Compact layout: bound the live readout to the viewport so its row of metrics wraps onto a
+ * second line instead of running off the right edge of a phone screen. */
+.app--compact .app__status-overlay {
+  right: var(--space-4);
+}
+
+.app--compact .status {
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  width: fit-content;
+  max-width: 100%;
 }
 
 /* Recording badge — top-right of the viewport, above the canvas, non-interactive. */
@@ -155,6 +198,76 @@
   .rec-indicator__dot {
     animation: none;
   }
+}
+
+/* Bottom action bar (compact layout): Controls · Play/Pause · Measurements, within thumb
+ * reach, clearing the device's bottom safe area (home indicator). */
+.app__tabbar {
+  grid-area: tabbar;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  padding-bottom: max(var(--space-2), env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+
+.tabbar__item {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  /* >= 44px high for a comfortable touch target (WCAG 2.5.5 / platform guidance). */
+  min-height: var(--space-12);
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition:
+    color var(--motion-fast) var(--ease),
+    background var(--motion-fast) var(--ease);
+}
+
+.tabbar__item:hover {
+  color: var(--text-primary);
+}
+
+/* Touch press feedback (no hover on touch devices). */
+.tabbar__item:active {
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+}
+
+.tabbar__item[aria-pressed='true'] {
+  color: var(--accent);
+  background: var(--accent-subtle);
+}
+
+/* Solid accent ring: these buttons are borderless/transparent, so the faint --accent-subtle
+ * fill used on bordered controls wouldn't read as a visible focus indicator (WCAG 2.4.13). */
+.tabbar__item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--accent);
+}
+
+.tabbar__label {
+  line-height: 1;
+}
+
+/* Prominent central play/pause, sized up from the standard icon button. */
+.tabbar__play.btn--icon {
+  flex: 0 0 auto;
+  width: var(--space-12);
+  height: var(--space-12);
+  border-radius: var(--radius-full);
 }
 
 /* Panel */
@@ -928,6 +1041,61 @@
   border-top: 1px solid var(--border);
 }
 
+/* Bottom-sheet variant of the dialog (compact layout): same focus-trap/Escape/portal
+ * machinery, anchored to the bottom edge and sliding up over the full-bleed canvas. */
+.dialog__backdrop--sheet {
+  align-items: flex-end;
+  padding: 0;
+}
+
+.dialog--sheet {
+  width: 100%;
+  max-width: none;
+  max-height: 85dvh;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-bottom: none;
+  /* Keep content above the home indicator without padding the scroll track itself. */
+  padding-bottom: env(safe-area-inset-bottom);
+  animation: sheet-in var(--motion-base) var(--ease);
+}
+
+/* Drag-handle affordance at the top of a sheet (decorative; the header carries the close). */
+.dialog__handle {
+  flex: none;
+  width: var(--space-8);
+  height: var(--space-1);
+  margin: var(--space-2) auto 0;
+  border-radius: var(--radius-full);
+  background: var(--border-strong);
+}
+
+.dialog--sheet .dialog__body {
+  flex: 1 1 auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* In a sheet the dialog header already names the panel, so suppress the panel's own eyebrow
+ * title (it's the dock's only heading on desktop, so it stays there — hidden only in sheets). */
+.dialog--sheet .panel__title {
+  display: none;
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog--sheet {
+    animation: none;
+  }
+}
+
 /* Text field */
 .textfield {
   display: flex;
@@ -1472,45 +1640,10 @@
 }
 
 
-/* Narrow screens: stack the sidebar above the viewport. */
-@media (max-width: 768px) {
-  .app,
-  .app--dock-collapsed {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr auto;
-    grid-template-areas:
-      'topbar'
-      'sidebar'
-      'viewport'
-      'dock';
-  }
-
-  .app__sidebar {
-    max-height: 40vh;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .app__dock {
-    max-height: 45vh;
-    border-left: none;
-    border-top: 1px solid var(--border);
-  }
-
-  /* Topbar actions can outgrow a phone's width — let them wrap onto a second row. */
-  .app__topbar {
-    flex-wrap: wrap;
-  }
-
-  .app__topbar-actions {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-}
-
-/* Phones: dialogs and the palette go near-full-width; touch scrolling stays smooth. */
+/* Phones: centred dialogs and the command palette go near-full-width. (The compact layout's
+ * own panels are bottom sheets — see .dialog--sheet — and already span the full width.) */
 @media (max-width: 480px) {
-  .dialog,
+  .dialog:not(.dialog--sheet),
   .palette {
     max-width: 100%;
   }
