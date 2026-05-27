@@ -26,5 +26,6 @@ dist-ssr
 # Reference materials and local development resources
 ref/
 
-# Agent worktrees (transient, never commit)
-.claude/worktrees/
+# Local agent tooling / engineering notes — kept out of the published repo
+.claude/
+CLAUDE.md

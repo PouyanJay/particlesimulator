@@ -63,9 +63,7 @@ Useful URL flags: `?forceWebGL` (force the WebGL2 backend), `?stats` (dev-only p
 
 - [docs/architecture.md](./docs/architecture.md) — the layered architecture and data flow.
 - [docs/adding-a-sim-mode.md](./docs/adding-a-sim-mode.md) — how to add a new simulation mode.
-- [CONTRIBUTING.md](./CONTRIBUTING.md) — conventions, the TDD workflow, and how to run things.
-- [CLAUDE.md](./CLAUDE.md) — the authoritative engineering guide.
-- [.claude/plans/](./.claude/plans/) — the phased roadmap and technical decisions.
+- [docs/qa-checklist.md](./docs/qa-checklist.md) — launch QA: verified items + manual cross-browser matrix.
 
 ## Deployment
 
