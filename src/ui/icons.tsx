@@ -261,3 +261,26 @@ export const CommandIcon = ({ className }: IconProps) =>
     <path d="M9 6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3z" />,
     className,
   )
+
+export const SlidersIcon = ({ className }: IconProps) =>
+  stroked(
+    <>
+      <path d="M4 6h10M18 6h2" />
+      <path d="M4 12h2M10 12h10" />
+      <path d="M4 18h12M20 18h0" />
+      <circle cx="16" cy="6" r="2" />
+      <circle cx="8" cy="12" r="2" />
+      <circle cx="18" cy="18" r="2" />
+    </>,
+    className,
+  )
+
+export const MoreIcon = ({ className }: IconProps) =>
+  stroked(
+    <>
+      <circle cx="5" cy="12" r="1" />
+      <circle cx="12" cy="12" r="1" />
+      <circle cx="19" cy="12" r="1" />
+    </>,
+    className,
+  )
