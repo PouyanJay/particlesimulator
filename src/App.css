@@ -117,7 +117,7 @@
   border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--border));
   border-radius: var(--radius-full);
   background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(var(--blur-overlay));
   font-size: var(--text-xs);
   color: var(--text-primary);
 }
@@ -823,7 +823,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(var(--blur-overlay));
   font-size: var(--text-xs);
 }
 
@@ -871,7 +871,7 @@
   justify-content: center;
   padding: var(--space-4);
   background: color-mix(in srgb, var(--bg-base) 70%, transparent);
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(var(--blur-backdrop));
 }
 
 /* Command palette sits high on the screen, like a spotlight. */
@@ -882,7 +882,7 @@
 
 .dialog {
   width: 100%;
-  max-width: 520px;
+  max-width: var(--width-dialog);
   max-height: 85vh;
   display: flex;
   flex-direction: column;
@@ -1025,7 +1025,7 @@
 /* Command palette */
 .palette {
   width: 100%;
-  max-width: 560px;
+  max-width: var(--width-palette);
   display: flex;
   flex-direction: column;
   max-height: 60vh;
@@ -1313,10 +1313,19 @@
   color: var(--text-secondary);
 }
 
-.export-actions {
+/* Shared row of related action buttons. */
+.button-group {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+
+.button-group--end {
+  justify-content: flex-end;
+}
+
+.button-group--between {
+  justify-content: space-between;
 }
 
 /* Give the format dropdown a fixed width so its menu fits the longest label ("MP4 (H.264)")

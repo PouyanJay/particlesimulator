@@ -8,6 +8,7 @@ import type { Challenge } from '../sim-core/challenges/types'
 import type { Telemetry } from '../sim-core/types'
 import { Dialog } from './controls/Dialog'
 import { Button } from './controls/Button'
+import { ButtonGroup } from './controls/ButtonGroup'
 import { CheckIcon } from './icons'
 
 function modeLabel(modeId: string): string {
@@ -89,7 +90,7 @@ function ChallengeRunner({ challenge, onExit }: { challenge: Challenge; onExit: 
 
       <div className="challenge__nav">
         <Button onClick={onExit}>All challenges</Button>
-        <div className="export-actions">
+        <ButtonGroup>
           <Button onClick={() => setStepIndex((i) => Math.max(0, i - 1))} disabled={stepIndex === 0}>
             Back
           </Button>
@@ -102,7 +103,7 @@ function ChallengeRunner({ challenge, onExit }: { challenge: Challenge; onExit: 
               Next
             </Button>
           )}
-        </div>
+        </ButtonGroup>
       </div>
     </div>
   )
