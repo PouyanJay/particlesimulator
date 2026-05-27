@@ -58,10 +58,19 @@ Reads from `sim-core` and draws; holds no physics. Key pieces:
 
 ## ui
 
-Token-styled components built on shared primitives in `ui/controls/` (`Button`, `Select`, `RangeField`,
-`ToggleField`, `Dialog`, `Tabs`, `Tooltip`, `TextField`, `ButtonGroup`, `Kbd`, the `roving` helper). The
-design system (tokens, spacing, a11y) is defined in `CLAUDE.md` and `src/styles/tokens.css`. The command
-palette, preset manager, share/export/scenario/challenge dialogs, and the welcome tour live here.
+Token-styled React components, grouped by role:
+
+- **`controls/`** — shared primitives (`Button`, `Select`, `RangeField`, `ToggleField`, `Dialog`, `Tabs`,
+  `Tooltip`, `TextField`, `ButtonGroup`, `Kbd`, the `roving` helper).
+- **`chrome/`** — app-frame pieces: toolbar, lab actions, mode/view/units selectors, status + recording readouts.
+- **`panels/`** — the instrument panels: control panel, measurements, gas-law check.
+- **`dialogs/`** — the overlays: preset manager, share, export, scenarios, challenges, welcome, and the `Overlays` mount.
+- **`commands/`** — the command palette and its action model. **`charts/`** — uPlot chart wrappers.
+- **`hooks/`** — small UI hooks. Plus leaf modules at the `ui/` root: `icons`, `platform`, `modeExplainers`,
+  `measurementDisplay`.
+
+The design system (tokens, spacing, a11y) lives in `src/styles/` (`tokens.css` for the DOM, `theme.ts` for the
+canvas colour mirror). No three.js in this layer.
 
 ## Data flow each frame
 

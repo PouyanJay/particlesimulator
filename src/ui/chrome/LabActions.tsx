@@ -1,8 +1,8 @@
-import { useUiStore } from '../state/uiStore'
-import { Button } from './controls/Button'
-import { Tooltip } from './controls/Tooltip'
-import { SaveIcon, ShareIcon, DownloadIcon, BookIcon, CommandIcon, GraduationIcon, HelpIcon } from './icons'
-import { MOD } from './platform'
+import { useUiStore } from '../../state/uiStore'
+import { Button } from '../controls/Button'
+import { Tooltip } from '../controls/Tooltip'
+import { SaveIcon, ShareIcon, DownloadIcon, BookIcon, CommandIcon, GraduationIcon, HelpIcon } from '../icons'
+import { MOD } from '../platform'
 
 /**
  * Topbar lab actions: open the preset manager, share dialog, export/record, curated

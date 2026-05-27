@@ -2,9 +2,9 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { PresetManager } from './PresetManager'
-import { useUiStore } from '../state/uiStore'
-import { usePresetStore } from '../state/presetStore'
-import { useParamStore } from '../state/paramStore'
+import { useUiStore } from '../../state/uiStore'
+import { usePresetStore } from '../../state/presetStore'
+import { useParamStore } from '../../state/paramStore'
 
 beforeEach(() => {
   usePresetStore.setState({ presets: [] })

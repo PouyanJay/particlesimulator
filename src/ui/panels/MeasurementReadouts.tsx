@@ -1,5 +1,5 @@
-import { useTelemetryStore } from '../state/telemetryStore'
-import { useReadoutUnits, formatSi } from './measurementDisplay'
+import { useTelemetryStore } from '../../state/telemetryStore'
+import { useReadoutUnits, formatSi } from '../measurementDisplay'
 
 /**
  * Numeric readout of the system's conserved / derived bulk quantities — kinetic energy,

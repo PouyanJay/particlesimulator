@@ -1,10 +1,10 @@
 import { useMemo, type ReactNode } from 'react'
-import { simRegistry } from '../state/simRegistry'
-import { useParamStore } from '../state/paramStore'
-import { beginParamHistoryGroup, endParamHistoryGroup } from '../state/paramHistoryGroup'
-import type { ParamDef } from '../sim-core/types'
-import { RangeField } from './controls/RangeField'
-import { ToggleField } from './controls/ToggleField'
+import { simRegistry } from '../../state/simRegistry'
+import { useParamStore } from '../../state/paramStore'
+import { beginParamHistoryGroup, endParamHistoryGroup } from '../../state/paramHistoryGroup'
+import type { ParamDef } from '../../sim-core/types'
+import { RangeField } from '../controls/RangeField'
+import { ToggleField } from '../controls/ToggleField'
 
 /**
  * Schema-driven parameter panel. Renders a control per parameter declared by the active

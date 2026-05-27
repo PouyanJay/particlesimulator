@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { render, fireEvent } from '@testing-library/react'
 import { renderHook } from '@testing-library/react'
 import { useGlobalShortcuts, isInteractiveTarget } from './useGlobalShortcuts'
-import { useParamStore } from '../state/paramStore'
+import { useParamStore } from '../../state/paramStore'
 
 beforeEach(() => {
   useParamStore.setState({

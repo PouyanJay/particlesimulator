@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { ViewToggle } from './ViewToggle'
-import { useParamStore } from '../state/paramStore'
+import { useParamStore } from '../../state/paramStore'
 
 beforeEach(() => useParamStore.setState({ view: '3d' }))
 

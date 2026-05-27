@@ -1,6 +1,6 @@
-import { useParamStore } from '../state/paramStore'
-import { SUBSTANCES } from '../sim-core/measure/substances'
-import { Select } from './controls/Select'
+import { useParamStore } from '../../state/paramStore'
+import { SUBSTANCES } from '../../sim-core/measure/substances'
+import { Select } from '../controls/Select'
 
 /**
  * Chooses how the Lennard-Jones gas readouts are displayed: the dimensionless reduced system

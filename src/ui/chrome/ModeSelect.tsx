@@ -1,7 +1,7 @@
-import { simRegistry } from '../state/simRegistry'
-import { useParamStore } from '../state/paramStore'
-import { explainerFor } from './modeExplainers'
-import { Select } from './controls/Select'
+import { simRegistry } from '../../state/simRegistry'
+import { useParamStore } from '../../state/paramStore'
+import { explainerFor } from '../modeExplainers'
+import { Select } from '../controls/Select'
 
 /**
  * Switches the active simulation mode and shows a short explainer of what it demonstrates.

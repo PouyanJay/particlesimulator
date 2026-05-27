@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useUiStore } from '../state/uiStore'
-import { currentScenario } from '../render/currentScenario'
-import { buildShareUrl } from '../state/shareLink'
-import { Dialog } from './controls/Dialog'
-import { Button } from './controls/Button'
+import { useUiStore } from '../../state/uiStore'
+import { currentScenario } from '../../render/currentScenario'
+import { buildShareUrl } from '../../state/shareLink'
+import { Dialog } from '../controls/Dialog'
+import { Button } from '../controls/Button'
 
 /** The current page URL with its hash stripped — the base for share/embed links. */
 function pageBaseUrl(): string {

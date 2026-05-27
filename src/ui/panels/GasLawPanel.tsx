@@ -1,5 +1,5 @@
-import { useParamStore } from '../state/paramStore'
-import { useTelemetryStore } from '../state/telemetryStore'
+import { useParamStore } from '../../state/paramStore'
+import { useTelemetryStore } from '../../state/telemetryStore'
 
 const GAS_MODES = new Set(['elastic-gas', 'molecular-dynamics'])
 /** Z axis shown on the gauge: 0…2, with the ideal value Z = 1 at the centre. */

@@ -1,6 +1,6 @@
-import { useParamStore } from '../state/paramStore'
-import { useTelemetryStore } from '../state/telemetryStore'
-import { useReadoutUnits, formatSi } from './measurementDisplay'
+import { useParamStore } from '../../state/paramStore'
+import { useTelemetryStore } from '../../state/telemetryStore'
+import { useReadoutUnits, formatSi } from '../measurementDisplay'
 
 /** Compact live readout of run state and derived telemetry. Mono, tabular figures. */
 export function StatusReadout() {
