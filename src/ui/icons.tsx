@@ -209,6 +209,9 @@ export const CameraIcon = ({ className }: IconProps) =>
 export const RecordIcon = ({ className }: IconProps) =>
   stroked(<circle cx="12" cy="12" r="6" fill="currentColor" />, className)
 
+export const StopIcon = ({ className }: IconProps) =>
+  stroked(<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />, className)
+
 export const BookIcon = ({ className }: IconProps) =>
   stroked(
     <>

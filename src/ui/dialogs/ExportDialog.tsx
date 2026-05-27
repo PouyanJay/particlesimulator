@@ -2,16 +2,16 @@ import { useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useUiStore } from '../../state/uiStore'
 import { useTelemetryStore } from '../../state/telemetryStore'
-import { useLifecyclePhase } from '../../state/lifecycle'
+import { useExportSettingsStore } from '../../state/exportSettingsStore'
 import { getCanvas } from '../../render/canvasBridge'
 import { currentScenario } from '../../render/currentScenario'
 import { telemetryToCsv, telemetryToJson } from '../../export/telemetrySerialize'
 import { downloadText, triggerDownload } from '../../export/download'
 import { timestampedFilename } from '../../export/filenames'
 import { captureCanvasPng } from '../../export/screenshot'
-import { beginRecording, endRecording } from '../../export/recordingController'
-import { RECORD_FORMATS, DEFAULT_RECORD_FORMAT, type RecordFormat } from '../../export/recordFormats'
+import { RECORD_FORMATS, type RecordFormat } from '../../export/recordFormats'
 import { scenarioToJson } from '../../sim-core/scenario'
+import { useRecordToggle } from '../hooks/useRecordToggle'
 import { useElapsedSeconds, formatElapsed } from '../hooks/useElapsedSeconds'
 import { Dialog } from '../controls/Dialog'
 import { Tabs } from '../controls/Tabs'
@@ -45,32 +45,23 @@ export function ExportDialog() {
 }
 
 function CapturePanel() {
-  const phase = useLifecyclePhase()
-  const recording = phase === 'recording'
+  const { recording, toggle, error: recordError } = useRecordToggle()
+  const format = useExportSettingsStore((s) => s.recordFormat)
+  const setFormat = useExportSettingsStore((s) => s.setRecordFormat)
   const elapsed = useElapsedSeconds(recording)
-  const [format, setFormat] = useState<RecordFormat>(DEFAULT_RECORD_FORMAT)
-  const [error, setError] = useState<string | null>(null)
-
-  async function toggleRecording(): Promise<void> {
-    setError(null)
-    try {
-      if (recording) await endRecording()
-      else await beginRecording(format)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Recording failed')
-    }
-  }
+  const [shotError, setShotError] = useState<string | null>(null)
+  const error = recordError ?? shotError
 
   async function screenshot(): Promise<void> {
-    setError(null)
+    setShotError(null)
     const canvas = getCanvas()
     if (!canvas) {
-      setError('The canvas is not ready yet.')
+      setShotError('The canvas is not ready yet.')
       return
     }
     const blob = await captureCanvasPng(canvas)
     if (blob) triggerDownload(timestampedFilename('particle-lab', 'png'), blob)
-    else setError('Could not capture the canvas.')
+    else setShotError('Could not capture the canvas.')
   }
 
   return (
@@ -85,7 +76,7 @@ function CapturePanel() {
         />
       </div>
       <ButtonGroup>
-        <Button variant={recording ? 'ghost' : 'primary'} onClick={() => void toggleRecording()}>
+        <Button variant={recording ? 'ghost' : 'primary'} onClick={() => void toggle()}>
           {recording ? 'Stop recording' : 'Start recording'}
         </Button>
         <Button onClick={() => void screenshot()} disabled={recording}>

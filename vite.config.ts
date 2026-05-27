@@ -20,10 +20,11 @@ export default defineConfig({
   plugins: [
     react(),
     // Installable, offline-capable PWA. autoUpdate keeps the service worker fresh; the app
-    // shell + assets are precached so the lab opens offline. Icons reuse the existing SVG mark.
+    // shell + assets are precached so the lab opens offline. Icons use the brand spiral mark
+    // (logo.svg = rounded squircle; logo-maskable.svg = full-bleed square for adaptive masks).
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['particles.svg'],
+      includeAssets: ['logo.svg', 'logo-maskable.svg'],
       manifest: {
         name: 'Particle Lab',
         short_name: 'Particle Lab',
@@ -31,7 +32,10 @@ export default defineConfig({
         theme_color: '#0b0e14',
         background_color: '#0b0e14',
         display: 'standalone',
-        icons: [{ src: 'particles.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
+        icons: [
+          { src: 'logo.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+          { src: 'logo-maskable.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
+        ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,wasm}'],

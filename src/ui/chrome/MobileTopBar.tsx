@@ -1,6 +1,7 @@
 import { useParamStore } from '../../state/paramStore'
 import { useUiStore } from '../../state/uiStore'
 import { Button } from '../controls/Button'
+import { Logo } from './Logo'
 import { ResetIcon, MoreIcon } from '../icons'
 
 /**
@@ -15,7 +16,10 @@ export function MobileTopBar() {
 
   return (
     <header className="app__topbar app__topbar--compact">
-      <span className="app__brand">Particle&nbsp;Lab</span>
+      <span className="app__brand">
+        <Logo className="app__brand-mark" />
+        Particle&nbsp;Lab
+      </span>
       <div className="app__topbar-actions">
         <Button
           icon

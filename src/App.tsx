@@ -11,6 +11,7 @@ import { Overlays } from './ui/dialogs/Overlays'
 import { StatusReadout } from './ui/chrome/StatusReadout'
 import { RecordingIndicator } from './ui/chrome/RecordingIndicator'
 import { MobileTopBar } from './ui/chrome/MobileTopBar'
+import { Logo } from './ui/chrome/Logo'
 import { MobileTabBar, type MobileSheet } from './ui/chrome/MobileTabBar'
 import { Button } from './ui/controls/Button'
 import { Dialog } from './ui/controls/Dialog'
@@ -79,7 +80,10 @@ export default function App() {
         <MobileTopBar />
       ) : (
         <header className="app__topbar">
-          <span className="app__brand">Particle&nbsp;Lab</span>
+          <span className="app__brand">
+            <Logo className="app__brand-mark" />
+            Particle&nbsp;Lab
+          </span>
           <div className="app__topbar-actions">
             <Toolbar />
             <span className="app__topbar-divider" aria-hidden="true" />
