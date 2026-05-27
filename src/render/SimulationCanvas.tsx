@@ -1,6 +1,6 @@
 import './webgpu' // registers three/webgpu JSX elements; must load before <Canvas>
 import * as THREE from 'three/webgpu'
-import { useEffect, useRef, type ComponentRef, type RefObject } from 'react'
+import { useEffect, useRef, lazy, Suspense, type ComponentRef, type RefObject } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { ParticleField } from './ParticleField'
@@ -24,6 +24,13 @@ const CAMERA_FOV = 45
 // WebGPU and fallback paths render identically (CLAUDE.md fallback-parity requirement).
 const FORCE_WEBGL =
   typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('forceWebGL')
+
+// Dev-only profiling overlay, behind `?stats`. Lazy so r3f-perf/stats-gl never ship to prod.
+const SHOW_STATS =
+  import.meta.env.DEV &&
+  typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).has('stats')
+const PerfOverlay = lazy(() => import('./PerfOverlay').then((m) => ({ default: m.PerfOverlay })))
 
 type OrbitControlsRef = ComponentRef<typeof OrbitControls>
 
@@ -140,6 +147,12 @@ export function SimulationCanvas() {
       {/* Single perspective camera throughout; 2D just locks rotation for a flat top-down view. */}
       <OrbitControls ref={controlsRef} enablePan enableZoom enableRotate={!is2D} makeDefault />
       <CameraRig controlsRef={controlsRef} />
+
+      {SHOW_STATS && (
+        <Suspense fallback={null}>
+          <PerfOverlay />
+        </Suspense>
+      )}
 
       {/* Must be last: takes over the render to present the post-processed (bloom) frame. */}
       <PostFx />
