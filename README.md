@@ -15,6 +15,8 @@ Pick a model, tune it live, measure what's happening, then share or record the r
 
 [**▶ Live demo**](https://pouyanjay.github.io/particlesimulator) · [Watch a recording](https://github.com/PouyanJay/particlesimulator/raw/main/public/demo.mp4)
 
+![Particle Lab](./public/demo-1.png)
+
 </div>
 
 ---
