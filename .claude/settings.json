@@ -11,7 +11,8 @@
       "Bash(node -e \"const d={...require\\('./package.json'\\).dependencies,...require\\('./package.json'\\).devDependencies}; console.log\\('r3f-perf:',d['r3f-perf']||'-','stats-gl:',d['stats-gl']||'-'\\)\")",
       "Bash(git checkout *)",
       "Bash(npm install *)",
-      "Bash(node -e \"const d=require\\('./package.json'\\).devDependencies; console.log\\('r3f-perf:',d['r3f-perf'],'stats-gl:',d['stats-gl']\\)\")"
+      "Bash(node -e \"const d=require\\('./package.json'\\).devDependencies; console.log\\('r3f-perf:',d['r3f-perf'],'stats-gl:',d['stats-gl']\\)\")",
+      "Bash(git -C /Users/pouyan/Developer/personal/particlesimulator check-ignore dist)"
     ]
   }
 }

@@ -123,8 +123,8 @@
 }
 
 .rec-indicator__dot {
-  width: 8px;
-  height: 8px;
+  width: var(--space-2);
+  height: var(--space-2);
   border-radius: var(--radius-full);
   background: var(--danger);
   animation: rec-pulse 1.4s var(--ease) infinite;
@@ -1126,7 +1126,7 @@
   font-weight: 600;
 }
 
-.welcome-list kbd {
+.kbd {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   padding: 0 var(--space-1);
@@ -1471,11 +1471,6 @@
   background: var(--success);
 }
 
-.challenge__nav {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-2);
-}
 
 /* Narrow screens: stack the sidebar above the viewport. */
 @media (max-width: 768px) {

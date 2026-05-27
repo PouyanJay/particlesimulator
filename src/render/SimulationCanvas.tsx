@@ -25,12 +25,16 @@ const CAMERA_FOV = 45
 const FORCE_WEBGL =
   typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('forceWebGL')
 
-// Dev-only profiling overlay, behind `?stats`. Lazy so r3f-perf/stats-gl never ship to prod.
+// Dev-only profiling overlay, behind `?stats`. The dynamic import is gated on `import.meta.env.DEV`
+// (not just the render) so Rollup dead-code-eliminates it in production — the r3f-perf/stats-gl
+// chunk is never emitted or service-worker-precached for end users.
 const SHOW_STATS =
   import.meta.env.DEV &&
   typeof window !== 'undefined' &&
   new URLSearchParams(window.location.search).has('stats')
-const PerfOverlay = lazy(() => import('./PerfOverlay').then((m) => ({ default: m.PerfOverlay })))
+const PerfOverlay = import.meta.env.DEV
+  ? lazy(() => import('./PerfOverlay').then((m) => ({ default: m.PerfOverlay })))
+  : null
 
 type OrbitControlsRef = ComponentRef<typeof OrbitControls>
 
@@ -148,7 +152,7 @@ export function SimulationCanvas() {
       <OrbitControls ref={controlsRef} enablePan enableZoom enableRotate={!is2D} makeDefault />
       <CameraRig controlsRef={controlsRef} />
 
-      {SHOW_STATS && (
+      {SHOW_STATS && PerfOverlay && (
         <Suspense fallback={null}>
           <PerfOverlay />
         </Suspense>
