@@ -1676,3 +1676,16 @@
     padding-top: var(--space-8);
   }
 }
+
+/* Touch devices: text inputs must be >= 16px or iOS Safari auto-zooms the page when one gains
+ * focus — and it stays zoomed, shifting the UI off-screen and pushing the bottom bar behind the
+ * browser toolbar. --text-md is exactly that 16px threshold. Scoped to coarse pointers so the
+ * denser desktop input sizing is untouched. (Pinch-zoom stays enabled — we don't cap scale.) */
+@media (pointer: coarse) {
+  .palette__input,
+  .textfield__input,
+  .preset-row__edit,
+  .share-field__input {
+    font-size: var(--text-md);
+  }
+}
